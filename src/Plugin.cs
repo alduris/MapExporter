@@ -41,31 +41,6 @@ sealed class MapExporter : BaseUnityPlugin
 
     public static new ManualLogSource Logger;
 
-    public static List<string> AllScugsRegionOverrides = new()
-    {
-        "AK",
-        "DP",
-        "HF",
-        "QW",
-        "RW",
-        "TO",
-        "UF",
-        "WM",
-        "ZZ"
-    };
-    public static readonly Dictionary<string, List<string>> SpecificRegionOverrides = new()
-    {
-        { "white", new() { "TZ", "HC" } },
-        { "yellow", new() { "TZ", "XD", "HC" } },
-        { "red", new() { "TZ", "HC" } },
-        { "gourmand", new() { "HC" } },
-        { "artificer", new() { "HC" } },
-        { "rivulet", new() { "HC" } },
-        { "spear", new() { "HC" } },
-        { "saint", new() { "HC", "FR", "NF" } },
-        { "inv", new() { "TM" } }
-    };
-
     public static bool NotHiddenRoom(AbstractRoom room) => !HiddenRoom(room);
     public static bool HiddenRoom(AbstractRoom room)
     {
@@ -558,17 +533,6 @@ sealed class MapExporter : BaseUnityPlugin
         Logger.LogDebug("capture task start");
         Random.InitState(0);
 
-        if (ModManager.MSC && Region.GetFullRegionOrder().Contains("SD"))
-        {
-            SpecificRegionOverrides["white"].Add("LC");
-            SpecificRegionOverrides["yellow"].Add("LC");
-            SpecificRegionOverrides["red"].Add("LC");
-            SpecificRegionOverrides["gourmand"].Add("LC");
-            SpecificRegionOverrides["rivulet"].Add("LC");
-            SpecificRegionOverrides["spear"].Add("LC");
-            SpecificRegionOverrides["inv"].Add("LC");
-        }
-
         if (captureSpecific.Count == 0)
         {
             foreach (string slugcatName in SlugcatStats.Name.values.entries.OrderByDescending(ScugPriority))
@@ -587,21 +551,6 @@ sealed class MapExporter : BaseUnityPlugin
                 foreach (string region in SlugcatStats.getSlugcatOptionalRegions(slugcat))
                 {
                     captureSpecific.Enqueue((slugcatName, region));
-                }
-
-                foreach (string region in AllScugsRegionOverrides)
-                {
-                    // Make sure region exists
-                    if (Region.GetFullRegionOrder().Contains(region))
-                        captureSpecific.Enqueue((slugcatName, region));
-                }
-                if (SpecificRegionOverrides.ContainsKey(slugcatName.ToLower()))
-                {
-                    foreach (string region in SpecificRegionOverrides[slugcatName.ToLower()])
-                    {
-                        if (Region.GetFullRegionOrder().Contains(region))
-                            captureSpecific.Enqueue((slugcatName, region));
-                    }
                 }
             }
         }

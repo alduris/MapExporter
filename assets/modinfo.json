@@ -1,12 +1,11 @@
 ﻿{
-  "id": "testmod",
-  "name": "Test Mod",
+  "id": "henpemaz-dual-noblecat-alduris.mapexporter",
+  "name": "Map Exporter",
   "version": "0.1.0",
-  "authors": "Author",
-  "target_game_version": "v1.9",
-  "description": "Put a neat description here",
+  "authors": "Henpemaz, DualIron, Noblecat57, and Alduris",
+  "description": "Creates images for an online interactable map",
   "tags": [],
   "requirements": [],
   "requirements_names": [],
-  "checksum_override_version": false
+  "checksum_override_version": true
 }
