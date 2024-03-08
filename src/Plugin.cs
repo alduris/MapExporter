@@ -126,7 +126,14 @@ sealed class MapExporter : BaseUnityPlugin
             {
                 // Register options thing
                 Logger.LogDebug("Normal game instance, don't run hooks");
-                MachineConnector.SetRegisteredOI(MOD_ID, new UI());
+
+                // Register UI
+                On.RainWorld.OnModsInit += (orig, self) =>
+                {
+                    orig(self);
+                    MachineConnector.SetRegisteredOI(MOD_ID, new UI());
+                    Logger.LogDebug("UI registered");
+                };
             }
         }
         catch (Exception e)

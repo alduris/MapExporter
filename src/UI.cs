@@ -1,3 +1,4 @@
+using MapExporter.Tabs;
 using Menu.Remix.MixedUI;
 
 internal class UI : OptionInterface
@@ -14,10 +15,24 @@ internal class UI : OptionInterface
     public override void Initialize()
     {
         base.Initialize();
+
+        Tabs = [
+            new ScreenshotTab(this)
+        ];
+
+        foreach (var tab in Tabs)
+        {
+            (tab as BaseTab).Initialize();
+        }
     }
 
     public override void Update()
     {
         base.Update();
+
+        foreach (var tab in Tabs)
+        {
+            (tab as BaseTab).Update();
+        }
     }
 }
