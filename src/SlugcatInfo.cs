@@ -44,26 +44,10 @@ sealed class Slugcat : IJsonObject
         }
 
         regions = new Dictionary<string, string>();
-        foreach (var reg in SlugcatStats.getSlugcatStoryRegions(myScug)) {
-            regions[reg] = Region.GetRegionFullName(reg, myScug);
-        }
-        foreach (var reg in SlugcatStats.getSlugcatOptionalRegions(myScug))
-        {
-            regions[reg] = Region.GetRegionFullName(reg, myScug);
-        }
         var allRegions = Region.GetFullRegionOrder();
-        foreach (var reg in MapExporter.AllScugsRegionOverrides)
+        foreach (var reg in MapExporter.captureSpecific)
         {
-            if (allRegions.Contains(reg))
-                regions[reg] = Region.GetRegionFullName(reg, myScug);
-        }
-        if (MapExporter.SpecificRegionOverrides.ContainsKey(myScug.ToString().ToLower()))
-        {
-            foreach (var reg in MapExporter.SpecificRegionOverrides[myScug.ToString().ToLower()])
-            {
-                if (allRegions.Contains(reg))
-                    regions[reg] = Region.GetRegionFullName(reg, myScug);
-            }
+            regions[reg.Item2] = Region.GetRegionFullName(reg.Item2, myScug);
         }
     }
 

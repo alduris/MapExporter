@@ -9,13 +9,15 @@ namespace MapExporter;
 
 sealed class RegionInfo : IJsonObject
 {
-    readonly Dictionary<string, RoomEntry> rooms;
-    readonly List<ConnectionEntry> connections;
+    readonly Dictionary<string, RoomEntry> rooms = [];
+    readonly List<ConnectionEntry> connections = [];
     readonly string acronym;
-    readonly List<Color> fgcolors;
-    readonly List<Color> bgcolors;
-    readonly List<Color> sccolors;
-    readonly HashSet<string> worldSpawns;
+    readonly List<Color> fgcolors = [];
+    readonly List<Color> bgcolors = [];
+    readonly List<Color> sccolors = [];
+    readonly HashSet<string> worldConditionalLinks = [];
+    readonly HashSet<string> worldCreatures = [];
+    readonly HashSet<string> worldRoomTags = [];
 
     public string copyRooms;
 
@@ -23,17 +25,8 @@ sealed class RegionInfo : IJsonObject
     {
         acronym = world.name;
 
-        rooms = new Dictionary<string, RoomEntry>();
-        connections = new List<ConnectionEntry>();
-
-        fgcolors = new List<Color>();
-        bgcolors = new List<Color>();
-        sccolors = new List<Color>();
-
-        worldSpawns = new HashSet<string>();
-
         LoadMapConfig(world);
-        LoadSpawns(world);
+        LoadWorldConfig(world);
     }
 
     private RoomEntry GetOrCreateRoomEntry(string name)
@@ -75,15 +68,46 @@ sealed class RegionInfo : IJsonObject
         }
     }
 
-    private void LoadSpawns(World world)
+    private void LoadWorldConfig(World world)
     {
         string acronym = world.region.name;
         string path = AssetManager.ResolveFilePath($"world/{acronym}/world_{acronym}.txt");
         if (File.Exists(path)) {
+            AssimilateConditionalLinks(File.ReadAllLines(path));
+            AssimilateRoomTags(File.ReadAllLines(path));
             AssimilateCreatures(File.ReadAllLines(path));
         }
         else {
             MapExporter.Logger.LogError($"WORLD FILE DOES NOT EXIST: {path}");
+        }
+    }
+
+    private void AssimilateConditionalLinks(IEnumerable<string> raw)
+    {
+        bool insideofconditionallinks = false;
+        foreach (var item in raw)
+        {
+            if (item == "CONDITIONAL LINKS") insideofconditionallinks = true;
+            else if (item == "END CONDITIONAL LINKS") insideofconditionallinks = false;
+            else if (insideofconditionallinks)
+            {
+                if (string.IsNullOrEmpty(item) || item.StartsWith("//")) continue;
+                worldConditionalLinks.Add(item);
+            }
+        }
+    }
+    private void AssimilateRoomTags(IEnumerable<string> raw)
+    {
+        bool insideofrooms = false;
+        foreach (var item in raw)
+        {
+            if (item == "ROOMS") insideofrooms = true;
+            else if (item == "END ROOMS") insideofrooms = false;
+            else if (insideofrooms)
+            {
+                if (string.IsNullOrEmpty(item) || item.StartsWith("//")) continue;
+                worldRoomTags.Add(item);
+            }
         }
     }
 
@@ -97,14 +121,14 @@ sealed class RegionInfo : IJsonObject
             else if (insideofcreatures)
             {
                 if (string.IsNullOrEmpty(item) || item.StartsWith("//")) continue;
-                worldSpawns.Add(item);
+                worldCreatures.Add(item);
             }
         }
     }
 
-    static float[] Vec2arr(Vector2 vec) => new float[] { vec.x, vec.y };
-    static float[] Vec2arr(Vector3 vec) => new float[] { vec.x, vec.y, vec.z };
-    static int[] Intvec2arr(IntVector2 vec) => new int[] { vec.x, vec.y};
+    static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
+    static float[] Vec2arr(Vector3 vec) => [vec.x, vec.y, vec.z];
+    static int[] Intvec2arr(IntVector2 vec) => [vec.x, vec.y];
 
     public void UpdateRoom(Room room)
     {
@@ -126,7 +150,9 @@ sealed class RegionInfo : IJsonObject
         else {
             ret["copyRooms"] = copyRooms;
         }
-        ret["spawns"] = worldSpawns.ToArray();
+        ret["conditionallinks"] = worldConditionalLinks.ToArray();
+        ret["roomtags"] = worldRoomTags.ToArray();
+        ret["creatures"] = worldCreatures.ToArray();
         return ret;
     }
 
@@ -142,14 +168,9 @@ sealed class RegionInfo : IJsonObject
 
     }
 
-    sealed class RoomEntry : IJsonObject
+    sealed class RoomEntry(string roomName) : IJsonObject
     {
-        public string roomName;
-
-        public RoomEntry(string roomName)
-        {
-            this.roomName = roomName;
-        }
+        public string roomName = roomName;
 
         // from map txt
         public Vector2 devPos;

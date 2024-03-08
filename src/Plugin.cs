@@ -28,9 +28,10 @@ sealed class MapExporter : BaseUnityPlugin
 {
     // Config
     const string MOD_ID = "henpemaz-dual-noblecat-alduris.mapexporter";
+    const string FLAG_TRIGGER = "--mapexport";
     const int NUM_SCREENS_BEFORE_RESET = 500;
-    static readonly Queue<(string, string)> captureSpecific = new() { }; // For example, "White;SU" loads Outskirts as Survivor
     static readonly bool screenshots = true;
+    public static readonly Queue<(string, string)> captureSpecific = new() { }; // For example, "White;SU" loads Outskirts as Survivor
 
     static readonly Dictionary<string, int[]> blacklistedCams = new()
     {
@@ -87,18 +88,8 @@ sealed class MapExporter : BaseUnityPlugin
         Logger.LogDebug("Started start thingy");
         try
         {
-            if (Environment.GetCommandLineArgs().Contains("-run"))
+            if (Environment.GetCommandLineArgs().Contains("--mapexport"))
             {
-                //
-                string configPath = Custom.LegacyRootFolderDirectory() + "MapExportConfig.txt";
-                if (File.Exists(configPath))
-                {
-                    foreach (string line in File.ReadAllLines(configPath))
-                    {
-                        string[] split = line.Split(';');
-                        captureSpecific.Enqueue((split[0], split[1]));
-                    }
-                }
                 On.Json.Serializer.SerializeValue += Serializer_SerializeValue;
                 On.RainWorld.LoadSetupValues += RainWorld_LoadSetupValues;
                 On.RainWorld.Update += RainWorld_Update;
@@ -128,6 +119,7 @@ sealed class MapExporter : BaseUnityPlugin
                 IL.BubbleGrass.Update += BubbleGrass_Update;
                 On.MoreSlugcats.BlinkingFlower.DrawSprites += BlinkingFlower_DrawSprites;
                 On.RoomCamera.ApplyEffectColorsToPaletteTexture += RoomCamera_ApplyEffectColorsToPaletteTexture;
+
                 Logger.LogDebug("Finished start thingy");
             }
             else
@@ -390,7 +382,32 @@ sealed class MapExporter : BaseUnityPlugin
         {
             // if (item.type == PlacedObject.Type.InsectGroup) item.active = false;
             if (item.type == PlacedObject.Type.FlyLure
-                || item.type == PlacedObject.Type.JellyFish) self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 20);
+                || item.type == PlacedObject.Type.JellyFish
+                || item.type == PlacedObject.Type.BubbleGrass
+                || item.type == PlacedObject.Type.TempleGuard
+                || item.type == PlacedObject.Type.StuckDaddy
+                || item.type == PlacedObject.Type.Hazer
+                || item.type == PlacedObject.Type.Vine
+                || item.type == PlacedObject.Type.ScavengerOutpost
+                || item.type == PlacedObject.Type.DeadTokenStalk
+                || item.type == PlacedObject.Type.SeedCob
+                || item.type == PlacedObject.Type.DeadSeedCob
+                || item.type == PlacedObject.Type.DeadHazer
+                || item.type == PlacedObject.Type.HangingPearls
+                || item.type == PlacedObject.Type.VultureGrub
+                || item.type == PlacedObject.Type.HangingPearls
+                || item.type == PlacedObject.Type.DeadVultureGrub
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.BigJellyFish
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.GlowWeed
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.GooieDuck
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.RotFlyPaper
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.DevToken
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.LillyPuck
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.Stowaway
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.MoonCloak
+                || item.type == MoreSlugcatsEnums.PlacedObjectType.HRGuard
+            )
+                self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 20);
 
         }
         orig(self);
@@ -465,6 +482,21 @@ sealed class MapExporter : BaseUnityPlugin
         self.GetStorySession.saveState.theGlow = false;
         self.rainWorld.setup.playerGlowing = false;
 
+        // Begone (according to noblecat)
+        self.GetStorySession.saveState.deathPersistentSaveData.theMark = false;
+        self.GetStorySession.saveState.deathPersistentSaveData.redsDeath = false;
+        self.GetStorySession.saveState.deathPersistentSaveData.reinforcedKarma = false;
+        // self.GetStorySession.saveState.deathPersistentSaveData.altEnding = false;
+        self.GetStorySession.saveState.hasRobo = false;
+        self.GetStorySession.saveState.redExtraCycles = false;
+        self.GetStorySession.saveState.deathPersistentSaveData.ascended = false;
+
+        // plus more
+        self.GetStorySession.saveState.deathPersistentSaveData.PoleMimicEverSeen = true;
+        self.GetStorySession.saveState.deathPersistentSaveData.SMEatTutorial = true;
+        self.GetStorySession.saveState.deathPersistentSaveData.ArtificerMaulTutorial = true;
+        self.GetStorySession.saveState.deathPersistentSaveData.GateStandTutorial = true;
+
         // no tutorials
         self.GetStorySession.saveState.deathPersistentSaveData.KarmaFlowerMessage = true;
         self.GetStorySession.saveState.deathPersistentSaveData.ScavMerchantMessage = true;
@@ -530,29 +562,13 @@ sealed class MapExporter : BaseUnityPlugin
     private System.Collections.IEnumerator CaptureTask(RainWorldGame game)
     {
         // Task start
-        Logger.LogDebug("capture task start");
         Random.InitState(0);
 
-        if (captureSpecific.Count == 0)
+        var args = Environment.GetCommandLineArgs();
+        foreach (var str in args[args.IndexOf(FLAG_TRIGGER) + 1].Split(','))
         {
-            foreach (string slugcatName in SlugcatStats.Name.values.entries.OrderByDescending(ScugPriority))
-            {
-                SlugcatStats.Name slugcat = new(slugcatName);
-
-                if ((!ModManager.MSC || slugcat != MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel) && SlugcatStats.HiddenOrUnplayableSlugcat(slugcat))
-                {
-                    continue;
-                }
-
-                foreach (string region in SlugcatStats.getSlugcatStoryRegions(slugcat))
-                {
-                    captureSpecific.Enqueue((slugcatName, region));
-                }
-                foreach (string region in SlugcatStats.getSlugcatOptionalRegions(slugcat))
-                {
-                    captureSpecific.Enqueue((slugcatName, region));
-                }
-            }
+            string[] split = str.Split(';');
+            captureSpecific.Enqueue((split[0], split[1]));
         }
 
         // 1st camera transition is a bit whack ? give it a sec to load
@@ -566,19 +582,6 @@ sealed class MapExporter : BaseUnityPlugin
 
         // Recreate scuglat list from last time if needed
         string configPath = Custom.LegacyRootFolderDirectory() + "MapExportConfig.txt";
-        string progressPath = Custom.LegacyRootFolderDirectory() + "MapExportProgress.txt";
-        if (File.Exists(progressPath))
-        {
-            foreach (string scug in File.ReadAllLines(progressPath))
-            {
-                SlugcatStats.Name slugcat = new(scug);
-
-                game.GetStorySession.saveStateNumber = slugcat;
-                game.GetStorySession.saveState.saveStateNumber = slugcat;
-
-                slugcatsJson.AddCurrentSlugcat(game);
-            }
-        }
 
         bool resetMemory = false;
         while (captureSpecific.Count > 0)
@@ -596,7 +599,6 @@ sealed class MapExporter : BaseUnityPlugin
 
             // Save progress
             File.WriteAllLines(configPath, captureSpecific.Select(tuple => tuple.Item1 + ";" + tuple.Item2));
-            File.WriteAllLines(progressPath, slugcatsJson.ToJson().Keys);
 
             // Memory stuff
             AssetManager.HardCleanFutileAssets();
@@ -610,23 +612,14 @@ sealed class MapExporter : BaseUnityPlugin
             }
         }
 
-        string pyPath = Custom.LegacyRootFolderDirectory() + "MapExportReopen.py";
+        string gamePath = Path.Combine(Custom.LegacyRootFolderDirectory(), "RainWorld.exe");
         if (resetMemory && captureSpecific.Count > 0)
         {
-            File.WriteAllLines(pyPath, new string[]
-            {
-                "import webbrowser",
-                "import time",
-                "time.sleep(5)",
-                $"webbrowser.open(\"steam://rungameid/312520\")"
-            });
-            Process.Start("CMD.exe", "/C python \"" + pyPath + "\"");
+            Process.Start("CMD.exe", "/C \"" + gamePath + "\" --mapexport \"" + string.Join(",", captureSpecific.Select(x => x.Item1 + ";" + x.Item2)) + "\"");
             Application.Quit();
         }
         else
         {
-            if (File.Exists(progressPath)) File.Delete(progressPath);
-            if (File.Exists(pyPath)) File.Delete(pyPath);
             File.WriteAllText(PathOfSlugcatData(), Json.Serialize(slugcatsJson));
 
             Logger.LogDebug("capture task done!");
@@ -702,7 +695,7 @@ sealed class MapExporter : BaseUnityPlugin
             {
                 newpos.RemoveAt(cams[i] - 1);
             }
-            room.realizedRoom.cameraPositions = newpos.ToArray();
+            room.realizedRoom.cameraPositions = [.. newpos];
         }
 
         yield return null;
