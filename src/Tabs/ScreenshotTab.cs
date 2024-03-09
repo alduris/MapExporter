@@ -232,7 +232,7 @@ namespace MapExporter.Tabs
         private static Color ScugEnabledColor(Color orig)
         {
             var hsl = Custom.RGB2HSL(orig);
-            return Custom.HSL2RGB(hsl.x, hsl.y, Custom.LerpMap(hsl.z, 0f, 1f, 0.4f, 1f));
+            return Custom.HSL2RGB(hsl.x, hsl.y, Mathf.Lerp(0.4f, 1f, hsl.z));
         }
 
         private static Color ScugDisabledColor(Color orig) => Color.Lerp(orig, MenuColorEffect.rgbMediumGrey, 0.65f);
