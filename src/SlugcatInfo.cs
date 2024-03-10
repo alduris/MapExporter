@@ -45,7 +45,7 @@ sealed class Slugcat : IJsonObject
 
         regions = new Dictionary<string, string>();
         var allRegions = Region.GetFullRegionOrder();
-        foreach (var reg in MapExporter.captureSpecific)
+        foreach (var reg in Plugin.captureSpecific)
         {
             regions[reg.Item2] = Region.GetRegionFullName(reg.Item2, myScug);
         }

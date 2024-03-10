@@ -47,10 +47,10 @@ sealed class RegionInfo : IJsonObject
         }
 
         if (!File.Exists(path)) {
-            MapExporter.Logger.LogWarning($"No map data for {world.game.StoryCharacter}/{world.name} at {path}");
+            Plugin.Logger.LogWarning($"No map data for {world.game.StoryCharacter}/{world.name} at {path}");
         }
         else {
-            MapExporter.Logger.LogDebug($"Found map data for {world.game.StoryCharacter}/{world.name} at {path}");
+            Plugin.Logger.LogDebug($"Found map data for {world.game.StoryCharacter}/{world.name} at {path}");
 
             string[] contents = File.ReadAllLines(path);
 
@@ -61,7 +61,7 @@ sealed class RegionInfo : IJsonObject
                 if (sname == "Connection") {
                     connections.Add(new ConnectionEntry(split[1]));
                 }
-                else if (!MapExporter.HiddenRoom(world.GetAbstractRoom(sname))) {
+                else if (!Plugin.HiddenRoom(world.GetAbstractRoom(sname))) {
                     GetOrCreateRoomEntry(sname).ParseEntry(split[1]);
                 }
             }
@@ -78,7 +78,7 @@ sealed class RegionInfo : IJsonObject
             AssimilateCreatures(File.ReadAllLines(path));
         }
         else {
-            MapExporter.Logger.LogError($"WORLD FILE DOES NOT EXIST: {path}");
+            Plugin.Logger.LogError($"WORLD FILE DOES NOT EXIST: {path}");
         }
     }
 

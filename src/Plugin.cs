@@ -24,7 +24,7 @@ using System.Globalization;
 namespace MapExporter;
 
 [BepInPlugin(MOD_ID, "Map Exporter", "1.0.0")]
-sealed class MapExporter : BaseUnityPlugin
+sealed class Plugin : BaseUnityPlugin
 {
     // Config
     const string MOD_ID = "henpemaz-dual-noblecat-alduris.mapexporter";
@@ -100,9 +100,9 @@ sealed class MapExporter : BaseUnityPlugin
                 On.RainWorldGame.ctor += RainWorldGame_ctor;
                 On.RainWorldGame.Update += RainWorldGame_Update;
                 On.RainWorldGame.RawUpdate += RainWorldGame_RawUpdate;
-                new Hook(typeof(RainWorldGame).GetProperty("TimeSpeedFac").GetGetMethod(), typeof(MapExporter).GetMethod("RainWorldGame_ZeroProperty"), this);
-                new Hook(typeof(RainWorldGame).GetProperty("InitialBlackSeconds").GetGetMethod(), typeof(MapExporter).GetMethod("RainWorldGame_ZeroProperty"), this);
-                new Hook(typeof(RainWorldGame).GetProperty("FadeInTime").GetGetMethod(), typeof(MapExporter).GetMethod("RainWorldGame_ZeroProperty"), this);
+                new Hook(typeof(RainWorldGame).GetProperty("TimeSpeedFac").GetGetMethod(), typeof(Plugin).GetMethod("RainWorldGame_ZeroProperty"), this);
+                new Hook(typeof(RainWorldGame).GetProperty("InitialBlackSeconds").GetGetMethod(), typeof(Plugin).GetMethod("RainWorldGame_ZeroProperty"), this);
+                new Hook(typeof(RainWorldGame).GetProperty("FadeInTime").GetGetMethod(), typeof(Plugin).GetMethod("RainWorldGame_ZeroProperty"), this);
                 On.OverWorld.WorldLoaded += OverWorld_WorldLoaded;
                 // On.Room.ReadyForAI += Room_ReadyForAI;
                 On.Room.Loaded += Room_Loaded;
