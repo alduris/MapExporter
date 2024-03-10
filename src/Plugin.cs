@@ -29,9 +29,11 @@ sealed class Plugin : BaseUnityPlugin
     // Config
     const string MOD_ID = "henpemaz-dual-noblecat-alduris.mapexporter";
     const string FLAG_TRIGGER = "--mapexport";
-    const int NUM_SCREENS_BEFORE_RESET = 500;
     static readonly bool screenshots = true;
-    public static readonly Queue<(string, string)> captureSpecific = new() { }; // For example, "White;SU" loads Outskirts as Survivor
+    public static string regionRendering = "SU"; // in case something drastic goes wrong, this is the default
+    public static readonly Queue<string> slugsRendering = [];
+
+    public static bool FlagTriggered => Environment.GetCommandLineArgs().Contains(FLAG_TRIGGER);
 
     static readonly Dictionary<string, int[]> blacklistedCams = new()
     {
@@ -75,6 +77,7 @@ sealed class Plugin : BaseUnityPlugin
         try
         {
             Logger = base.Logger;
+            IL.RainWorld.Awake += RainWorld_Awake;
             On.RainWorld.Start += RainWorld_Start; // "FUCK compatibility just run my hooks" - love you too henpemaz
         }
         catch (Exception ex)
@@ -88,7 +91,7 @@ sealed class Plugin : BaseUnityPlugin
         Logger.LogDebug("Started start thingy");
         try
         {
-            if (Environment.GetCommandLineArgs().Contains("--mapexport"))
+            if (FlagTriggered)
             {
                 On.Json.Serializer.SerializeValue += Serializer_SerializeValue;
                 On.RainWorld.LoadSetupValues += RainWorld_LoadSetupValues;
@@ -143,6 +146,24 @@ sealed class Plugin : BaseUnityPlugin
         }
 
         orig(self);
+    }
+
+    private void RainWorld_Awake(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        for (int i = 0; i < 2; i++)
+        {
+            ILLabel brto = null;
+            c.GotoNext(x => x.MatchCall(typeof(File), "Exists"), x => x.MatchBrfalse(out brto));
+            if (brto != null )
+            {
+                c.Index--;
+                c.MoveAfterLabels();
+                c.EmitDelegate(() => FlagTriggered);
+                c.Emit(OpCodes.Brtrue, brto);
+            }
+        }
     }
 
     // Fixes some crashes in ZZ (Aerial Arrays)
@@ -532,12 +553,7 @@ sealed class Plugin : BaseUnityPlugin
 
     static string PathOfRegion(string slugcat, string region)
     {
-        return Directory.CreateDirectory(Path.Combine(Custom.LegacyRootFolderDirectory(), "export", slugcat.ToLower(), region.ToLower())).FullName;
-    }
-
-    static string PathOfSlugcatData()
-    {
-        return Path.Combine(Path.Combine(Custom.LegacyRootFolderDirectory(), "export", "slugcats.json"));
+        return Directory.CreateDirectory(Data.RenderOutputDir(slugcat.ToLower(), region.ToLower())).FullName;
     }
 
     static string PathOfMetadata(string slugcat, string region)
@@ -565,73 +581,40 @@ sealed class Plugin : BaseUnityPlugin
 
     // Runs half-synchronously to the game loop, bless iters
     System.Collections.IEnumerator captureTask;
-    int capturedScreens = 0;
     private System.Collections.IEnumerator CaptureTask(RainWorldGame game)
     {
         // Task start
         Random.InitState(0);
 
         var args = Environment.GetCommandLineArgs();
-        foreach (var str in args[args.IndexOf(FLAG_TRIGGER) + 1].Split(','))
+        var split = args[args.IndexOf(FLAG_TRIGGER) + 1].Split(';');
+        regionRendering = split[0];
+        foreach (var str in split[1].Split(','))
         {
-            string[] split = str.Split(';');
-            captureSpecific.Enqueue((split[0], split[1]));
+            slugsRendering.Enqueue(str);
         }
 
         // 1st camera transition is a bit whack ? give it a sec to load
-        //while (game.cameras[0].www != null) yield return null;
         while (game.cameras[0].room == null || !game.cameras[0].room.ReadyForPlayer) yield return null;
         for (int i = 0; i < 40; i++) yield return null;
         // ok game loaded I suppose
         game.cameras[0].room.abstractRoom.Abstractize();
 
-        SlugcatFile slugcatsJson = new();
-
         // Recreate scuglat list from last time if needed
-        string configPath = Custom.LegacyRootFolderDirectory() + "MapExportConfig.txt";
-
-        bool resetMemory = false;
-        while (captureSpecific.Count > 0)
+        while (slugsRendering.Count > 0)
         {
-            var capture = captureSpecific.Dequeue();
-            SlugcatStats.Name slugcat = new(capture.Item1);
+            SlugcatStats.Name slugcat = new(slugsRendering.Dequeue());
 
             game.GetStorySession.saveStateNumber = slugcat;
             game.GetStorySession.saveState.saveStateNumber = slugcat;
 
-            slugcatsJson.AddCurrentSlugcat(game);
-
-            foreach (var step in CaptureRegion(game, region: capture.Item2))
+            foreach (var step in CaptureRegion(game, regionRendering))
                 yield return step;
-
-            // Save progress
-            File.WriteAllLines(configPath, captureSpecific.Select(tuple => tuple.Item1 + ";" + tuple.Item2));
-
-            // Memory stuff
-            AssetManager.HardCleanFutileAssets();
-            GC.Collect();
-
-            // Stop early if we're low on memory
-            if (capturedScreens >= NUM_SCREENS_BEFORE_RESET)
-            {
-                resetMemory = true;
-                break;
-            }
         }
 
-        string gamePath = Path.Combine(Custom.LegacyRootFolderDirectory(), "RainWorld.exe");
-        if (resetMemory && captureSpecific.Count > 0)
-        {
-            Process.Start("CMD.exe", "/C \"" + gamePath + "\" --mapexport \"" + string.Join(",", captureSpecific.Select(x => x.Item1 + ";" + x.Item2)) + "\"");
-            Application.Quit();
-        }
-        else
-        {
-            File.WriteAllText(PathOfSlugcatData(), Json.Serialize(slugcatsJson));
-
-            Logger.LogDebug("capture task done!");
-            Application.Quit();
-        }
+        Data.ScreenshotterStatus = Data.SSStatus.Finished;
+        Data.SaveData();
+        Application.Quit();
     }
 
     private System.Collections.IEnumerable CaptureRegion(RainWorldGame game, string region)
@@ -647,7 +630,7 @@ sealed class Plugin : BaseUnityPlugin
 
         RegionInfo mapContent = new(game.world);
 
-        List<AbstractRoom> rooms = game.world.abstractRooms.ToList();
+        List<AbstractRoom> rooms = [.. game.world.abstractRooms];
 
         // Don't image rooms not available for this slugcat
         rooms.RemoveAll(HiddenRoom);
@@ -719,7 +702,6 @@ sealed class Plugin : BaseUnityPlugin
         for (int i = 0; i < room.realizedRoom.cameraPositions.Length; i++)
         {
             // load screen
-            capturedScreens++;
             Random.InitState(room.name.GetHashCode()); // allow for deterministic random numbers, to make rain look less garbage
             game.cameras[0].MoveCamera(i);
             game.cameras[0].virtualMicrophone.AllQuiet();

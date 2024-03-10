@@ -36,14 +36,10 @@ sealed class RegionInfo : IJsonObject
 
     private void LoadMapConfig(World world)
     {
-        string path = AssetManager.ResolveFilePath(
-            $"World{Path.DirectorySeparatorChar}{world.name}{Path.DirectorySeparatorChar}map_{world.name}-{world.game.GetStorySession.saveState.saveStateNumber}.txt"
-            );
+        string path = AssetManager.ResolveFilePath(Path.Combine("World", world.name, $"map_{world.name}-{world.game.GetStorySession.saveState.saveStateNumber}.txt"));
 
         if (!File.Exists(path)) {
-            path = AssetManager.ResolveFilePath(
-                $"World{Path.DirectorySeparatorChar}{world.name}{Path.DirectorySeparatorChar}map_{world.name}.txt"
-                );
+            path = AssetManager.ResolveFilePath(Path.Combine("World", world.name, $"map_{world.name}.txt"));
         }
 
         if (!File.Exists(path)) {
@@ -200,7 +196,7 @@ sealed class RegionInfo : IJsonObject
         {
             cameras = room.cameraPositions;
 
-            size = new int[] { room.Width, room.Height };
+            size = [room.Width, room.Height];
 
             tiles = new int[room.Width, room.Height][];
             for (int k = 0; k < room.Width; k++)
@@ -209,7 +205,7 @@ sealed class RegionInfo : IJsonObject
                 {
                     // Dont like either available formats ?
                     // Invent a new format
-                    tiles[k, l] = new int[] { (int)room.Tiles[k, l].Terrain, (room.Tiles[k, l].verticalBeam ? 2:0) + (room.Tiles[k, l].horizontalBeam ? 1:0), (int)room.Tiles[k, l].shortCut};
+                    tiles[k, l] = [(int)room.Tiles[k, l].Terrain, (room.Tiles[k, l].verticalBeam ? 2:0) + (room.Tiles[k, l].horizontalBeam ? 1:0), (int)room.Tiles[k, l].shortCut];
                     //terain, vb+hb, sc
                 }
             }

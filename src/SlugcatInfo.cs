@@ -45,10 +45,7 @@ sealed class Slugcat : IJsonObject
 
         regions = new Dictionary<string, string>();
         var allRegions = Region.GetFullRegionOrder();
-        foreach (var reg in Plugin.captureSpecific)
-        {
-            regions[reg.Item2] = Region.GetRegionFullName(reg.Item2, myScug);
-        }
+        regions[Plugin.regionRendering] = Region.GetRegionFullName(Plugin.regionRendering, myScug);
     }
 
     public Dictionary<string, object> ToJson()

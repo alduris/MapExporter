@@ -1,38 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using Menu;
 using Menu.Remix.MixedUI;
 using MoreSlugcats;
 using RWCustom;
 using UnityEngine;
+using QueueData = MapExporter.Data.QueueData;
+using SSStatus = MapExporter.Data.SSStatus;
 
 namespace MapExporter.Tabs
 {
     internal class ScreenshotTab : BaseTab
     {
-        private readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs) : IEquatable<QueueData>, IEquatable<string>
-        {
-            public readonly string name = name;
-            public readonly HashSet<SlugcatStats.Name> scugs = scugs;
-
-            public bool Equals(QueueData other)
-            {
-                return name.Equals(other.name);
-            }
-
-            public bool Equals(string other)
-            {
-                return name == other;
-            }
-        }
         private const float SCROLLBAR_WIDTH = 20f;
         private const float CHECKBOX_SIZE = 24f;
         private const float LINE_HEIGHT = 20f;
         private const float BIG_LINE_HEIGHT = 30f;
+        private const int MAX_RETRY_ATTEMPTS = 3;
 
         private readonly Dictionary<string, HashSet<SlugcatStats.Name>> WaitingRegions = [];
-        private readonly Queue<QueueData> QueuedRegions = [];
+        private readonly Queue<QueueData> QueuedRegions = Data.QueuedRegions;
         private readonly Dictionary<string, string> RegionNames = [];
         private readonly List<SlugcatStats.Name> Slugcats;
 
@@ -42,6 +32,9 @@ namespace MapExporter.Tabs
         private OpComboBox comboRegions;
         private OpScrollBox waitBox;
         private OpScrollBox queueBox;
+
+        private Process ScreenshotProcess;
+        private int RetryAttempts = 0;
 
         private bool WaitDirty = false;
         private bool QueueDirty = false;
@@ -122,6 +115,11 @@ namespace MapExporter.Tabs
             const float CHECKBOX_LH = CHECKBOX_SIZE + SM_PAD;
             const float EDGE_PAD = SM_PAD;
             const float QUEUE_SLUG_PAD = EDGE_PAD + SEP_PAD;
+
+            if (QueuedRegions.Count > 0 && RetryAttempts < MAX_RETRY_ATTEMPTS)
+            {
+                DoThings();
+            }
 
             // Left scrollbox update
             if (WaitDirty)
@@ -285,6 +283,39 @@ namespace MapExporter.Tabs
                     }
 
                     queueBox.SetContentSize(height);
+                }
+            }
+        }
+
+        public void DoThings()
+        {
+            string gamePath = Path.Combine(Custom.LegacyRootFolderDirectory(), "RainWorld.exe");
+            if (ScreenshotProcess == null)
+            {
+                Data.ScreenshotterStatus = SSStatus.Unfinished;
+                Data.SaveData();
+
+                QueueData next = QueuedRegions.Peek();
+                var acronym = RegionNames[next.name];
+                var scugList = string.Join(",", next.scugs.Select(x => x.value));
+                ScreenshotProcess = Process.Start("CMD.exe", "/C \"" + gamePath + "\" --mapexport \"" + acronym + ";" + scugList + "\"");
+            }
+            else
+            {
+                if (ScreenshotProcess.HasExited)
+                {
+                    Data.UpdateSSStatus();
+                    if (Data.ScreenshotterStatus == SSStatus.Finished)
+                    {
+                        QueuedRegions.Dequeue();
+                        Data.ScreenshotterStatus = SSStatus.Inactive;
+                        Data.SaveData();
+                        RetryAttempts = 0;
+                    }
+                    else
+                    {
+                        RetryAttempts++;
+                    }
                 }
             }
         }
