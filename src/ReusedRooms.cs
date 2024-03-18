@@ -10,7 +10,7 @@ static class ReusedRooms
         public Dictionary<string, RoomSettings> settings;
     }
 
-    static readonly Dictionary<string, RegionData> regions = new();
+    static readonly Dictionary<string, RegionData> regions = [];
 
     public static string SlugcatRoomsToUse(string slugcat, World world, List<AbstractRoom> validRooms)
     {

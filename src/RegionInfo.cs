@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.IO;
 using RWCustom;
+using MapExporter.Screenshotter;
 
 namespace MapExporter;
 
@@ -57,7 +58,7 @@ sealed class RegionInfo : IJsonObject
                 if (sname == "Connection") {
                     connections.Add(new ConnectionEntry(split[1]));
                 }
-                else if (!Plugin.HiddenRoom(world.GetAbstractRoom(sname))) {
+                else if (!Capturer.HiddenRoom(world.GetAbstractRoom(sname))) {
                     GetOrCreateRoomEntry(sname).ParseEntry(split[1]);
                 }
             }

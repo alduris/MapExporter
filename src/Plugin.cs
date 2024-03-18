@@ -6,16 +6,15 @@ using System.Security.Permissions;
 using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Logging;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
+using Mono.Cecil.Cil;
 using UnityEngine;
 using MoreSlugcats;
 using RWCustom;
+using MapExporter.Screenshotter;
 using Random = UnityEngine.Random;
-using System.Diagnostics;
 using Debug = UnityEngine.Debug;
-using MonoMod.Cil;
-using Mono.Cecil.Cil;
-using System.Globalization;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -27,50 +26,12 @@ namespace MapExporter;
 sealed class Plugin : BaseUnityPlugin
 {
     // Config
-    const string MOD_ID = "henpemaz-dual-noblecat-alduris.mapexporter";
-    const string FLAG_TRIGGER = "--mapexport";
-    static readonly bool screenshots = true;
-    public static string regionRendering = "SU"; // in case something drastic goes wrong, this is the default
-    public static readonly Queue<string> slugsRendering = [];
+    public const string MOD_ID = "henpemaz-dual-noblecat-alduris.mapexporter";
+    public const string FLAG_TRIGGER = "--mapexport";
 
     public static bool FlagTriggered => Environment.GetCommandLineArgs().Contains(FLAG_TRIGGER);
 
-    static readonly Dictionary<string, int[]> blacklistedCams = new()
-    {
-        { "SU_B13", new int[]{2} }, // one indexed
-        { "GW_S08", new int[]{2} }, // in vanilla only
-        { "SL_C01", new int[]{4,5} }, // crescent order or will break
-    };
-
     public static new ManualLogSource Logger;
-
-    public static bool NotHiddenRoom(AbstractRoom room) => !HiddenRoom(room);
-    public static bool HiddenRoom(AbstractRoom room)
-    {
-        if (room == null)
-        {
-            return true;
-        }
-        if (room.world.DisabledMapRooms.Contains(room.name, StringComparer.InvariantCultureIgnoreCase))
-        {
-            Logger.LogDebug($"Room {room.world.game.StoryCharacter}/{room.name} is disabled");
-            return true;
-        }
-        if (!room.offScreenDen)
-        {
-            if (room.connections.Length == 0)
-            {
-                Logger.LogDebug($"Room {room.world.game.StoryCharacter}/{room.name} with no outward connections is ignored");
-                return true;
-            }
-            if (room.connections.All(r => room.world.GetAbstractRoom(r) is not AbstractRoom other || !other.connections.Contains(room.index)))
-            {
-                Logger.LogDebug($"Room {room.world.game.StoryCharacter}/{room.name} with no inward connections is ignored");
-                return true;
-            }
-        }
-        return false;
-    }
 
     public void OnEnable()
     {
@@ -148,6 +109,7 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
     }
 
+    // disable resetting logs
     private void RainWorld_Awake(ILContext il)
     {
         var c = new ILCursor(il);
@@ -155,8 +117,7 @@ sealed class Plugin : BaseUnityPlugin
         for (int i = 0; i < 2; i++)
         {
             ILLabel brto = null;
-            c.GotoNext(x => x.MatchCall(typeof(File), "Exists"), x => x.MatchBrfalse(out brto));
-            if (brto != null )
+            if (c.TryGotoNext(x => x.MatchCall(typeof(File), "Exists"), x => x.MatchBrfalse(out brto)))
             {
                 c.Index--;
                 c.MoveAfterLabels();
@@ -165,6 +126,8 @@ sealed class Plugin : BaseUnityPlugin
             }
         }
     }
+
+    #region fixes
 
     // Fixes some crashes in ZZ (Aerial Arrays)
     private void RoomCamera_ApplyEffectColorsToPaletteTexture(On.RoomCamera.orig_ApplyEffectColorsToPaletteTexture orig, RoomCamera self, ref Texture2D texture, int color1, int color2)
@@ -278,7 +241,6 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
     }
 
-    #region fixes
     // shortcut consistency
     private void RoomCamera_DrawUpdate(On.RoomCamera.orig_DrawUpdate orig, RoomCamera self, float timeStacker, float timeSpeed)
     {
@@ -485,6 +447,9 @@ sealed class Plugin : BaseUnityPlugin
 
     #endregion fixes
 
+    // Runs half-synchronously to the game loop, bless iters
+    System.Collections.IEnumerator captureTask;
+
     // start
     private void RainWorldGame_ctor(On.RainWorldGame.orig_ctor orig, RainWorldGame self, ProcessManager manager)
     {
@@ -542,191 +507,12 @@ sealed class Plugin : BaseUnityPlugin
 
         Logger.LogDebug("Starting capture task");
 
-        captureTask = CaptureTask(self);
+        captureTask = new Capturer().CaptureTask(self);
     }
 
     private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
     {
         orig(self);
         captureTask.MoveNext();
-    }
-
-    static string PathOfRegion(string slugcat, string region)
-    {
-        return Directory.CreateDirectory(Data.RenderOutputDir(slugcat.ToLower(), region.ToLower())).FullName;
-    }
-
-    static string PathOfMetadata(string slugcat, string region)
-    {
-        return Path.Combine(PathOfRegion(slugcat, region), "metadata.json");
-    }
-
-    static string PathOfScreenshot(string slugcat, string region, string room, int num)
-    {
-        return $"{Path.Combine(PathOfRegion(slugcat, region), room.ToLower())}_{num}.png";
-    }
-
-    private static int ScugPriority(string slugcat)
-    {
-        return slugcat switch
-        {
-            "white" => 10,      // do White first, they have the most generic regions
-            "artificer" => 9,   // do Artificer next, they have Metropolis, Waterfront Facility, and past-GW
-            "saint" => 8,       // do Saint next for Undergrowth and Silent Construct
-            "rivulet" => 7,     // do Rivulet for The Rot
-            "inv" => 6,         // do Inv because inv
-            _ => 0              // everyone else has a mix of duplicate rooms
-        };
-    }
-
-    // Runs half-synchronously to the game loop, bless iters
-    System.Collections.IEnumerator captureTask;
-    private System.Collections.IEnumerator CaptureTask(RainWorldGame game)
-    {
-        // Task start
-        Random.InitState(0);
-
-        var args = Environment.GetCommandLineArgs();
-        var split = args[args.IndexOf(FLAG_TRIGGER) + 1].Split(';');
-        regionRendering = split[0];
-        foreach (var str in split[1].Split(','))
-        {
-            slugsRendering.Enqueue(str);
-        }
-
-        // 1st camera transition is a bit whack ? give it a sec to load
-        while (game.cameras[0].room == null || !game.cameras[0].room.ReadyForPlayer) yield return null;
-        for (int i = 0; i < 40; i++) yield return null;
-        // ok game loaded I suppose
-        game.cameras[0].room.abstractRoom.Abstractize();
-
-        // Recreate scuglat list from last time if needed
-        while (slugsRendering.Count > 0)
-        {
-            SlugcatStats.Name slugcat = new(slugsRendering.Dequeue());
-
-            game.GetStorySession.saveStateNumber = slugcat;
-            game.GetStorySession.saveState.saveStateNumber = slugcat;
-
-            foreach (var step in CaptureRegion(game, regionRendering))
-                yield return step;
-        }
-
-        Data.ScreenshotterStatus = Data.SSStatus.Finished;
-        Data.SaveData();
-        Application.Quit();
-    }
-
-    private System.Collections.IEnumerable CaptureRegion(RainWorldGame game, string region)
-    {
-        SlugcatStats.Name slugcat = game.StoryCharacter;
-
-        // load region
-        Random.InitState(0);
-        game.overWorld.LoadWorld(region, slugcat, false);
-        Logger.LogDebug($"Loaded {slugcat}/{region}");
-
-        Directory.CreateDirectory(PathOfRegion(slugcat.value, region));
-
-        RegionInfo mapContent = new(game.world);
-
-        List<AbstractRoom> rooms = [.. game.world.abstractRooms];
-
-        // Don't image rooms not available for this slugcat
-        rooms.RemoveAll(HiddenRoom);
-
-        // Don't image offscreen dens
-        rooms.RemoveAll(r => r.offScreenDen);
-
-        if (ReusedRooms.SlugcatRoomsToUse(slugcat.value, game.world, rooms) is string copyRooms)
-        {
-            mapContent.copyRooms = copyRooms;
-        }
-        else
-        {
-            foreach (var room in rooms)
-            {
-                foreach (var step in CaptureRoom(room, mapContent))
-                    yield return step;
-            }
-        }
-
-        File.WriteAllText(PathOfMetadata(slugcat.value, region), Json.Serialize(mapContent));
-
-        Logger.LogDebug("capture task done with " + region);
-    }
-
-    private System.Collections.IEnumerable CaptureRoom(AbstractRoom room, RegionInfo regionContent)
-    {
-        RainWorldGame game = room.world.game;
-
-        // load room
-        game.overWorld.activeWorld.loadingRooms.Clear();
-        Random.InitState(0);
-        game.overWorld.activeWorld.ActivateRoom(room);
-        // load room until it is loaded
-        if (game.overWorld.activeWorld.loadingRooms.Count > 0 && game.overWorld.activeWorld.loadingRooms[0].room == room.realizedRoom)
-        {
-            RoomPreparer loading = game.overWorld.activeWorld.loadingRooms[0];
-            while (!loading.done)
-            {
-                loading.Update();
-            }
-        }
-        while (!(room.realizedRoom.loadingProgress >= 3 && room.realizedRoom.waitToEnterAfterFullyLoaded < 1))
-        {
-            room.realizedRoom.Update();
-        }
-
-        if (blacklistedCams.TryGetValue(room.name, out int[] cams))
-        {
-            var newpos = room.realizedRoom.cameraPositions.ToList();
-            for (int i = cams.Length - 1; i >= 0; i--)
-            {
-                newpos.RemoveAt(cams[i] - 1);
-            }
-            room.realizedRoom.cameraPositions = [.. newpos];
-        }
-
-        yield return null;
-        Random.InitState(0);
-        // go to room
-        game.cameras[0].MoveCamera(room.realizedRoom, 0);
-        game.cameras[0].virtualMicrophone.AllQuiet();
-        // get to room
-        while (game.cameras[0].loadingRoom != null) yield return null;
-        Random.InitState(0);
-
-        regionContent.UpdateRoom(room.realizedRoom);
-
-        for (int i = 0; i < room.realizedRoom.cameraPositions.Length; i++)
-        {
-            // load screen
-            Random.InitState(room.name.GetHashCode()); // allow for deterministic random numbers, to make rain look less garbage
-            game.cameras[0].MoveCamera(i);
-            game.cameras[0].virtualMicrophone.AllQuiet();
-            while (game.cameras[0].www != null) yield return null;
-            yield return null;
-            yield return null; // one extra frame maybe
-                               // fire!
-
-            if (screenshots)
-            {
-                string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
-
-                if (!File.Exists(filename))
-                {
-                    ScreenCapture.CaptureScreenshot(filename);
-                }
-            }
-
-            // palette and colors
-            regionContent.LogPalette(game.cameras[0].currentPalette);
-
-            yield return null; // one extra frame after ??
-        }
-        Random.InitState(0);
-        room.Abstractize();
-        yield return null;
     }
 }
