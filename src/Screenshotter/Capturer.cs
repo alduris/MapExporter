@@ -187,10 +187,10 @@ namespace MapExporter.Screenshotter
                 Random.InitState(room.name.GetHashCode()); // allow for deterministic random numbers, to make rain look less garbage
                 game.cameras[0].MoveCamera(i);
                 game.cameras[0].virtualMicrophone.AllQuiet();
-                while (game.cameras[0].www != null) yield return null;
+
+                // Yippee all the cameras loading are synchronous, now I just have to check if that actually works
                 yield return null;
-                yield return null; // one extra frame maybe
-                                   // fire!
+                yield return null; // dunno if we need these still but keeping them just in case :leditoroverload: (I haven't tested, there's errors with the updated PUBLIC file)
 
                 if (screenshots)
                 {

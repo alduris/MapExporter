@@ -343,7 +343,7 @@ namespace MapExporter.Tabs
             WaitingRegions[region] = [];
             foreach (var scug in Slugcats)
             {
-                if (SlugcatStats.getSlugcatStoryRegions(scug).Contains(RegionNames[region]) || SlugcatStats.getSlugcatOptionalRegions(scug).Contains(RegionNames[region]))
+                if (SlugcatStats.SlugcatStoryRegions(scug).Contains(RegionNames[region]) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(RegionNames[region]))
                 {
                     WaitingRegions[region].Add(scug);
                 }
@@ -362,7 +362,7 @@ namespace MapExporter.Tabs
                     WaitingRegions.Add(region.Key, scugs);
                     foreach (var scug in Slugcats)
                     {
-                        if (SlugcatStats.getSlugcatStoryRegions(scug).Contains(region.Value) || SlugcatStats.getSlugcatOptionalRegions(scug).Contains(region.Value))
+                        if (SlugcatStats.SlugcatStoryRegions(scug).Contains(region.Value) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(region.Value))
                         {
                             scugs.Add(scug);
                         }
