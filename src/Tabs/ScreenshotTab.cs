@@ -289,7 +289,7 @@ namespace MapExporter.Tabs
 
         public void DoThings()
         {
-            string gamePath = Path.Combine(Custom.LegacyRootFolderDirectory(), "RainWorld.exe");
+            // string gamePath = Path.Combine(Custom.LegacyRootFolderDirectory(), "RainWorld.exe");
             if (ScreenshotProcess == null)
             {
                 Data.ScreenshotterStatus = SSStatus.Unfinished;
@@ -299,7 +299,11 @@ namespace MapExporter.Tabs
                 var acronym = RegionNames[next.name];
                 var scugList = string.Join(",", next.scugs.Select(x => x.value));
                 // ScreenshotProcess = Process.Start("CMD.exe", $"/C \"{gamePath}\" {string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"");
-                ScreenshotProcess = Process.Start(gamePath, $"{string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"");
+                var processInfo = new ProcessStartInfo("RainWorld.exe", $"{string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"")
+                {
+                    WorkingDirectory = Custom.LegacyRootFolderDirectory()
+                };
+                ScreenshotProcess = Process.Start(processInfo);
             }
             else
             {
