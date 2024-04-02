@@ -188,18 +188,17 @@ namespace MapExporter.Screenshotter
                 game.cameras[0].MoveCamera(i);
                 game.cameras[0].virtualMicrophone.AllQuiet();
 
-                // Yippee all the cameras loading are synchronous, now I just have to check if that actually works
-                yield return null;
-                yield return null; // dunno if we need these still but keeping them just in case :leditoroverload: (I haven't tested, there's errors with the updated PUBLIC file)
+                yield return new WaitForEndOfFrame();
 
                 if (screenshots)
                 {
                     string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
+                    ScreenCapture.CaptureScreenshot(filename); // Overwrite it anyway because that's probably what the user wants
 
-                    if (!File.Exists(filename))
+                    /*if (!File.Exists(filename))
                     {
                         ScreenCapture.CaptureScreenshot(filename);
-                    }
+                    }*/
                 }
 
                 // palette and colors

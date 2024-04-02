@@ -40,6 +40,8 @@ sealed class Plugin : BaseUnityPlugin
             Logger = base.Logger;
             IL.RainWorld.Awake += RainWorld_Awake;
             On.RainWorld.Start += RainWorld_Start; // "FUCK compatibility just run my hooks" - love you too henpemaz
+
+            Data.TryCreateDirectories();
         }
         catch (Exception ex)
         {

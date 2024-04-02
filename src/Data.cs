@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using RWCustom;
 
 namespace MapExporter
@@ -18,6 +19,14 @@ namespace MapExporter
         public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, Region.GetRegionFullName(acronym, new(scug)));
         public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, scug, Region.GetRegionFullName(acronym, new(scug)));
 
+        public static void TryCreateDirectories()
+        {
+            if (!Directory.Exists(DataDirectory))
+            {
+                Directory.CreateDirectory(DataDirectory);
+            }
+        }
+
         public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs) : IEquatable<QueueData>, IEquatable<string>
         {
             public readonly string name = name;
@@ -31,6 +40,11 @@ namespace MapExporter
             public bool Equals(string other)
             {
                 return name == other;
+            }
+
+            public override string ToString()
+            {
+                return name + ";" + string.Join(",", [.. scugs.Select(x => x.value)]);
             }
         }
         public static readonly Queue<QueueData> QueuedRegions = [];
@@ -98,7 +112,7 @@ namespace MapExporter
                     QueuedRegions.Select(x => new Dictionary<string, object> {
                         {"name", x.name },
                         {"scugs", x.scugs.Select(x => x.value).ToArray() }
-                    })
+                    }).ToArray()
                 },
                 { "ssstatus", ScreenshotterStatus.ToString() },
             };

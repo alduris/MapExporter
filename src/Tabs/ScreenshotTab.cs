@@ -298,7 +298,8 @@ namespace MapExporter.Tabs
                 QueueData next = QueuedRegions.Peek();
                 var acronym = RegionNames[next.name];
                 var scugList = string.Join(",", next.scugs.Select(x => x.value));
-                ScreenshotProcess = Process.Start("CMD.exe", "/C \"" + gamePath + "\" --mapexport \"" + acronym + ";" + scugList + "\"");
+                // ScreenshotProcess = Process.Start("CMD.exe", $"/C \"{gamePath}\" {string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"");
+                ScreenshotProcess = Process.Start(gamePath, $"{string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"");
             }
             else
             {
