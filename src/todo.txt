@@ -1,0 +1,11 @@
+- Figure out how to track rooms that may be different between slugcats
+	- Don't render slugcats that aren't different
+	- Use predefined priority order
+	- new RoomSettings(abstractRoom.name, world.region, false, false, null || slugcat name)
+		- Without slugcat name doesn't check for any specific slugcat
+		- Allows you to get placed objects
+	- I think check for different exits too probably
+		- See what can be reused from ReusedRooms
+		- RegionInfo contains world connections
+- Get rid of CaptureRegion (merge it into CaptureTask)
+- Test

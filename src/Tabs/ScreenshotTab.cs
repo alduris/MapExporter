@@ -301,7 +301,10 @@ namespace MapExporter.Tabs
                 // ScreenshotProcess = Process.Start("CMD.exe", $"/C \"{gamePath}\" {string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"");
                 var processInfo = new ProcessStartInfo("RainWorld.exe", $"{string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"")
                 {
-                    WorkingDirectory = Custom.LegacyRootFolderDirectory()
+                    WorkingDirectory = Custom.LegacyRootFolderDirectory(),
+#if RELEASE
+                    WindowStyle = ProcessWindowStyle.Minimized,
+#endif
                 };
                 ScreenshotProcess = Process.Start(processInfo);
             }
