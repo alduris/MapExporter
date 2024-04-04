@@ -289,16 +289,20 @@ namespace MapExporter.Tabs
 
         public void DoThings()
         {
-            // string gamePath = Path.Combine(Custom.LegacyRootFolderDirectory(), "RainWorld.exe");
             if (ScreenshotProcess == null)
             {
+                // Try to create a new process
+
+                // Set up data so we know if it finishes or crashes
                 Data.ScreenshotterStatus = SSStatus.Unfinished;
                 Data.SaveData();
 
+                // Get the next item to render
                 QueueData next = QueuedRegions.Peek();
                 var acronym = RegionNames[next.name];
                 var scugList = string.Join(",", next.scugs.Select(x => x.value));
                 
+                // Create the process
                 var args = Environment.GetCommandLineArgs();
                 var processInfo = new ProcessStartInfo(args[0], $"{string.Join("", args.Skip(1).Select(x => x + " "))}{Plugin.FLAG_TRIGGER} \"{acronym};{scugList}\"")
                 {
@@ -311,9 +315,12 @@ namespace MapExporter.Tabs
             }
             else if (ScreenshotProcess.HasExited)
             {
+                // Old process closed, presume finish or crashed. Time to figure out which!
                 Data.UpdateSSStatus();
+
                 if (Data.ScreenshotterStatus == SSStatus.Finished)
                 {
+                    // Finished without crashing, yay
                     QueuedRegions.Dequeue();
                     Data.ScreenshotterStatus = SSStatus.Inactive;
                     Data.SaveData();
@@ -321,6 +328,7 @@ namespace MapExporter.Tabs
                 }
                 else
                 {
+                    // Uh-oh spaghetti-o's! Retry just in case user accidentally closed it or the problem was fixed idk
                     RetryAttempts++;
                 }
                 ScreenshotProcess = null;
