@@ -87,7 +87,7 @@ namespace MapExporter.Screenshotter
 
             // load room
             while (game.cameras[0].room == null || !game.cameras[0].room.ReadyForPlayer) yield return null;
-            yield return null;
+            for (int i = 0; i < 40; i++) yield return null; // give it an extra sec to load just in case
             game.cameras[0].room.abstractRoom.Abstractize();
 
             // Recreate scuglat list from last time if needed

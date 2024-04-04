@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Permissions;
@@ -11,10 +10,8 @@ using MonoMod.RuntimeDetour;
 using Mono.Cecil.Cil;
 using UnityEngine;
 using MoreSlugcats;
-using RWCustom;
 using MapExporter.Screenshotter;
 using Random = UnityEngine.Random;
-using Debug = UnityEngine.Debug;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -104,8 +101,8 @@ sealed class Plugin : BaseUnityPlugin
         }
         catch (Exception e)
         {
-            Logger.LogDebug("Caught start thingy");
-            Debug.LogException(e);
+            Logger.LogError("Caught start thingy");
+            Logger.LogError(e);
         }
 
         orig(self);

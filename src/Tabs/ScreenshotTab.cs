@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -116,9 +117,18 @@ namespace MapExporter.Tabs
             const float EDGE_PAD = SM_PAD;
             const float QUEUE_SLUG_PAD = EDGE_PAD + SEP_PAD;
 
-            if (QueuedRegions.Count > 0 && RetryAttempts < MAX_RETRY_ATTEMPTS)
+            if (QueuedRegions.Count > 0)
             {
-                DoThings();
+                if (RetryAttempts < MAX_RETRY_ATTEMPTS)
+                {
+                    DoThings();
+                }
+                else
+                {
+                    QueuedRegions.Dequeue();
+                    QueueDirty = true;
+                    RetryAttempts = 0;
+                }
             }
 
             // Left scrollbox update
@@ -302,16 +312,43 @@ namespace MapExporter.Tabs
                 var acronym = RegionNames[next.name];
                 var scugList = string.Join(",", next.scugs.Select(x => x.value));
                 
-                // Create the process
+                // Create the process (thanks Vigaro and Bensone)
+                var currProcess = Process.GetCurrentProcess();
+                var envVars = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process);
+                var doorstopKeys = new List<string>();
+                foreach (DictionaryEntry entry in envVars)
+                {
+                    if (entry.Key.ToString().StartsWith("DOORSTOP"))
+                    {
+                        doorstopKeys.Add(entry.Key.ToString());
+                    }
+                }
+
                 var args = Environment.GetCommandLineArgs();
-                var processInfo = new ProcessStartInfo(args[0], $"{string.Join("", args.Skip(1).Select(x => x + " "))}{Plugin.FLAG_TRIGGER} \"{acronym};{scugList}\"")
+                var processInfo = new ProcessStartInfo(currProcess.MainModule.FileName, $"{string.Join("", args.Skip(1).Select(x => x + " "))}{Plugin.FLAG_TRIGGER} \"{acronym};{scugList}\"")
                 {
                     WorkingDirectory = Custom.LegacyRootFolderDirectory(),
+                    UseShellExecute = false,
 #if RELEASE
                     WindowStyle = ProcessWindowStyle.Minimized,
 #endif
                 };
-                ScreenshotProcess = Process.Start(processInfo);
+
+                // Remove doorstop things
+                processInfo.EnvironmentVariables.Clear();
+                foreach (DictionaryEntry item in envVars)
+                {
+                    if (!doorstopKeys.Contains(item.Key.ToString()))
+                    {
+                        processInfo.EnvironmentVariables.Add((string)item.Key, (string)item.Value);
+                    }
+                }
+
+                ScreenshotProcess = new Process
+                {
+                    StartInfo = processInfo
+                };
+                ScreenshotProcess.Start();
             }
             else if (ScreenshotProcess.HasExited)
             {
@@ -322,6 +359,7 @@ namespace MapExporter.Tabs
                 {
                     // Finished without crashing, yay
                     QueuedRegions.Dequeue();
+                    QueueDirty = true;
                     Data.ScreenshotterStatus = SSStatus.Inactive;
                     Data.SaveData();
                     RetryAttempts = 0;
@@ -331,6 +369,7 @@ namespace MapExporter.Tabs
                     // Uh-oh spaghetti-o's! Retry just in case user accidentally closed it or the problem was fixed idk
                     RetryAttempts++;
                 }
+                ScreenshotProcess.Dispose();
                 ScreenshotProcess = null;
             }
         }
