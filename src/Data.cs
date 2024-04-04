@@ -16,8 +16,8 @@ namespace MapExporter
         public static string FinalDir => PathOf("Output");
         public static string DataFileDir => PathOf("data.json");
         
-        public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, Region.GetRegionFullName(acronym, new(scug)));
-        public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, scug, Region.GetRegionFullName(acronym, new(scug)));
+        public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, acronym + " - " + Region.GetRegionFullName(acronym, new(scug)));
+        public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, scug, acronym + " - " + Region.GetRegionFullName(acronym, new(scug)));
 
         public static void TryCreateDirectories()
         {
@@ -29,23 +29,29 @@ namespace MapExporter
 
         public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs) : IEquatable<QueueData>, IEquatable<string>
         {
-            public readonly string name = name;
+            public readonly string acronym = name;
             public readonly HashSet<SlugcatStats.Name> scugs = scugs;
 
             public bool Equals(QueueData other)
             {
-                return name.Equals(other.name);
+                return acronym.Equals(other.acronym);
             }
 
             public bool Equals(string other)
             {
-                return name == other;
+                return acronym == other;
             }
 
             public override string ToString()
             {
-                return name + ";" + string.Join(",", [.. scugs.Select(x => x.value)]);
+                return acronym + ";" + string.Join(",", [.. scugs.Select(x => x.value)]);
             }
+
+            public Dictionary<string, object> ToJSON() => new()
+            {
+                {"name", acronym },
+                {"scugs", scugs.Select(x => x.value).ToArray() }
+            };
         }
         public static readonly Queue<QueueData> QueuedRegions = [];
 
@@ -56,8 +62,7 @@ namespace MapExporter
         }
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;
 
-        public static readonly Dictionary<SlugcatStats.Name, List<string>> RenderedRegions;
-        public static readonly Dictionary<SlugcatStats.Name, List<string>> FinishedRegions;
+        public static readonly Dictionary<SlugcatStats.Name, List<string>> RenderedRegions = [];
 
         public static void GetData()
         {
@@ -80,6 +85,16 @@ namespace MapExporter
                 if (json.ContainsKey("ssstatus"))
                 {
                     Enum.TryParse((string)json["ssstatus"], out ScreenshotterStatus);
+                }
+
+                // Saved progress
+                if (json.ContainsKey("rendered"))
+                {
+                    var regions = (Dictionary<string, string[]>)json["rendered"];
+                    foreach (var region in regions)
+                    {
+                        RenderedRegions.Add(new SlugcatStats.Name(region.Key, false), [.. region.Value]);
+                    }
                 }
             }
 
@@ -105,16 +120,19 @@ namespace MapExporter
 
         public static void SaveData()
         {
+            Dictionary<string, string[]> rendered = [];
+            foreach (var kv in RenderedRegions)
+            {
+                rendered.Add(kv.Key.value, [.. kv.Value]);
+            }
             Dictionary<string, object> dict = new()
             {
                 {
                     "queue",
-                    QueuedRegions.Select(x => new Dictionary<string, object> {
-                        {"name", x.name },
-                        {"scugs", x.scugs.Select(x => x.value).ToArray() }
-                    }).ToArray()
+                    QueuedRegions.Select(x => x.ToJSON()).ToArray()
                 },
                 { "ssstatus", ScreenshotterStatus.ToString() },
+                { "rendered", rendered },
             };
             File.WriteAllText(DataFileDir, Json.Serialize(dict));
         }

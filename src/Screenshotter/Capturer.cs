@@ -197,6 +197,7 @@ namespace MapExporter.Screenshotter
                 game.cameras[0].virtualMicrophone.AllQuiet();
 
                 yield return new WaitForEndOfFrame();
+                yield return null; // wait an extra frame or two so objects can render, why not
 
                 if (screenshots)
                 {

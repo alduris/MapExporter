@@ -358,6 +358,23 @@ sealed class Plugin : BaseUnityPlugin
         }
     }
 
+    // no orcacles
+    /*private void Room_ReadyForAI(On.Room.orig_ReadyForAI orig, Room self)
+    {
+        string oldname = self.abstractRoom.name;
+        if (self.abstractRoom.name.EndsWith("_AI")) self.abstractRoom.name = "XXX"; // oracle breaks w no player
+        orig(self);
+        self.abstractRoom.name = oldname;
+    }*/
+
+    // no gate switching
+    private void OverWorld_WorldLoaded(On.OverWorld.orig_WorldLoaded orig, OverWorld self)
+    {
+        return; // orig assumes a gate
+    }
+
+    #endregion fixes
+
     // effects blacklist
     private void Room_Loaded(On.Room.orig_Loaded orig, Room self)
     {
@@ -386,35 +403,22 @@ sealed class Plugin : BaseUnityPlugin
                 || item.type == PlacedObject.Type.VultureGrub
                 || item.type == PlacedObject.Type.HangingPearls
                 || item.type == PlacedObject.Type.DeadVultureGrub
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.BigJellyFish
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.GlowWeed
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.GooieDuck
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.RotFlyPaper
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.DevToken
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.LillyPuck
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.Stowaway
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.MoonCloak
-                || item.type == MoreSlugcatsEnums.PlacedObjectType.HRGuard
+                || (ModManager.MSC && (
+                    item.type == MoreSlugcatsEnums.PlacedObjectType.BigJellyFish
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.GlowWeed
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.GooieDuck
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.RotFlyPaper
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.DevToken
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.LillyPuck
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.Stowaway
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.MoonCloak
+                    || item.type == MoreSlugcatsEnums.PlacedObjectType.HRGuard
+                ))
             )
                 self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 20);
 
         }
         orig(self);
-    }
-
-    // no orcacles
-    /*private void Room_ReadyForAI(On.Room.orig_ReadyForAI orig, Room self)
-    {
-        string oldname = self.abstractRoom.name;
-        if (self.abstractRoom.name.EndsWith("_AI")) self.abstractRoom.name = "XXX"; // oracle breaks w no player
-        orig(self);
-        self.abstractRoom.name = oldname;
-    }*/
-
-    // no gate switching
-    private void OverWorld_WorldLoaded(On.OverWorld.orig_WorldLoaded orig, OverWorld self)
-    {
-        return; // orig assumes a gate
     }
 
     private void WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues(On.WorldLoader.orig_ctor_RainWorldGame_Name_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game, SlugcatStats.Name playerCharacter, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)
@@ -443,8 +447,6 @@ sealed class Plugin : BaseUnityPlugin
             }
         }
     }
-
-    #endregion fixes
 
     // Runs half-synchronously to the game loop, bless iters
     System.Collections.IEnumerator captureTask;

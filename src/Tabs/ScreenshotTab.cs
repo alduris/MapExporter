@@ -56,15 +56,23 @@ namespace MapExporter.Tabs
 
         public override void Initialize()
         {
-            // Get all regions with their name as survivor
+            // Get all regions with their name (not for any particular slugcat)
+            var regionOrder = Region.GetFullRegionOrder();
             RegionNames.Clear();
-            IEnumerable<(string name, string acronym)> nameValuePairs = Region.GetFullRegionOrder().Select(x => (Region.GetRegionFullName(x, SlugcatStats.Name.White), x));
+            IEnumerable<(string acronym, string name)> nameValuePairs = regionOrder.Select(x => (x, Region.GetRegionFullName(x, null)));
             foreach (var pair in nameValuePairs) {
-                RegionNames.Add(pair.name, pair.acronym);
+                RegionNames.Add(pair.acronym, pair.name);
             }
 
             // Set up UI
-            comboRegions = new OpComboBox(OpUtil.CosmeticBind(""), new Vector2(10f, 530f), 175f, RegionNames.Keys.ToArray()) { listHeight = (ushort)Math.Min(20, RegionNames.Count) };
+            var regionList = RegionNames
+                .OrderBy(kv => regionOrder.FindIndex(x => x.Equals(kv.Key, StringComparison.InvariantCultureIgnoreCase))) // preserve region order
+                .Select(kv => new ListItem(kv.Key, $"({kv.Key}) {kv.Value}")) // display as "(acronym) full name" but keep the acronym as the value
+                .ToList(); // OpComboBox wants it as a list
+            comboRegions = new OpComboBox(OpUtil.CosmeticBind(""), new Vector2(10f, 530f), 175f, regionList)
+            {
+                listHeight = (ushort)Math.Min(20, RegionNames.Count)
+            };
             var addButton = new OpSimpleButton(new Vector2(195f, 530f), new Vector2(40f, 24f), "ADD");
             var addAllButton = new OpSimpleButton(new Vector2(245f, 530f), new Vector2(40f, 24f), "ALL");
             var startButton = new OpSimpleButton(new Vector2(10f, 10f), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
@@ -160,7 +168,7 @@ namespace MapExporter.Tabs
                             WaitingRegions.Remove(item.Key);
                             WaitDirty = true;
                         };
-                        var regionLabel = new OpLabel(EDGE_PAD + LINE_HEIGHT + SM_PAD, y, item.Key);
+                        var regionLabel = new OpLabel(EDGE_PAD + LINE_HEIGHT + SM_PAD, y, $"({item.Key}) {RegionNames[item.Key]}");
 
                         waitBox.AddItems(delButton, regionLabel);
 
@@ -260,7 +268,7 @@ namespace MapExporter.Tabs
                         }
 
                         // Region name and scuglats
-                        queueBox.AddItems(new OpLabel(EDGE_PAD + SM_PAD, y, $"{i}. {item.name}", false));
+                        queueBox.AddItems(new OpLabel(EDGE_PAD + SM_PAD, y, $"{i}. ({item.acronym}) {RegionNames[item.acronym]}", false));
                         y -= LINE_HEIGHT;
 
                         int lines = 2;
@@ -308,9 +316,7 @@ namespace MapExporter.Tabs
                 Data.SaveData();
 
                 // Get the next item to render
-                QueueData next = QueuedRegions.Peek();
-                var acronym = RegionNames[next.name];
-                var scugList = string.Join(",", next.scugs.Select(x => x.value));
+                string next = QueuedRegions.Peek().ToString();
                 
                 // Create the process (thanks Vigaro and Bensone)
                 var currProcess = Process.GetCurrentProcess();
@@ -325,7 +331,9 @@ namespace MapExporter.Tabs
                 }
 
                 var args = Environment.GetCommandLineArgs();
-                var processInfo = new ProcessStartInfo(currProcess.MainModule.FileName, $"{string.Join("", args.Skip(1).Select(x => x + " "))}{Plugin.FLAG_TRIGGER} \"{acronym};{scugList}\"")
+                var processInfo = new ProcessStartInfo(
+                    currProcess.MainModule.FileName,
+                    $"{string.Join("", args.Skip(1).Select(x => (x.Contains(" ") && !x.StartsWith("\"") ? $"\"{x}\"" : x) + " "))}{Plugin.FLAG_TRIGGER} \"{next}\"")
                 {
                     WorkingDirectory = Custom.LegacyRootFolderDirectory(),
                     UseShellExecute = false,
@@ -358,9 +366,16 @@ namespace MapExporter.Tabs
                 if (Data.ScreenshotterStatus == SSStatus.Finished)
                 {
                     // Finished without crashing, yay
-                    QueuedRegions.Dequeue();
+                    var data = QueuedRegions.Dequeue();
                     QueueDirty = true;
                     Data.ScreenshotterStatus = SSStatus.Inactive;
+                    foreach (var scug in data.scugs)
+                    {
+                        if (Data.RenderedRegions.TryGetValue(scug, out var list))
+                        {
+                            list.Add(data.acronym);
+                        }
+                    }
                     Data.SaveData();
                     RetryAttempts = 0;
                 }
@@ -393,13 +408,13 @@ namespace MapExporter.Tabs
             }
 
             // Add values
-            var region = comboRegions.value;
-            WaitingRegions[region] = [];
+            var acronym = comboRegions.value;
+            WaitingRegions[acronym] = [];
             foreach (var scug in Slugcats)
             {
-                if (SlugcatStats.SlugcatStoryRegions(scug).Contains(RegionNames[region]) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(RegionNames[region]))
+                if (SlugcatStats.SlugcatStoryRegions(scug).Contains(acronym) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(acronym))
                 {
-                    WaitingRegions[region].Add(scug);
+                    WaitingRegions[acronym].Add(scug);
                 }
             }
             comboRegions.value = null;
