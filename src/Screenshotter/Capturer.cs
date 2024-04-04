@@ -85,11 +85,9 @@ namespace MapExporter.Screenshotter
                 slugsRendering.Enqueue(str);
             }
 
-            // 1st camera transition is a bit whack ? give it a sec to load
+            // load room
             while (game.cameras[0].room == null || !game.cameras[0].room.ReadyForPlayer) yield return null;
             yield return null;
-            // for (int i = 0; i < 40; i++) yield return null;
-            // ok game loaded I suppose
             game.cameras[0].room.abstractRoom.Abstractize();
 
             // Recreate scuglat list from last time if needed
