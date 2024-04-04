@@ -65,9 +65,8 @@ namespace MapExporter.Tabs
             }
 
             // Set up UI
-            var regionList = RegionNames
-                .OrderBy(kv => regionOrder.FindIndex(x => x.Equals(kv.Key, StringComparison.InvariantCultureIgnoreCase))) // preserve region order
-                .Select(kv => new ListItem(kv.Key, $"({kv.Key}) {kv.Value}")) // display as "(acronym) full name" but keep the acronym as the value
+            var regionList = nameValuePairs
+                .Select(x => new ListItem(x.acronym, $"({x.acronym}) {x.name}")) // display as "(acronym) full name" but keep the acronym as the value
                 .ToList(); // OpComboBox wants it as a list
             comboRegions = new OpComboBox(OpUtil.CosmeticBind(""), new Vector2(10f, 530f), 175f, regionList)
             {
