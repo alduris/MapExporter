@@ -5,6 +5,7 @@
     <LangVersion>12</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>../assets/plugins/</OutputPath>
+    <PathMap>$(MSBuildProjectDirectory)=/$(SolutionName)</PathMap>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

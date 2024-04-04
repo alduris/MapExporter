@@ -45,7 +45,7 @@ sealed class Plugin : BaseUnityPlugin
         }
         catch (Exception ex)
         {
-            Debug.LogException(ex);
+            Logger.LogError(ex);
         }
     }
 

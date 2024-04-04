@@ -298,33 +298,33 @@ namespace MapExporter.Tabs
                 QueueData next = QueuedRegions.Peek();
                 var acronym = RegionNames[next.name];
                 var scugList = string.Join(",", next.scugs.Select(x => x.value));
-                // ScreenshotProcess = Process.Start("CMD.exe", $"/C \"{gamePath}\" {string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"");
-                var processInfo = new ProcessStartInfo("RainWorld.exe", $"{string.Join(" ", Environment.GetCommandLineArgs().Skip(1))} --mapexport \"{acronym};{scugList}\"")
+                
+                var args = Environment.GetCommandLineArgs();
+                var processInfo = new ProcessStartInfo(args[0], $"{string.Join("", args.Skip(1).Select(x => x + " "))}--mapexport \"{acronym};{scugList}\"")
                 {
                     WorkingDirectory = Custom.LegacyRootFolderDirectory(),
+                    UseShellExecute = false,
 #if RELEASE
                     WindowStyle = ProcessWindowStyle.Minimized,
 #endif
                 };
                 ScreenshotProcess = Process.Start(processInfo);
             }
-            else
+            else if (ScreenshotProcess.HasExited)
             {
-                if (ScreenshotProcess.HasExited)
+                Data.UpdateSSStatus();
+                if (Data.ScreenshotterStatus == SSStatus.Finished)
                 {
-                    Data.UpdateSSStatus();
-                    if (Data.ScreenshotterStatus == SSStatus.Finished)
-                    {
-                        QueuedRegions.Dequeue();
-                        Data.ScreenshotterStatus = SSStatus.Inactive;
-                        Data.SaveData();
-                        RetryAttempts = 0;
-                    }
-                    else
-                    {
-                        RetryAttempts++;
-                    }
+                    QueuedRegions.Dequeue();
+                    Data.ScreenshotterStatus = SSStatus.Inactive;
+                    Data.SaveData();
+                    RetryAttempts = 0;
                 }
+                else
+                {
+                    RetryAttempts++;
+                }
+                ScreenshotProcess = null;
             }
         }
 
