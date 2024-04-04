@@ -69,7 +69,16 @@ namespace MapExporter.Screenshotter
             Random.InitState(0);
 
             var args = Environment.GetCommandLineArgs();
-            var split = args[args.IndexOf(Plugin.FLAG_TRIGGER) + 1].Split(';');
+            int index = 0;
+            for (int i = 0; i < args.Length; i++) // IndexOf wasn't working
+            {
+                if (args[i].ToLower() == Plugin.FLAG_TRIGGER)
+                {
+                    index = i + 1;
+                    break;
+                }
+            }
+            var split = args[index].Split(';');
             regionRendering = split[0];
             foreach (var str in split[1].Split(','))
             {
@@ -78,7 +87,8 @@ namespace MapExporter.Screenshotter
 
             // 1st camera transition is a bit whack ? give it a sec to load
             while (game.cameras[0].room == null || !game.cameras[0].room.ReadyForPlayer) yield return null;
-            for (int i = 0; i < 40; i++) yield return null;
+            yield return null;
+            // for (int i = 0; i < 40; i++) yield return null;
             // ok game loaded I suppose
             game.cameras[0].room.abstractRoom.Abstractize();
 
