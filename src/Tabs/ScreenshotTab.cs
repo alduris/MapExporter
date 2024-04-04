@@ -19,7 +19,7 @@ namespace MapExporter.Tabs
         private const float CHECKBOX_SIZE = 24f;
         private const float LINE_HEIGHT = 20f;
         private const float BIG_LINE_HEIGHT = 30f;
-        private const int MAX_RETRY_ATTEMPTS = 3;
+        private const int MAX_RETRY_ATTEMPTS = 1; //3;
 
         private readonly Dictionary<string, HashSet<SlugcatStats.Name>> WaitingRegions = [];
         private readonly Queue<QueueData> QueuedRegions = Data.QueuedRegions;
@@ -300,10 +300,9 @@ namespace MapExporter.Tabs
                 var scugList = string.Join(",", next.scugs.Select(x => x.value));
                 
                 var args = Environment.GetCommandLineArgs();
-                var processInfo = new ProcessStartInfo(args[0], $"{string.Join("", args.Skip(1).Select(x => x + " "))}--mapexport \"{acronym};{scugList}\"")
+                var processInfo = new ProcessStartInfo(args[0], $"{string.Join("", args.Skip(1).Select(x => x + " "))}{Plugin.FLAG_TRIGGER} \"{acronym};{scugList}\"")
                 {
                     WorkingDirectory = Custom.LegacyRootFolderDirectory(),
-                    UseShellExecute = false,
 #if RELEASE
                     WindowStyle = ProcessWindowStyle.Minimized,
 #endif
