@@ -110,6 +110,26 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
     }
 
+    // disable resetting logs
+    private void RainWorld_Awake(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        for (int i = 0; i < 2; i++)
+        {
+            ILLabel brto = null;
+            if (c.TryGotoNext(x => x.MatchCall(typeof(File), "Exists"), x => x.MatchBrfalse(out brto)))
+            {
+                c.Index--;
+                c.MoveAfterLabels();
+                c.EmitDelegate(() => FlagTriggered);
+                c.Emit(OpCodes.Brtrue, brto);
+            }
+        }
+    }
+
+    #region fixes
+
     private void SeedCob_DrawSprites(On.SeedCob.orig_DrawSprites orig, SeedCob self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
     {
         Vector2 vector = Vector2.Lerp(self.firstChunk.lastPos, self.firstChunk.pos, timeStacker);
@@ -118,7 +138,7 @@ sealed class Plugin : BaseUnityPlugin
         Vector2 vector3 = self.rootPos;
         for (int i = 0; i < self.stalkSegments; i++)
         {
-            float f = (float)i / (float)(self.stalkSegments - 1);
+            float f = (float)i / (self.stalkSegments - 1);
             Vector2 vector4 = Custom.Bezier(self.rootPos, self.rootPos + self.rootDir * Vector2.Distance(self.rootPos, self.placedPos) * 0.2f, vector2, vector2 + Custom.DirVec(vector, vector2) * Vector2.Distance(rootPos, placedPos) * 0.2f, f);
             Vector2 normalized = (vector3 - vector4).normalized;
             Vector2 vector5 = Custom.PerpendicularVector(normalized);
@@ -144,7 +164,7 @@ sealed class Plugin : BaseUnityPlugin
         num = 2f;
         for (int k = 0; k < self.cobSegments; k++)
         {
-            float t = (float)k / (float)(self.cobSegments - 1);
+            float t = (float)k / (self.cobSegments - 1);
             Vector2 vector7 = Vector2.Lerp(vector2, vector, t);
             Vector2 normalized2 = (vector3 - vector7).normalized;
             Vector2 vector8 = Custom.PerpendicularVector(normalized2);
@@ -161,14 +181,14 @@ sealed class Plugin : BaseUnityPlugin
         float num7 = Mathf.Lerp(self.lastOpen, self.open, timeStacker);
         for (int l = 0; l < 2; l++)
         {
-            float num8 = -1f + (float)l * 2f;
+            float num8 = -1f + l * 2f;
             num = 2f;
             vector3 = vector + Custom.DirVec(vector2, vector) * 7f;
             float num9 = Custom.AimFromOneVectorToAnother(vector, vector2);
             Vector2 vector9 = vector;
             for (int m = 0; m < self.cobSegments; m++)
             {
-                float num10 = (float)m / (float)(self.cobSegments - 1);
+                float num10 = (float)m / (self.cobSegments - 1);
                 vector9 += Custom.DegToVec(num9 + num8 * Mathf.Pow(num7, Mathf.Lerp(1f, 0.1f, num10)) * 50f * Mathf.Pow(num10, 0.5f)) * (Vector2.Distance(vector, vector2) * 1.1f + 8f) / self.cobSegments;
                 Vector2 normalized3 = (vector3 - vector9).normalized;
                 Vector2 vector10 = Custom.PerpendicularVector(normalized3);
@@ -191,7 +211,7 @@ sealed class Plugin : BaseUnityPlugin
             for (int n = 0; n < self.seedPositions.Length; n++)
             {
                 Vector2 vector13 = vector2 + vector11 * self.seedPositions[n].y * (Vector2.Distance(vector2, vector) - 10f) + vector12 * self.seedPositions[n].x * 3f;
-                float num13 = 1f + Mathf.Sin((float)n / (float)(self.seedPositions.Length - 1) * (float)Math.PI);
+                float num13 = 1f + Mathf.Sin((float)n / (self.seedPositions.Length - 1) * (float)Math.PI);
                 if (self.AbstractCob.dead)
                 {
                     num13 *= 0.5f;
@@ -203,7 +223,7 @@ sealed class Plugin : BaseUnityPlugin
                 sLeaser.sprites[self.SeedSprite(n, 0)].scale = (self.seedsPopped[n] ? num13 : 0.35f);
                 sLeaser.sprites[self.SeedSprite(n, 0)].x = vector13.x - camPos.x;
                 sLeaser.sprites[self.SeedSprite(n, 0)].y = vector13.y - camPos.y;
-                Vector2 vector14 = default(Vector2);
+                Vector2 vector14 = default;
                 if (self.seedsPopped[n])
                 {
                     vector14 = vector12 * Mathf.Pow(Mathf.Abs(self.seedPositions[n].x), Custom.LerpMap(num13, 1f, 2f, 1f, 0.5f)) * Mathf.Sign(self.seedPositions[n].x) * 3.5f * num13;
@@ -238,26 +258,6 @@ sealed class Plugin : BaseUnityPlugin
             sLeaser.CleanSpritesAndRemove();
         }
     }
-
-    // disable resetting logs
-    private void RainWorld_Awake(ILContext il)
-    {
-        var c = new ILCursor(il);
-
-        for (int i = 0; i < 2; i++)
-        {
-            ILLabel brto = null;
-            if (c.TryGotoNext(x => x.MatchCall(typeof(File), "Exists"), x => x.MatchBrfalse(out brto)))
-            {
-                c.Index--;
-                c.MoveAfterLabels();
-                c.EmitDelegate(() => FlagTriggered);
-                c.Emit(OpCodes.Brtrue, brto);
-            }
-        }
-    }
-
-    #region fixes
 
     // Fixes some crashes in ZZ (Aerial Arrays)
     private void RoomCamera_ApplyEffectColorsToPaletteTexture(On.RoomCamera.orig_ApplyEffectColorsToPaletteTexture orig, RoomCamera self, ref Texture2D texture, int color1, int color2)
