@@ -10,10 +10,9 @@ using MonoMod.RuntimeDetour;
 using Mono.Cecil.Cil;
 using UnityEngine;
 using MoreSlugcats;
+using RWCustom;
 using MapExporter.Screenshotter;
 using Random = UnityEngine.Random;
-using System.Drawing;
-using RWCustom;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -412,14 +411,14 @@ sealed class Plugin : BaseUnityPlugin
         orig(self, sLeaser, rCam, timeStacker, camPos);
 
         sLeaser.sprites[1].shader = FShader.defaultShader;
-        sLeaser.sprites[1].color = UnityEngine.Color.white;
+        sLeaser.sprites[1].color = Color.white;
 
         if (self.requirement == MoreSlugcats.MoreSlugcatsEnums.GateRequirement.RoboLock)
         {
             for (int i = 2; i < 11; i++)
             {
                 sLeaser.sprites[i].shader = FShader.defaultShader;
-                sLeaser.sprites[i].color = UnityEngine.Color.white;
+                sLeaser.sprites[i].color = Color.white;
             }
         }
     }
