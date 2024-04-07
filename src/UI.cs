@@ -17,7 +17,9 @@ internal class UI : OptionInterface
         base.Initialize();
 
         Tabs = [
-            new ScreenshotTab(this)
+            new ScreenshotTab(this),
+            new EditTab(this),
+            // new GenerateTab(this)
         ];
 
         foreach (var tab in Tabs)
@@ -32,7 +34,10 @@ internal class UI : OptionInterface
 
         foreach (var tab in Tabs)
         {
-            (tab as BaseTab).Update();
+            if (!tab.isInactive)
+            {
+                (tab as BaseTab).Update();
+            }
         }
     }
 }
