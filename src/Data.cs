@@ -15,16 +15,17 @@ namespace MapExporter
         public static string RenderDir => PathOf("Input");
         public static string FinalDir => PathOf("Output");
         public static string DataFileDir => PathOf("data.json");
-        
-        public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, acronym + " - " + Region.GetRegionFullName(acronym, new(scug)));
-        public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, scug, acronym + " - " + Region.GetRegionFullName(acronym, new(scug)));
 
-        public static void TryCreateDirectories()
+        public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, acronym); // + " - " + Region.GetRegionFullName(acronym, new(scug)));
+        public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, scug, acronym); // + " - " + Region.GetRegionFullName(acronym, new(scug)));
+
+        public static void Initialize()
         {
             if (!Directory.Exists(DataDirectory))
             {
                 Directory.CreateDirectory(DataDirectory);
             }
+            GetData();
         }
 
         public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs) : IEquatable<QueueData>, IEquatable<string>
@@ -58,6 +59,7 @@ namespace MapExporter
         public enum SSStatus{
             Inactive,
             Unfinished,
+            Errored,
             Finished
         }
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;

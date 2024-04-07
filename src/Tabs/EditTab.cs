@@ -10,12 +10,12 @@ namespace MapExporter.Tabs
 
         public override void Initialize()
         {
-            throw new NotImplementedException();
+            // throw new NotImplementedException();
         }
 
         public override void Update()
         {
-            throw new NotImplementedException();
+            // throw new NotImplementedException();
         }
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using Menu;
 using Menu.Remix.MixedUI;
@@ -16,19 +15,11 @@ namespace MapExporter.Tabs
 {
     internal class ScreenshotTab : BaseTab
     {
-        private const float SCROLLBAR_WIDTH = 20f;
-        private const float CHECKBOX_SIZE = 24f;
-        private const float LINE_HEIGHT = 20f;
-        private const float BIG_LINE_HEIGHT = 30f;
         private const int MAX_RETRY_ATTEMPTS = 1; //3;
 
         private readonly Dictionary<string, HashSet<SlugcatStats.Name>> WaitingRegions = [];
-        private readonly Queue<QueueData> QueuedRegions = Data.QueuedRegions;
         private readonly Dictionary<string, string> RegionNames = [];
         private readonly List<SlugcatStats.Name> Slugcats;
-
-        private static readonly Color BlueColor = new(0.5f, 0.65f, 0.95f);
-        private static readonly Color RedColor = new(0.85f, 0.5f, 0.55f);
 
         private OpComboBox comboRegions;
         private OpScrollBox waitBox;
@@ -90,6 +81,7 @@ namespace MapExporter.Tabs
             clearButton.OnClick += ClearButton_OnClick;
 
             abortButton.OnClick += AbortButton_OnClick;
+            skipButton.OnClick += SkipButton_OnClick;
 
             // Add UI to UI
             AddItems([
@@ -124,7 +116,7 @@ namespace MapExporter.Tabs
             const float EDGE_PAD = SM_PAD;
             const float QUEUE_SLUG_PAD = EDGE_PAD + SEP_PAD;
 
-            if (QueuedRegions.Count > 0)
+            if (Data.QueuedRegions.Count > 0)
             {
                 if (RetryAttempts < MAX_RETRY_ATTEMPTS)
                 {
@@ -132,9 +124,10 @@ namespace MapExporter.Tabs
                 }
                 else
                 {
-                    QueuedRegions.Dequeue();
+                    // Data.QueuedRegions.Dequeue();
+                    // RetryAttempts = 0;
+                    Data.ScreenshotterStatus = SSStatus.Errored;
                     QueueDirty = true;
-                    RetryAttempts = 0;
                 }
             }
 
@@ -245,13 +238,13 @@ namespace MapExporter.Tabs
                 queueBox.SetContentSize(0f);
 
                 // Calculate new size
-                if (QueuedRegions.Count > 0)
+                if (Data.QueuedRegions.Count > 0)
                 {
                     var height = 24f;
                     var y = queueBox.size.y + (BIG_PAD - EDGE_PAD);
                     int i = 1;
 
-                    foreach (var item in QueuedRegions)
+                    foreach (var item in Data.QueuedRegions)
                     {
                         y -= LINE_HEIGHT + BIG_PAD;
 
@@ -269,7 +262,12 @@ namespace MapExporter.Tabs
                         }
 
                         // Region name and scuglats
-                        queueBox.AddItems(new OpLabel(EDGE_PAD + SM_PAD, y, $"{i}. ({item.acronym}) {RegionNames[item.acronym]}", false));
+                        var titleLabel = new OpLabel(EDGE_PAD + SM_PAD, y, $"{i}. ({item.acronym}) {RegionNames[item.acronym]}", false);
+                        if (Data.ScreenshotterStatus == SSStatus.Errored)
+                        {
+                            titleLabel.color = RedColor;
+                        }
+                        queueBox.AddItems(titleLabel);
                         y -= LINE_HEIGHT;
 
                         int lines = 2;
@@ -289,7 +287,7 @@ namespace MapExporter.Tabs
                         height += LINE_HEIGHT * lines;
 
                         // Horizontal line and queued header
-                        if (i == 1 && QueuedRegions.Count > 1)
+                        if (i == 1 && Data.QueuedRegions.Count > 1)
                         {
                             y -= SM_PAD;
                             queueBox.AddItems(new OpImage(new Vector2(EDGE_PAD, y), "pixel") { scale = new Vector2(queueBox.size.x - SCROLLBAR_WIDTH - EDGE_PAD * 2, 2f), color = MenuColorEffect.rgbMediumGrey });
@@ -317,7 +315,7 @@ namespace MapExporter.Tabs
                 Data.SaveData();
 
                 // Get the next item to render
-                string next = QueuedRegions.Peek().ToString();
+                string next = Data.QueuedRegions.Peek().ToString();
                 
                 // Create the process (thanks Vigaro and Bensone)
                 var currProcess = Process.GetCurrentProcess();
@@ -367,7 +365,7 @@ namespace MapExporter.Tabs
                 if (Data.ScreenshotterStatus == SSStatus.Finished)
                 {
                     // Finished without crashing, yay
-                    var data = QueuedRegions.Dequeue();
+                    var data = Data.QueuedRegions.Dequeue();
                     QueueDirty = true;
                     Data.ScreenshotterStatus = SSStatus.Inactive;
                     foreach (var scug in data.scugs)
@@ -375,6 +373,10 @@ namespace MapExporter.Tabs
                         if (Data.RenderedRegions.TryGetValue(scug, out var list))
                         {
                             list.Add(data.acronym);
+                        }
+                        else
+                        {
+                            Data.RenderedRegions.Add(scug, [data.acronym]);
                         }
                     }
                     Data.SaveData();
@@ -447,12 +449,13 @@ namespace MapExporter.Tabs
         {
             foreach (var region in WaitingRegions)
             {
-                if (!QueuedRegions.Any(x => x.Equals(region.Key)) && region.Value.Count > 0)
+                if (!Data.QueuedRegions.Any(x => x.Equals(region.Key)) && region.Value.Count > 0)
                 {
-                    QueuedRegions.Enqueue(new QueueData(region.Key, region.Value));
+                    Data.QueuedRegions.Enqueue(new QueueData(region.Key, region.Value));
                 }
             }
             WaitingRegions.Clear();
+            Data.SaveData();
 
             WaitDirty = true;
             QueueDirty = true;
@@ -466,8 +469,30 @@ namespace MapExporter.Tabs
 
         private void AbortButton_OnClick(UIfocusable trigger)
         {
-            QueuedRegions.Clear();
+            if (ScreenshotProcess != null)
+            {
+                ScreenshotProcess.Close();
+                ScreenshotProcess.Dispose();
+                ScreenshotProcess = null;
+            }
+            Data.QueuedRegions.Clear();
             QueueDirty = true;
+            Data.ScreenshotterStatus = SSStatus.Inactive;
+            Data.SaveData();
+        }
+
+        private void SkipButton_OnClick(UIfocusable trigger)
+        {
+            if (ScreenshotProcess != null)
+            {
+                ScreenshotProcess.Close();
+                ScreenshotProcess.Dispose();
+                ScreenshotProcess = null;
+            }
+            RetryAttempts = 0;
+            Data.QueuedRegions.Dequeue();
+            Data.ScreenshotterStatus = SSStatus.Inactive;
+            Data.SaveData();
         }
     }
 }
