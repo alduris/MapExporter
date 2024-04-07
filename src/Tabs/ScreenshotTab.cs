@@ -68,7 +68,7 @@ namespace MapExporter.Tabs
             var regionList = nameValuePairs
                 .Select(x => new ListItem(x.acronym, $"({x.acronym}) {x.name}")) // display as "(acronym) full name" but keep the acronym as the value
                 .ToList(); // OpComboBox wants it as a list
-            comboRegions = new OpComboBox(OpUtil.CosmeticBind(""), new Vector2(10f, 530f), 175f, regionList)
+            comboRegions = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(10f, 530f), 175f, regionList)
             {
                 listHeight = (ushort)Math.Min(20, RegionNames.Count)
             };
@@ -190,7 +190,7 @@ namespace MapExporter.Tabs
                             // Create checkbox
                             var j = i; // needed for variable reference purposese
                             var has = item.Value.Contains(Slugcats[i]);
-                            var checkbox = new OpCheckBox(OpUtil.CosmeticBind(has), new(EDGE_PAD + x, y))
+                            var checkbox = new OpCheckBox(OIUtil.CosmeticBind(has), new(EDGE_PAD + x, y))
                             {
                                 colorEdge = ScugDisplayColor(PlayerGraphics.DefaultSlugcatColor(Slugcats[i]), has),
                                 description = Slugcats[i].value

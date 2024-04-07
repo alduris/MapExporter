@@ -1,9 +1,9 @@
 ﻿namespace MapExporter.Tabs
 {
-    internal sealed class OpUtil : OptionInterface
+    internal sealed class OIUtil : OptionInterface
     {
-        private OpUtil() { }
-        public readonly static OpUtil Instance = new();
+        private OIUtil() { }
+        public readonly static OIUtil Instance = new();
 
         public static Configurable<T> CosmeticBind<T>(T init) => new(Instance, null, init, null);
     }
