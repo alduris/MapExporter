@@ -1,9 +1,10 @@
 using System.Collections.Generic;
-using UnityEngine;
-using System.Text.RegularExpressions;
-using System.Linq;
 using System.IO;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text.RegularExpressions;
 using RWCustom;
+using UnityEngine;
 using MapExporter.Screenshotter;
 
 namespace MapExporter;
@@ -28,6 +29,11 @@ sealed class RegionInfo : IJsonObject
 
         LoadMapConfig(world);
         LoadWorldConfig(world);
+    }
+
+    private RegionInfo(string acronym)
+    {
+        this.acronym = acronym;
     }
 
     private RoomEntry GetOrCreateRoomEntry(string name)
@@ -126,6 +132,9 @@ sealed class RegionInfo : IJsonObject
     static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
     static float[] Vec2arr(Vector3 vec) => [vec.x, vec.y, vec.z];
     static int[] Intvec2arr(IntVector2 vec) => [vec.x, vec.y];
+    static Vector2 Arr2Vec2(float[] arr) => new(arr[0], arr[1]);
+    static Vector3 Arr2Vec3(float[] arr) => new(arr[0], arr[1], arr[2]);
+    static IntVector2 Arr2IntVec2(int[] arr) => new(arr[0], arr[1]);
 
     public void UpdateRoom(Room room)
     {
@@ -153,6 +162,43 @@ sealed class RegionInfo : IJsonObject
         return ret;
     }
 
+    public static RegionInfo FromJSON(Dictionary<string, object> json)
+    {
+        var info = new RegionInfo((string)json["acronym"]);
+        info.fgcolors.AddRange(((float[][])json["fgcolors"]).Select(x => new Color(x[0], x[1], x[2])));
+        info.bgcolors.AddRange(((float[][])json["bgcolors"]).Select(x => new Color(x[0], x[1], x[2])));
+        info.sccolors.AddRange(((float[][])json["sccolors"]).Select(x => new Color(x[0], x[1], x[2])));
+
+        if (json.ContainsKey("copyRooms"))
+        {
+            info.copyRooms = (string)json["copyRooms"];
+        }
+        else
+        {
+            foreach (var kv in (Dictionary<string, object>)json["rooms"])
+            {
+                info.rooms.Add(kv.Key, RoomEntry.FromJSON((Dictionary<string, object>)kv.Value));
+            }
+            info.connections.AddRange(((Dictionary<string, object>[])json["connections"]).Select(ConnectionEntry.FromJSON));
+        }
+
+        foreach (string s in (string[])json["conditionallinks"])
+        {
+            info.worldConditionalLinks.Add(s);
+        }
+
+        foreach (string s in (string[])json["roomtags"])
+        {
+            info.worldRoomTags.Add(s);
+        }
+
+        foreach (string s in (string[])json["creatures"])
+        {
+            info.worldCreatures.Add(s);
+        }
+        return info;
+    }
+
     internal void LogPalette(RoomPalette currentPalette)
     {
         // get sky color and fg color (px 00 and 07)
@@ -162,7 +208,6 @@ sealed class RegionInfo : IJsonObject
         fgcolors.Add(fg);
         bgcolors.Add(bg);
         sccolors.Add(sc);
-
     }
 
     sealed class RoomEntry(string roomName) : IJsonObject
@@ -189,9 +234,9 @@ sealed class RegionInfo : IJsonObject
 
         // from room
         public Vector2[] cameras; // TODO: can this cause issues if it's not the same as the cache?
-        private int[] size;
-        private int[,][] tiles;
-        private IntVector2[] nodes;
+        public int[] size;
+        public int[,][] tiles;
+        public IntVector2[] nodes;
 
         public void UpdateEntry(Room room)
         {
@@ -229,6 +274,40 @@ sealed class RegionInfo : IJsonObject
                 { "tiles", tiles},
             };
         }
+
+        public static RoomEntry FromJSON(Dictionary<string, object> json)
+        {
+            var entry = new RoomEntry((string)json["roomName"])
+            {
+                canPos = Arr2Vec2((float[])json["canPos"]),
+                canLayer = (int)json["canLayer"],
+                devPos = Arr2Vec2((float[])json["devPos"]),
+                subregion = (string)json["subregion"],
+                cameras = json["cameras"] != null ? ((float[][])json["cameras"]).Select(Arr2Vec2).ToArray() : null,
+                nodes = json["nodes"] != null ? ((int[][])json["nodes"]).Select(Arr2IntVec2).ToArray() : null,
+                size = (int[])json["size"],
+            };
+            // idk how to convert object to multidimensional array (not jagged array) since you have to specify dimensions when creating it and casting won't
+            // so I just copy over everything lol
+            if (json["tiles"] != null)
+            {
+                var (w, h) = (entry.size[0], entry.size[1]);
+                entry.tiles = new int[w, h][];
+                var rawTiles = (int[][])json["tiles"];
+                for (int i = 0; i < w; i++)
+                {
+                    for (int j = 0; j < h; j++)
+                    {
+                        entry.tiles[i, j] = rawTiles[j + i * h]; // multidimensional arrays are row-major (rightmost dimension is contiguous)
+                    }
+                }
+            }
+            else
+            {
+                entry.tiles = null;
+            }
+            return entry;
+        }
     }
 
     sealed class ConnectionEntry : IJsonObject
@@ -262,6 +341,18 @@ sealed class RegionInfo : IJsonObject
                 { "dirA", dirA },
                 { "dirB", dirB },
             };
+        }
+
+        public static ConnectionEntry FromJSON(Dictionary<string, object> json)
+        {
+            var entry = (ConnectionEntry)FormatterServices.GetUninitializedObject(typeof(ConnectionEntry));
+            entry.roomA = (string)json["roomA"];
+            entry.roomB = (string)json["roomB"];
+            entry.posA = Arr2IntVec2((int[])json["posA"]);
+            entry.posB = Arr2IntVec2((int[])json["posB"]);
+            entry.dirA = (int)json["dirA"];
+            entry.dirB = (int)json["dirB"];
+            return entry;
         }
     }
 }
