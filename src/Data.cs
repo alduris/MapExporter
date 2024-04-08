@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using RWCustom;
 
 namespace MapExporter
@@ -76,10 +75,11 @@ namespace MapExporter
                 // Queue data
                 if (json.ContainsKey("queue"))
                 {
-                    var regions = (Dictionary<string, string[]>)json["queue"];
-                    foreach (var region in regions)
+                    var regions = (List<object>)json["queue"];
+                    foreach (var obj in regions)
                     {
-                        QueuedRegions.Enqueue(new QueueData(region.Key, [.. region.Value.Select(x => new SlugcatStats.Name(x, false))]));
+                        var region = (Dictionary<string, object>)obj;
+                        QueuedRegions.Enqueue(new QueueData((string)region["name"], [.. ((List<object>)region["scugs"]).Select(x => new SlugcatStats.Name((string)x, false))]));
                     }
                 }
 
@@ -92,10 +92,10 @@ namespace MapExporter
                 // Saved progress
                 if (json.ContainsKey("rendered"))
                 {
-                    var regions = (Dictionary<string, string[]>)json["rendered"];
+                    var regions = (Dictionary<string, object>)json["rendered"];
                     foreach (var region in regions)
                     {
-                        RenderedRegions.Add(new SlugcatStats.Name(region.Key, false), [.. region.Value]);
+                        RenderedRegions.Add(new SlugcatStats.Name(region.Key, false), ((List<object>)region.Value).Select(x => (string)x).ToList());
                     }
                 }
             }
