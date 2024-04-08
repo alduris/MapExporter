@@ -206,7 +206,7 @@ sealed class RegionInfo : IJsonObject
                 {
                     // Dont like either available formats ?
                     // Invent a new format
-                    tiles[k, l] = [(int)room.Tiles[k, l].Terrain, (room.Tiles[k, l].verticalBeam ? 2:0) + (room.Tiles[k, l].horizontalBeam ? 1:0), (int)room.Tiles[k, l].shortCut];
+                    tiles[k, l] = [(int)room.Tiles[k, l].Terrain, (room.Tiles[k, l].verticalBeam ? 2:0) + (room.Tiles[k, l].horizontalBeam ? 1:0), room.Tiles[k, l].shortCut];
                     //terain, vb+hb, sc
                 }
             }

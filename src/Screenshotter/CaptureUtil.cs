@@ -65,9 +65,15 @@ namespace MapExporter.Screenshotter
                     scugworld.Update();
                 }
 
+                // Check for placed filters
                 foreach (var room in scugworld.abstractRooms)
                 {
                     var settings = new RoomSettings(acronym, region, false, false, slugcat);
+                    if (settings.placedObjects.Any(x => x.type == PlacedObject.Type.Filter))
+                    {
+                        results.Add(slugcat);
+                        break;
+                    }
                 }
             }
 
