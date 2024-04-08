@@ -132,9 +132,9 @@ sealed class RegionInfo : IJsonObject
     static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
     static float[] Vec2arr(Vector3 vec) => [vec.x, vec.y, vec.z];
     static int[] Intvec2arr(IntVector2 vec) => [vec.x, vec.y];
-    static Vector2 Arr2Vec2(float[] arr) => new(arr[0], arr[1]);
-    static Vector3 Arr2Vec3(float[] arr) => new(arr[0], arr[1], arr[2]);
-    static IntVector2 Arr2IntVec2(int[] arr) => new(arr[0], arr[1]);
+    static Vector2 Arr2Vec2(List<float> arr) => new(arr[0], arr[1]);
+    static Vector3 Arr2Vec3(List<float> arr) => new(arr[0], arr[1], arr[2]);
+    static IntVector2 Arr2IntVec2(List<int> arr) => new(arr[0], arr[1]);
 
     public void UpdateRoom(Room room)
     {
@@ -165,9 +165,21 @@ sealed class RegionInfo : IJsonObject
     public static RegionInfo FromJSON(Dictionary<string, object> json)
     {
         var info = new RegionInfo((string)json["acronym"]);
-        info.fgcolors.AddRange(((float[][])json["fgcolors"]).Select(x => new Color(x[0], x[1], x[2])));
-        info.bgcolors.AddRange(((float[][])json["bgcolors"]).Select(x => new Color(x[0], x[1], x[2])));
-        info.sccolors.AddRange(((float[][])json["sccolors"]).Select(x => new Color(x[0], x[1], x[2])));
+        info.fgcolors.AddRange(
+            ((List<object>)json["fgcolors"])
+            .Select(x => (List<float>)x)
+            .Select(x => new Color(x[0], x[1], x[2]))
+        );
+        info.bgcolors.AddRange(
+            ((List<object>)json["bgcolors"])
+            .Select(x => (List<float>)x)
+            .Select(x => new Color(x[0], x[1], x[2]))
+        );
+        info.sccolors.AddRange(
+            ((List<object>)json["sccolors"])
+            .Select(x => (List<float>)x)
+            .Select(x => new Color(x[0], x[1], x[2]))
+        );
 
         if (json.ContainsKey("copyRooms"))
         {
@@ -179,7 +191,11 @@ sealed class RegionInfo : IJsonObject
             {
                 info.rooms.Add(kv.Key, RoomEntry.FromJSON((Dictionary<string, object>)kv.Value));
             }
-            info.connections.AddRange(((Dictionary<string, object>[])json["connections"]).Select(ConnectionEntry.FromJSON));
+            info.connections.AddRange(
+                ((List<object>)json["connections"])
+                .Select(x => (Dictionary<string, object>)x)
+                .Select(ConnectionEntry.FromJSON)
+            );
         }
 
         foreach (string s in (string[])json["conditionallinks"])
@@ -279,13 +295,13 @@ sealed class RegionInfo : IJsonObject
         {
             var entry = new RoomEntry((string)json["roomName"])
             {
-                canPos = Arr2Vec2((float[])json["canPos"]),
+                canPos = Arr2Vec2([.. ((List<object>)json["canPos"]).Select(x => (float)x)]),
                 canLayer = (int)json["canLayer"],
-                devPos = Arr2Vec2((float[])json["devPos"]),
+                devPos = Arr2Vec2([.. ((List<object>)json["devPos"]).Select(x => (float)x)]),
                 subregion = (string)json["subregion"],
-                cameras = json["cameras"] != null ? ((float[][])json["cameras"]).Select(Arr2Vec2).ToArray() : null,
-                nodes = json["nodes"] != null ? ((int[][])json["nodes"]).Select(Arr2IntVec2).ToArray() : null,
-                size = (int[])json["size"],
+                cameras = json["cameras"] != null ? ((List<object>)json["cameras"]).Select(x => (List<object>)x).Select(x => Arr2Vec2([.. x.Select(x => (float)x)])).ToArray() : null,
+                nodes = json["nodes"] != null ? ((List<object>)json["nodes"]).Select(x => (List<object>)x).Select(x => Arr2IntVec2([.. x.Select(x => (int)x)])).ToArray() : null,
+                size = ((List<object>)json["size"]).Select(x => (int)x).ToArray(),
             };
             // idk how to convert object to multidimensional array (not jagged array) since you have to specify dimensions when creating it and casting won't
             // so I just copy over everything lol
@@ -293,7 +309,7 @@ sealed class RegionInfo : IJsonObject
             {
                 var (w, h) = (entry.size[0], entry.size[1]);
                 entry.tiles = new int[w, h][];
-                var rawTiles = (int[][])json["tiles"];
+                var rawTiles = ((List<object>)json["tiles"]).Select(x => ((List<object>)x).Select(x => (int)x).ToArray()).ToList();
                 for (int i = 0; i < w; i++)
                 {
                     for (int j = 0; j < h; j++)
@@ -348,8 +364,8 @@ sealed class RegionInfo : IJsonObject
             var entry = (ConnectionEntry)FormatterServices.GetUninitializedObject(typeof(ConnectionEntry));
             entry.roomA = (string)json["roomA"];
             entry.roomB = (string)json["roomB"];
-            entry.posA = Arr2IntVec2((int[])json["posA"]);
-            entry.posB = Arr2IntVec2((int[])json["posB"]);
+            entry.posA = Arr2IntVec2([.. ((List<object>)json["posA"]).Select(x => (int)x)]);
+            entry.posB = Arr2IntVec2([.. ((List<object>)json["posB"]).Select(x => (int)x)]);
             entry.dirA = (int)json["dirA"];
             entry.dirB = (int)json["dirB"];
             return entry;
