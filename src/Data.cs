@@ -75,10 +75,9 @@ namespace MapExporter
                 // Queue data
                 if (json.ContainsKey("queue"))
                 {
-                    var regions = (List<object>)json["queue"];
-                    foreach (var obj in regions)
+                    var regions = ((List<object>)json["queue"]).Cast<Dictionary<string, object>>();
+                    foreach (var region in regions)
                     {
-                        var region = (Dictionary<string, object>)obj;
                         QueuedRegions.Enqueue(new QueueData((string)region["name"], [.. ((List<object>)region["scugs"]).Select(x => new SlugcatStats.Name((string)x, false))]));
                     }
                 }
@@ -95,7 +94,7 @@ namespace MapExporter
                     var regions = (Dictionary<string, object>)json["rendered"];
                     foreach (var region in regions)
                     {
-                        RenderedRegions.Add(new SlugcatStats.Name(region.Key, false), ((List<object>)region.Value).Select(x => (string)x).ToList());
+                        RenderedRegions.Add(new SlugcatStats.Name(region.Key, false), ((List<object>)region.Value).Cast<string>().ToList());
                     }
                 }
             }
