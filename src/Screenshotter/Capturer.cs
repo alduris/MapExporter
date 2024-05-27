@@ -196,7 +196,7 @@ namespace MapExporter.Screenshotter
                 game.cameras[0].MoveCamera(i);
                 game.cameras[0].virtualMicrophone.AllQuiet();
 
-                yield return new WaitForEndOfFrame();
+                yield return null;
                 yield return null; // wait an extra frame or two so objects can render, why not
 
                 if (screenshots)
@@ -213,7 +213,8 @@ namespace MapExporter.Screenshotter
                 // palette and colors
                 regionContent.LogPalette(game.cameras[0].currentPalette);
 
-                yield return null; // one extra frame after ??
+                yield return null; // extra frame or two for safety
+                yield return null;
             }
             Random.InitState(0);
             room.Abstractize();
