@@ -34,7 +34,7 @@ namespace MapExporter
 
             public bool Equals(QueueData other)
             {
-                return acronym.Equals(other.acronym);
+                return acronym.Equals(other.acronym, StringComparison.InvariantCultureIgnoreCase);
             }
 
             public bool Equals(string other)
@@ -92,9 +92,26 @@ namespace MapExporter
                 if (json.ContainsKey("rendered"))
                 {
                     var regions = (Dictionary<string, object>)json["rendered"];
-                    foreach (var region in regions)
+                    foreach (var scugRegions in regions)
                     {
-                        RenderedRegions.Add(new SlugcatStats.Name(region.Key, false), ((List<object>)region.Value).Cast<string>().ToList());
+                        var scug = new SlugcatStats.Name(scugRegions.Key, false);
+                        var savedList = ((List<object>)scugRegions.Value).Cast<string>().ToList();
+
+                        // Make sure the regions still exist in our file system
+                        var foundList = new List<string>();
+                        foreach (var region in savedList)
+                        {
+                            if (Directory.Exists(RenderOutputDir(scugRegions.Key, region)))
+                            {
+                                foundList.Add(region);
+                            }
+                        }
+
+                        // Don't add the scug to the list if they have no rendered regions in the file system
+                        if (foundList.Count > 0)
+                        {
+                            RenderedRegions.Add(scug, foundList);
+                        }
                     }
                 }
             }

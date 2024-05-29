@@ -9,17 +9,17 @@ using MapExporter.Screenshotter;
 
 namespace MapExporter;
 
-sealed class RegionInfo : IJsonObject
+internal sealed class RegionInfo : IJsonObject
 {
-    readonly Dictionary<string, RoomEntry> rooms = [];
-    readonly List<ConnectionEntry> connections = [];
-    readonly string acronym;
-    readonly List<Color> fgcolors = [];
-    readonly List<Color> bgcolors = [];
-    readonly List<Color> sccolors = [];
-    readonly HashSet<string> worldConditionalLinks = [];
-    readonly HashSet<string> worldCreatures = [];
-    readonly HashSet<string> worldRoomTags = [];
+    public readonly Dictionary<string, RoomEntry> rooms = [];
+    public readonly List<ConnectionEntry> connections = [];
+    public readonly string acronym;
+    public readonly List<Color> fgcolors = [];
+    public readonly List<Color> bgcolors = [];
+    public readonly List<Color> sccolors = [];
+    public readonly HashSet<string> worldConditionalLinks = [];
+    public readonly HashSet<string> worldCreatures = [];
+    public readonly HashSet<string> worldRoomTags = [];
 
     public string copyRooms;
 
@@ -166,16 +166,16 @@ sealed class RegionInfo : IJsonObject
     {
         var info = new RegionInfo((string)json["acronym"]);
         info.fgcolors.AddRange(
-            ((List<object>)json["fgcolors"]).Cast<List<float>>()
-            .Select(x => new Color(x[0], x[1], x[2]))
+            ((List<object>)json["fgcolors"]).Cast<List<object>>()
+            .Select(x => new Color((float)(double)x[0], (float)(double)x[1], (float)(double)x[2]))
         );
         info.bgcolors.AddRange(
-            ((List<object>)json["bgcolors"]).Cast<List<float>>()
-            .Select(x => new Color(x[0], x[1], x[2]))
+            ((List<object>)json["bgcolors"]).Cast<List<object>>()
+            .Select(x => new Color((float)(double)x[0], (float)(double)x[1], (float)(double)x[2]))
         );
         info.sccolors.AddRange(
-            ((List<object>)json["sccolors"]).Cast<List<float>>()
-            .Select(x => new Color(x[0], x[1], x[2]))
+            ((List<object>)json["sccolors"]).Cast<List<object>>()
+            .Select(x => new Color((float)(double)x[0], (float)(double)x[1], (float)(double)x[2]))
         );
 
         if (json.ContainsKey("copyRooms"))
@@ -222,7 +222,7 @@ sealed class RegionInfo : IJsonObject
         sccolors.Add(sc);
     }
 
-    sealed class RoomEntry(string roomName) : IJsonObject
+    public sealed class RoomEntry(string roomName) : IJsonObject
     {
         public string roomName = roomName;
 
@@ -291,13 +291,13 @@ sealed class RegionInfo : IJsonObject
         {
             var entry = new RoomEntry((string)json["roomName"])
             {
-                canPos = Arr2Vec2([.. ((List<object>)json["canPos"]).Cast<float>()]),
-                canLayer = (int)json["canLayer"],
-                devPos = Arr2Vec2([.. ((List<object>)json["devPos"]).Cast<float>()]),
+                canPos = Arr2Vec2([.. ((List<object>)json["canPos"]).Select(x => (float)(double)x)]),
+                canLayer = (int)(long)json["canLayer"],
+                devPos = Arr2Vec2([.. ((List<object>)json["devPos"]).Select(x => (float)(double)x)]),
                 subregion = (string)json["subregion"],
-                cameras = json["cameras"] != null ? ((List<object>)json["cameras"]).Cast<List<object>>().Select(x => Arr2Vec2([.. x.Cast<float>()])).ToArray() : null,
-                nodes = json["nodes"] != null ? ((List<object>)json["nodes"]).Cast<List<object>>().Select(x => Arr2IntVec2([.. x.Cast<int>()])).ToArray() : null,
-                size = ((List<object>)json["size"]).Cast<int>().ToArray(),
+                cameras = json["cameras"] != null ? ((List<object>)json["cameras"]).Cast<List<object>>().Select(x => Arr2Vec2([.. x.Select(x => (float)(double)x)])).ToArray() : null,
+                nodes = json["nodes"] != null ? ((List<object>)json["nodes"]).Cast<List<object>>().Select(x => Arr2IntVec2([.. x.Select(x => (int)(long)x)])).ToArray() : null,
+                size = json["size"] != null ? ((List<object>)json["size"]).Select(x => (int)(long)x).ToArray() : null
             };
 
             // idk how to convert object to multidimensional array (not jagged array) since you have to specify dimensions when creating it and casting won't
@@ -306,7 +306,7 @@ sealed class RegionInfo : IJsonObject
             {
                 var (w, h) = (entry.size[0], entry.size[1]);
                 entry.tiles = new int[w, h][];
-                var rawTiles = ((List<object>)json["tiles"]).Select(x => ((List<object>)x).Cast<int>().ToArray()).ToList();
+                var rawTiles = ((List<object>)json["tiles"]).Select(x => ((List<object>)x).Select(x => (int)(long)x).ToArray()).ToList();
                 for (int i = 0; i < w; i++)
                 {
                     for (int j = 0; j < h; j++)
@@ -323,7 +323,7 @@ sealed class RegionInfo : IJsonObject
         }
     }
 
-    sealed class ConnectionEntry : IJsonObject
+    public sealed class ConnectionEntry : IJsonObject
     {
         public string roomA;
         public string roomB;
@@ -361,10 +361,10 @@ sealed class RegionInfo : IJsonObject
             var entry = (ConnectionEntry)FormatterServices.GetUninitializedObject(typeof(ConnectionEntry));
             entry.roomA = (string)json["roomA"];
             entry.roomB = (string)json["roomB"];
-            entry.posA = Arr2IntVec2([.. ((List<object>)json["posA"]).Cast<int>()]);
-            entry.posB = Arr2IntVec2([.. ((List<object>)json["posB"]).Cast<int>()]);
-            entry.dirA = (int)json["dirA"];
-            entry.dirB = (int)json["dirB"];
+            entry.posA = Arr2IntVec2([.. ((List<object>)json["posA"]).Select(x => (int)(long)x)]);
+            entry.posB = Arr2IntVec2([.. ((List<object>)json["posB"]).Select(x => (int)(long)x)]);
+            entry.dirA = (int)(long)json["dirA"];
+            entry.dirB = (int)(long)json["dirB"];
             return entry;
         }
     }
