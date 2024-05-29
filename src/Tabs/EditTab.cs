@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MapExporter.Tabs.UI;
 using Menu.Remix.MixedUI;
 using MoreSlugcats;
 using UnityEngine;
@@ -41,9 +42,15 @@ namespace MapExporter.Tabs
             const float BODY_LEFT_WIDTH = MENU_SIZE / 3;
             const float BODY_RIGHT_WIDTH = MENU_SIZE - BODY_LEFT_WIDTH;
             const float TOPBAR_HEIGHT = 30f + SIDE_PADDING + ITEM_GAP;
-            roomSelector = new(new Vector2(SIDE_PADDING, SIDE_PADDING), new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT), 0, false, true, true);
+            roomSelector = new(
+                new Vector2(SIDE_PADDING, SIDE_PADDING),
+                new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT),
+                0, false, true, true);
             var mapSize = BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2; // trying to make it a square
-            roomOptions = new(new Vector2(BODY_LEFT_WIDTH + ITEM_GAP / 2, SIDE_PADDING), new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, roomSelector.size.y - mapSize - ITEM_GAP), 0, true, true, true);
+            roomOptions = new(
+                new Vector2(BODY_LEFT_WIDTH + ITEM_GAP / 2, SIDE_PADDING),
+                new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, roomSelector.size.y - mapSize - ITEM_GAP),
+                0, true, true, true);
             var mapBox = new OpRect(new(roomOptions.pos.x, roomSelector.pos.y + roomSelector.size.y - mapSize), new(mapSize, mapSize));
 
             // Add the items
@@ -110,6 +117,7 @@ namespace MapExporter.Tabs
                 el.tab.items.Remove(el);
             }
             roomSelector.items.Clear();
+            roomSelector.SetContentSize(0);
 
             foreach (var el in roomOptions.items)
             {
@@ -117,11 +125,14 @@ namespace MapExporter.Tabs
                 el.tab.items.Remove(el);
             }
             roomOptions.items.Clear();
+            roomOptions.SetContentSize(0);
 
             // Don't put any new stuff if there is no region
             var scug = new SlugcatStats.Name(scugSelector.value, false);
             Plugin.Logger.LogDebug("oh?");
-            if (acronym == null || !Region.GetFullRegionOrder().Contains(acronym) || scug.Index == -1) return;
+            if (acronym == null || scug.Index == -1 || !Data.RenderedRegions.ContainsKey(scug) ||
+                !Data.RenderedRegions[scug].Contains(acronym, StringComparer.InvariantCultureIgnoreCase))
+                return;
 
             // Find the room list and add its contents
             if (File.Exists(Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json")))
@@ -131,8 +142,9 @@ namespace MapExporter.Tabs
                 const float LIST_LH = 24f;
                 const float SCROLL_WIDTH = OIUtil.SLIDER_WIDTH;
 
-                var region = RegionInfo.FromJSON((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json"))));
-                var roomList = region.rooms.Keys.OrderBy(x => x).ToList();
+                var region = RegionInfo.FromJSON((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
+                    Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json"))));
+                var roomList = region.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
 
                 float y = roomSelector.size.y - LIST_EDGE_PAD;
                 float height = LIST_EDGE_PAD * 2;
@@ -141,13 +153,12 @@ namespace MapExporter.Tabs
                     Plugin.Logger.LogDebug(room);
                     y -= LIST_LH;
                     height += LIST_LH;
-                    var button = new OpSimpleButton(new Vector2(LIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - LIST_EDGE_PAD * 2 - SCROLL_WIDTH, LIST_LH), room)
+                    var button = new OpTextButton(new Vector2(LIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - LIST_EDGE_PAD * 2 - SCROLL_WIDTH, LIST_LH), room)
                     {
                         alignment = FLabelAlignment.Left
                     };
                     button.OnFocusGet += (_) => FocusRoom(room);
-                    button.OnClick += (_) => FocusRoom(room);
-                    OIUtil.AddClearButton(button);
+                    button.OnClick += (_) => SwitchToRoom(room);
                     roomSelector.AddItems(button);
                 }
                 roomSelector.SetContentSize(height);
@@ -160,12 +171,12 @@ namespace MapExporter.Tabs
 
         private void FocusRoom(string room)
         {
-            //
+            Plugin.Logger.LogDebug($"Room: {room}");
         }
 
         private void SwitchToRoom(string room)
         {
-            //
+            Plugin.Logger.LogDebug($"Switch to room {room}");
         }
     }
 }

@@ -13,7 +13,6 @@ using MoreSlugcats;
 using RWCustom;
 using MapExporter.Screenshotter;
 using Random = UnityEngine.Random;
-using MapExporter.Tabs;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -99,7 +98,6 @@ sealed class Plugin : BaseUnityPlugin
                     orig(self);
                     MachineConnector.SetRegisteredOI(MOD_ID, new UI());
                     Logger.LogDebug("UI registered");
-                    OIUtil.ApplyHooks();
                 };
             }
         }
