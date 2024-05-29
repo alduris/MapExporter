@@ -372,7 +372,11 @@ namespace MapExporter.Tabs
                     {
                         if (Data.RenderedRegions.TryGetValue(scug, out var list))
                         {
-                            list.Add(data.acronym);
+                            if (!list.Contains(data.acronym))
+                            {
+                                // Don't add duplicate acronyms (oops)
+                                list.Add(data.acronym);
+                            }
                         }
                         else
                         {
