@@ -10,15 +10,14 @@ namespace MapExporter.Screenshotter
     internal class Capturer
     {
 
-        public static readonly Dictionary<string, int[]> blacklistedCams = new()
+        public static readonly Dictionary<string, int[]> blacklistedCams = new() // one indexed
         {
-            { "SU_B13", new int[]{2} }, // one indexed
+            { "SU_B13", new int[]{2} },
             { "GW_S08", new int[]{2} }, // in vanilla only
             { "SL_C01", new int[]{4,5} }, // crescent order or will break
         };
         public static string regionRendering = "SU"; // in case something drastic goes wrong, this is the default
         public static readonly Queue<string> slugsRendering = [];
-        public static readonly bool screenshots = true;
 
         public static bool NotHiddenRoom(AbstractRoom room) => !HiddenRoom(room);
         public static bool HiddenRoom(AbstractRoom room)
@@ -196,24 +195,16 @@ namespace MapExporter.Screenshotter
                 game.cameras[0].MoveCamera(i);
                 game.cameras[0].virtualMicrophone.AllQuiet();
 
+                yield return new WaitForEndOfFrame(); // wait an extra frame or two so objects can render, why not
                 yield return null;
-                yield return null; // wait an extra frame or two so objects can render, why not
 
-                if (screenshots)
-                {
-                    string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
-                    ScreenCapture.CaptureScreenshot(filename); // Overwrite it anyway because that's probably what the user wants
-
-                    /*if (!File.Exists(filename))
-                    {
-                        ScreenCapture.CaptureScreenshot(filename);
-                    }*/
-                }
+                string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
+                ScreenCapture.CaptureScreenshot(filename); // Overwrite it anyway because that's probably what the user wants
 
                 // palette and colors
                 regionContent.LogPalette(game.cameras[0].currentPalette);
 
-                yield return null; // extra frame or two for safety
+                yield return new WaitForEndOfFrame(); // extra frame or two for safety
                 yield return null;
             }
             Random.InitState(0);
