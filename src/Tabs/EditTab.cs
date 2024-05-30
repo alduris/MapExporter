@@ -110,7 +110,6 @@ namespace MapExporter.Tabs
 
         private void RegionSelector_OnValueChanged(UIconfig config, string acronym, string oldAcronym)
         {
-            Plugin.Logger.LogDebug("EEEEE");
             if (acronym == oldAcronym) return;
 
             // Remove items from boxes
@@ -132,7 +131,6 @@ namespace MapExporter.Tabs
 
             // Don't put any new stuff if there is no region
             var scug = new SlugcatStats.Name(scugSelector.value, false);
-            Plugin.Logger.LogDebug("oh?");
             if (acronym == null || scug.Index == -1 || !Data.RenderedRegions.ContainsKey(scug) ||
                 !Data.RenderedRegions[scug].Contains(acronym, StringComparer.InvariantCultureIgnoreCase))
             {
@@ -143,7 +141,6 @@ namespace MapExporter.Tabs
             // Find the room list and add its contents
             if (File.Exists(Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json")))
             {
-                Plugin.Logger.LogDebug("2");
                 const float LIST_EDGE_PAD = 6f;
                 const float LIST_LH = 24f;
                 const float SCROLL_WIDTH = OIUtil.SLIDER_WIDTH;
@@ -156,7 +153,6 @@ namespace MapExporter.Tabs
                 float height = LIST_EDGE_PAD * 2;
                 foreach (var room in roomList)
                 {
-                    Plugin.Logger.LogDebug(room);
                     y -= LIST_LH;
                     height += LIST_LH;
                     var button = new OpTextButton(new Vector2(LIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - LIST_EDGE_PAD * 2 - SCROLL_WIDTH, LIST_LH), room)
@@ -174,15 +170,10 @@ namespace MapExporter.Tabs
                 roomSelector.SetContentSize(height);
                 mapBox.LoadRegion(activeRegion);
             }
-            else
-            {
-                Plugin.Logger.LogDebug("BWAJHSDF:LKJLSDF");
-            }
         }
 
         private void SwitchToRoom(string room)
         {
-            Plugin.Logger.LogDebug($"Switch to room {room}");
             mapBox.FocusRoom(room);
         }
     }
