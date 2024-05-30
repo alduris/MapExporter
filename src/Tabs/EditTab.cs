@@ -15,6 +15,8 @@ namespace MapExporter.Tabs
         private OpComboBox regionSelector;
         private OpScrollBox roomSelector;
         private OpScrollBox roomOptions;
+        private OpMapBox mapBox;
+        private WeakReference<OpTextButton> activeButton = new(null);
 
         private RegionInfo activeRegion = null;
 
@@ -51,7 +53,7 @@ namespace MapExporter.Tabs
                 new Vector2(BODY_LEFT_WIDTH + ITEM_GAP / 2, SIDE_PADDING),
                 new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, roomSelector.size.y - mapSize - ITEM_GAP),
                 0, true, true, true);
-            var mapBox = new OpRect(new(roomOptions.pos.x, roomSelector.pos.y + roomSelector.size.y - mapSize), new(mapSize, mapSize));
+            mapBox = new OpMapBox(new(roomOptions.pos.x, roomSelector.pos.y + roomSelector.size.y - mapSize), new(mapSize, mapSize));
 
             // Add the items
             AddItems(
@@ -65,6 +67,7 @@ namespace MapExporter.Tabs
                 scugSelector,
                 new OpLabel(new Vector2(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "EDIT MAP", FLabelAlignment.Center, true)
             );
+            mapBox.Initialize();
         }
 
         public override void Update()
@@ -132,7 +135,10 @@ namespace MapExporter.Tabs
             Plugin.Logger.LogDebug("oh?");
             if (acronym == null || scug.Index == -1 || !Data.RenderedRegions.ContainsKey(scug) ||
                 !Data.RenderedRegions[scug].Contains(acronym, StringComparer.InvariantCultureIgnoreCase))
+            {
+                mapBox.UnloadRegion();
                 return;
+            }
 
             // Find the room list and add its contents
             if (File.Exists(Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json")))
@@ -142,9 +148,9 @@ namespace MapExporter.Tabs
                 const float LIST_LH = 24f;
                 const float SCROLL_WIDTH = OIUtil.SLIDER_WIDTH;
 
-                var region = RegionInfo.FromJSON((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
+                activeRegion = RegionInfo.FromJSON((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
                     Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json"))));
-                var roomList = region.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
+                var roomList = activeRegion.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
 
                 float y = roomSelector.size.y - LIST_EDGE_PAD;
                 float height = LIST_EDGE_PAD * 2;
@@ -157,11 +163,16 @@ namespace MapExporter.Tabs
                     {
                         alignment = FLabelAlignment.Left
                     };
-                    button.OnFocusGet += (_) => FocusRoom(room);
-                    button.OnClick += (_) => SwitchToRoom(room);
+                    button.OnClick += (_) => {
+                        if (activeButton.TryGetTarget(out var oldButton)) oldButton.Active = false;
+                        button.Active = true;
+                        activeButton.SetTarget(button);
+                        SwitchToRoom(room);
+                    };
                     roomSelector.AddItems(button);
                 }
                 roomSelector.SetContentSize(height);
+                mapBox.LoadRegion(activeRegion);
             }
             else
             {
@@ -169,14 +180,10 @@ namespace MapExporter.Tabs
             }
         }
 
-        private void FocusRoom(string room)
-        {
-            Plugin.Logger.LogDebug($"Room: {room}");
-        }
-
         private void SwitchToRoom(string room)
         {
             Plugin.Logger.LogDebug($"Switch to room {room}");
+            mapBox.FocusRoom(room);
         }
     }
 }
