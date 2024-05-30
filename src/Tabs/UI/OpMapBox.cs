@@ -12,7 +12,7 @@ namespace MapExporter.Tabs.UI
         private OpImage opImage = null;
         private Texture2D texture = null;
         private bool mapDirty = false;
-        private string focusRoom = null;
+        private string activeRoom = null;
 
         private static readonly int[] OFFSCREEN_SIZE = [10, 10];
         private static readonly Color FOCUS_COLOR = new(0.9f, 0.9f, 1f);
@@ -29,6 +29,7 @@ namespace MapExporter.Tabs.UI
 
         public void Initialize()
         {
+            if (texture != null) return;
             texture = new Texture2D(Mathf.CeilToInt(size.x), Mathf.CeilToInt(size.y), TextureFormat.ARGB32, false);
             opImage = new OpImage(new(0, 0), texture)
             {
@@ -55,9 +56,9 @@ namespace MapExporter.Tabs.UI
 
                 // Figure out our draw area
                 Vector2 drawPosition = new(0, 0);
-                if (focusRoom != null)
+                if (activeRoom != null)
                 {
-                    var room = activeRegion.rooms[focusRoom];
+                    var room = activeRegion.rooms[activeRoom];
                     var size = room.size ?? OFFSCREEN_SIZE;
                     drawPosition = room.devPos + new Vector2(size[0], size[1]) / 2;
                 }
@@ -114,7 +115,7 @@ namespace MapExporter.Tabs.UI
                     }
 
                     // Give it a border if it is the focused room
-                    if (room.roomName == focusRoom)
+                    if (activeRoom != null && room.roomName == activeRoom)
                     {
                         // Top
                         if (startY - 1 >= drawArea.yMin)
@@ -212,7 +213,7 @@ namespace MapExporter.Tabs.UI
         public void LoadRegion(RegionInfo region)
         {
             activeRegion = region;
-            focusRoom = null;
+            activeRoom = null;
             mapDirty = true;
         }
 
@@ -221,20 +222,20 @@ namespace MapExporter.Tabs.UI
             if (activeRegion != null)
             {
                 activeRegion = null;
-                focusRoom = null;
+                activeRoom = null;
                 mapDirty = true;
             }
         }
 
         public void FocusRoom(string roomName)
         {
-            if (roomName == focusRoom || !activeRegion.rooms.ContainsKey(roomName))
+            if (roomName == activeRoom || !activeRegion.rooms.ContainsKey(roomName))
             {
                 PlaySound(SoundID.MENU_Error_Ping);
                 return;
             }
 
-            focusRoom = roomName;
+            activeRoom = roomName;
             mapDirty = true;
         }
 
