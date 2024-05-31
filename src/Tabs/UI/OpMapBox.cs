@@ -9,14 +9,15 @@ namespace MapExporter.Tabs.UI
     internal class OpMapBox : OpScrollBox
     {
         private RegionInfo activeRegion = null;
-        private OpImage opImage = null;
+        private OpImage mapOpImage = null;
         private Texture2D texture = null;
         private bool mapDirty = false;
         private string activeRoom = null;
 
         private static readonly int[] OFFSCREEN_SIZE = [10, 10];
-        private static readonly Color FOCUS_COLOR = new(0.9f, 0.9f, 1f);
-        private static readonly Color CONNECTION_COLOR = new(1f, 1f, 1f);
+        private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
+        private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
+        private static readonly Color CAMERA_COLOR = new(1f, 1f, 0.5f);
 
         public OpMapBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, contentSize, horizontal, hasSlideBar)
         {
@@ -31,12 +32,12 @@ namespace MapExporter.Tabs.UI
         {
             if (texture != null) return;
             texture = new Texture2D(Mathf.CeilToInt(size.x), Mathf.CeilToInt(size.y), TextureFormat.ARGB32, false);
-            opImage = new OpImage(new(0, 0), texture)
+            mapOpImage = new OpImage(new(0, 0), texture)
             {
                 color = new Color(0f, 0f, 0f, 0f),
                 //scale = new Vector2(2f, 2f)
             };
-            AddItems(opImage);
+            AddItems(mapOpImage);
             ClearCanvas();
         }
 
@@ -47,6 +48,22 @@ namespace MapExporter.Tabs.UI
             {
                 mapDirty = false;
                 ClearCanvas();
+
+                // Remove old labels
+                List<UIelement> toRemove = [];
+                foreach (var item in items)
+                {
+                    if (item != mapOpImage)
+                    {
+                        toRemove.Add(item);
+                    }
+                }
+                foreach (var item in toRemove)
+                {
+                    item.Deactivate();
+                    item.tab.items.Remove(item);
+                    items.Remove(item);
+                }
 
                 // Draw nothing if there is no active region
                 if (activeRegion == null)
@@ -85,7 +102,7 @@ namespace MapExporter.Tabs.UI
 
                     Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2();
                     Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2();
-                    if (LineIntersectsRect(drawArea, A, B))
+                    if (drawArea.Contains(A) || drawArea.Contains(B) || LineIntersectsRect(drawArea, A, B))
                     {
                         showConns.Add(conn);
                     }
@@ -114,95 +131,33 @@ namespace MapExporter.Tabs.UI
                         }
                     }
 
+                    // Draw camera outlines
+                    if (room.cameras != null)
+                    {
+                        foreach (var cam in room.cameras)
+                        {
+                            // Cameras are 1400x800, tiles are 20x20. Using this, we can determine cameras here should be 70x40 pixels.
+                            DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, new Vector2(70f, 40f), CAMERA_COLOR, 1);
+                        }
+                    }
+
                     // Give it a border if it is the focused room
                     if (activeRoom != null && room.roomName == activeRoom)
                     {
-                        // Top
-                        if (startY - 1 >= drawArea.yMin)
-                        {
-                            for (int i = -1; i <= size[0]; i++)
-                            {
-                                if (startX + i < drawArea.xMin || startX + i > drawArea.xMax) continue;
-                                var p = new Vector2(startX + i - drawBL.x, startY - 1 - drawBL.y);
-                                texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), FOCUS_COLOR);
-                            }
-                        }
-                        // Bottom
-                        if (startY + size[1] <= drawArea.yMax)
-                        {
-                            for (int i = -1; i <= size[0]; i++)
-                            {
-                                if (startX + i < drawArea.xMin || startX + i > drawArea.xMax) continue;
-                                var p = new Vector2(startX + i - drawBL.x, startY + size[1] - drawBL.y);
-                                texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), FOCUS_COLOR);
-                            }
-                        }
-                        // Left
-                        if (startX - 1 >= drawArea.xMin)
-                        {
-                            for (int j = 0; j < size[1]; j++)
-                            {
-                                if (startY + j < drawArea.yMin || startY + j > drawArea.yMax) continue;
-                                var p = new Vector2(startX - 1 - drawBL.x, startY + j - drawBL.y);
-                                texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), FOCUS_COLOR);
-                            }
-                        }
-                        // Right
-                        if (startX + size[0] <= drawArea.xMax)
-                        {
-                            for (int j = 0; j < size[1]; j++)
-                            {
-                                if (startY + j < drawArea.yMin || startY + j > drawArea.yMax) continue;
-                                var p = new Vector2(startX + size[0] - drawBL.x, startY + j - drawBL.y);
-                                texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), FOCUS_COLOR);
-                            }
-                        }
+                        DrawRectOutline(new Vector2(startX - 1, startY - 1) - drawBL, new Vector2(size[0] + 2, size[1] + 2), FOCUS_COLOR, 2);
                     }
+
+                    // Give it an OpLabel name
+                    AddItems(new OpLabel(startX - drawBL.x, startY + size[1] - drawBL.y, room.roomName == activeRoom ? "> " + room.roomName : room.roomName));
                 }
 
                 // Draw connections
                 foreach (var conn in showConns)
                 {
-                    Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2();
-                    Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2();
+                    Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2() - drawBL;
+                    Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2() - drawBL;
 
-                    float dy = B.y - A.y;
-                    float dx = B.x - A.x;
-
-                    if (Mathf.Abs(dx) >= Mathf.Abs(dy))
-                    {
-                        if (A.x > B.x)
-                        {
-                            (B, A) = (A, B);
-                            dy = B.y - A.y;
-                            dx = B.x - A.x;
-                        }
-                        float m = dy / dx;
-
-                        for (int x = Mathf.RoundToInt(A.x); x < Mathf.RoundToInt(B.x); x++)
-                        {
-                            float y = A.y + m * (x - A.x);
-                            var p = new Vector2(x - drawBL.x, y - drawBL.y);
-                            texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), CONNECTION_COLOR);
-                        }
-                    }
-                    else
-                    {
-                        if (A.y > B.y)
-                        {
-                            (B, A) = (A, B);
-                            dy = B.y - A.y;
-                            dx = B.x - A.x;
-                        }
-                        float m = dx / dy;
-
-                        for (int y = Mathf.RoundToInt(A.y); y < Mathf.RoundToInt(B.y); y++)
-                        {
-                            float x = A.x + m * (y - A.y);
-                            var p = new Vector2(x - drawBL.x, y - drawBL.y);
-                            texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), CONNECTION_COLOR);
-                        }
-                    }
+                    DrawLine(A, B, CONNECTION_COLOR, 1);
                 }
 
                 // Apply texture so it actually shows lol
@@ -229,7 +184,7 @@ namespace MapExporter.Tabs.UI
 
         public void FocusRoom(string roomName)
         {
-            if (roomName == activeRoom || !activeRegion.rooms.ContainsKey(roomName))
+            if (roomName == activeRoom || (roomName != null && !activeRegion.rooms.ContainsKey(roomName)))
             {
                 PlaySound(SoundID.MENU_Error_Ping);
                 return;
@@ -239,18 +194,162 @@ namespace MapExporter.Tabs.UI
             mapDirty = true;
         }
 
+        public void UpdateMap()
+        {
+            mapDirty = true;
+        }
+
         private void ClearCanvas()
         {
-            texture.Resize(1, 1);
-            texture.SetPixel(0, 0, new Color(0f, 0f, 0f, 0f));
-            texture.Resize(Mathf.CeilToInt(size.x), Mathf.CeilToInt(size.y));
+            var fillColor = new Color(0f, 0f, 0f, 0f);
+            var fillColorArray = texture.GetPixels();
+
+            for (var i = 0; i < fillColorArray.Length; ++i)
+            {
+                fillColorArray[i] = fillColor;
+            }
+            texture.SetPixels(fillColorArray);
+
             UpdateTexture();
         }
 
         private void UpdateTexture()
         {
+            texture.filterMode = FilterMode.Point;
             texture.Apply();
-            (opImage.sprite as FTexture).SetTexture(texture);
+            (mapOpImage.sprite as FTexture).SetTexture(texture);
+        }
+
+        private void DrawRectOutline(Vector2 pos, Vector2 size, Color color, int width = 1)
+        {
+            pos = new Vector2(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
+            size = new Vector2(Mathf.RoundToInt(size.x), Mathf.RoundToInt(size.y));
+            width--;
+            // Top
+            if (pos.y >= 0)
+            {
+                for (int i = -width; i < size.x + width; i++)
+                {
+                    int x = Mathf.RoundToInt(pos.x + i), y = Mathf.RoundToInt(pos.y);
+                    if (x < 0 || x >= texture.width) continue;
+                    texture.SetPixel(x, y, color);
+
+                    for (int j = 1; j <= width; j++)
+                    {
+                        texture.SetPixel(x, y - j, color);
+                    }
+                }
+            }
+            // Bottom
+            if (pos.y + size.y - 1 < texture.height)
+            {
+                for (int i = -width; i < size.x + width; i++)
+                {
+                    int x = Mathf.RoundToInt(pos.x + i), y = Mathf.RoundToInt(pos.y + size.y - 1);
+                    if (x < 0 || x >= texture.width) continue;
+                    texture.SetPixel(x, y, color);
+
+                    for (int j = 1; j <= width; j++)
+                    {
+                        texture.SetPixel(x, y + j, color);
+                    }
+                }
+            }
+            // Left
+            if (pos.x >= 0)
+            {
+                for (int j = -width; j < size.y + width; j++)
+                {
+                    int x = Mathf.RoundToInt(pos.x), y = Mathf.RoundToInt(pos.y + j);
+                    if (y < 0 || y >= texture.height) continue;
+                    texture.SetPixel(x, y, color);
+
+                    for (int i = 1; i <= width; i++)
+                    {
+                        texture.SetPixel(x - i, y, color);
+                    }
+                }
+            }
+            // Right
+            if (pos.x + size.x - 1 < texture.width)
+            {
+                for (int j = -width; j < size.y + width; j++)
+                {
+                    int x = Mathf.RoundToInt(pos.x + size.x - 1), y = Mathf.RoundToInt(pos.y + j);
+                    if (y < 0 || y >= texture.height) continue;
+                    texture.SetPixel(x, y, color);
+
+                    for (int i = 1; i <= width; i++)
+                    {
+                        texture.SetPixel(x + i, y, color);
+                    }
+                }
+            }
+        }
+
+        private void DrawLine(Vector2 A, Vector2 B, Color color, int width = 1)
+        {
+            float dy = B.y - A.y;
+            float dx = B.x - A.x;
+
+            if (Mathf.Abs(dx) >= Mathf.Abs(dy))
+            {
+                if (A.x > B.x)
+                {
+                    (B, A) = (A, B);
+                    dy = B.y - A.y;
+                    dx = B.x - A.x;
+                }
+                float m = dy / dx;
+
+                for (int x = Mathf.RoundToInt(A.x); x < Mathf.RoundToInt(B.x); x++)
+                {
+                    if (x < 0 || x >= texture.width) continue;
+                    int y = Mathf.RoundToInt(A.y + m * (x - A.x));
+                    if (y < 0 || y >= texture.height) continue;
+                    texture.SetPixel(x, y, color);
+                    if (width > 1)
+                    {
+                        for (int i = 1; i <= Mathf.CeilToInt(width / 2f); i++)
+                        {
+                            texture.SetPixel(x, y + i, color);
+                        }
+                        for (int i = 1; i <= Mathf.FloorToInt(width / 2f); i++)
+                        {
+                            texture.SetPixel(x, y - i, color);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (A.y > B.y)
+                {
+                    (B, A) = (A, B);
+                    dy = B.y - A.y;
+                    dx = B.x - A.x;
+                }
+                float m = dx / dy;
+
+                for (int y = Mathf.RoundToInt(A.y); y < Mathf.RoundToInt(B.y); y++)
+                {
+                    if (y < 0 || y >= texture.height) continue;
+                    int x = Mathf.RoundToInt(A.x + m * (y - A.y));
+                    if (x < 0 || x >= texture.width) continue;
+                    texture.SetPixel(x, y, color);
+                    if (width > 1)
+                    {
+                        for (int i = 1; i <= Mathf.CeilToInt(width / 2f); i++)
+                        {
+                            texture.SetPixel(x + i, y, color);
+                        }
+                        for (int i = 1; i <= Mathf.FloorToInt(width / 2f); i++)
+                        {
+                            texture.SetPixel(x - i, y, color);
+                        }
+                    }
+                }
+            }
         }
 
         private static bool LineIntersectsRect(Rect self, Vector2 A, Vector2 B)
@@ -268,11 +367,14 @@ namespace MapExporter.Tabs.UI
             float xu = (self.yMax - b) / m;
 
             return
-                (xl > self.xMin && xl < self.xMax) ||
-                (xu > self.xMin && xu < self.xMax) ||
-                (yl > self.yMin && yl < self.yMax) ||
-                (yu > self.yMin && yu < self.yMax);
+                (xl > self.xMin && xl < self.xMax && In01(InvLerpUnclamped(A.x, B.x, xl))) ||
+                (xu > self.xMin && xu < self.xMax && In01(InvLerpUnclamped(A.x, B.x, xu))) ||
+                (yl > self.yMin && yl < self.yMax && In01(InvLerpUnclamped(A.y, B.y, yl))) ||
+                (yu > self.yMin && yu < self.yMax && In01(InvLerpUnclamped(A.y, B.y, yu)));
         }
+
+        private static float InvLerpUnclamped(float a, float b, float x) => (x - a) / (b - a);
+        private static bool In01(float val) => val >= 0 && val <= 1;
 
         private static Color GetTileColor(int[] tile)
         {

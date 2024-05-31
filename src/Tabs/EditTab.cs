@@ -160,10 +160,19 @@ namespace MapExporter.Tabs
                         alignment = FLabelAlignment.Left
                     };
                     button.OnClick += (_) => {
-                        if (activeButton.TryGetTarget(out var oldButton)) oldButton.Active = false;
-                        button.Active = true;
-                        activeButton.SetTarget(button);
-                        SwitchToRoom(room);
+                        if (button.Active)
+                        {
+                            button.Active = false;
+                            activeButton.SetTarget(null);
+                            SwitchToRoom(null);
+                        }
+                        else
+                        {
+                            if (activeButton.TryGetTarget(out var oldButton)) oldButton.Active = false;
+                            button.Active = true;
+                            activeButton.SetTarget(button);
+                            SwitchToRoom(room);
+                        }
                     };
                     roomSelector.AddItems(button);
                 }
