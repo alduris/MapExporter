@@ -9,38 +9,38 @@ using UnityEngine;
 
 namespace MapExporter.Tabs
 {
-    internal class EditTab : BaseTab
+    internal class EditTab(OptionInterface owner) : BaseTab(owner, "Editor")
     {
         private OpComboBox scugSelector;
         private OpComboBox regionSelector;
         private OpScrollBox roomSelector;
-        private OpScrollBox roomOptions;
+        private OpControlBox controlBox;
         private OpMapBox mapBox;
-        private WeakReference<OpTextButton> activeButton = new(null);
+        private readonly WeakReference<OpTextButton> activeButton = new(null);
 
         private RegionInfo activeRegion = null;
-
-
-        public EditTab(OptionInterface owner) : base(owner, "Editor")
-        {
-        }
 
         public override void Initialize()
         {
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
             const float MENU_SIZE = 600f;
-            const float COMBOBOX_OFFSET = 4f;
+            // const float COMBOBOX_OFFSET = 4f;
             var scugList = Data.RenderedRegions.Keys.ToList();
 
             // Top of menu
-            const float TOPBAR_UNIT_WIDTH = (MENU_SIZE - SIDE_PADDING * 2f - ITEM_GAP * 2) / 4f;
-            scugSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f + COMBOBOX_OFFSET), TOPBAR_UNIT_WIDTH, scugList.Select(x => x.value).ToArray());
+            const float TOPBAR_UNIT_WIDTH = (MENU_SIZE - SIDE_PADDING * 2f - ITEM_GAP * 2) / 5f;
+            scugSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f), TOPBAR_UNIT_WIDTH, scugList.Select(x => x.value).ToArray());
             scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
-            regionSelector = new(OIUtil.CosmeticBind(""), new(scugSelector.pos.x + scugSelector.size.x + ITEM_GAP + COMBOBOX_OFFSET, scugSelector.pos.y), TOPBAR_UNIT_WIDTH * 2, [""]);
+            regionSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH + ITEM_GAP, scugSelector.pos.y), TOPBAR_UNIT_WIDTH * 2, [""]);
             regionSelector.OnValueChanged += RegionSelector_OnValueChanged;
+            var saveButton = new OpSimpleButton(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 24f), "SAVE")
+            {
+                colorEdge = BlueColor
+            };
+            saveButton.OnClick += SaveButton_OnClick;
 
-            // Input boxes and such
+            // Body boxes and such
             const float BODY_LEFT_WIDTH = MENU_SIZE / 3;
             const float BODY_RIGHT_WIDTH = MENU_SIZE - BODY_LEFT_WIDTH;
             const float TOPBAR_HEIGHT = 30f + SIDE_PADDING + ITEM_GAP;
@@ -48,26 +48,27 @@ namespace MapExporter.Tabs
                 new Vector2(SIDE_PADDING, SIDE_PADDING),
                 new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT),
                 0, false, true, true);
-            var mapSize = BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2; // trying to make it a square
-            roomOptions = new(
+            float mapSize = BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2; // supposed to be a square
+            controlBox = new(
                 new Vector2(BODY_LEFT_WIDTH + ITEM_GAP / 2, SIDE_PADDING),
-                new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, roomSelector.size.y - mapSize - ITEM_GAP),
-                0, true, true, true);
-            mapBox = new OpMapBox(new(roomOptions.pos.x, roomSelector.pos.y + roomSelector.size.y - mapSize), new(mapSize, mapSize));
+                new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, roomSelector.size.y - mapSize - ITEM_GAP));
+            mapBox = new OpMapBox(new(controlBox.pos.x, roomSelector.pos.y + roomSelector.size.y - mapSize), new(mapSize, mapSize));
 
             // Add the items
             AddItems(
                 // Input boxes and such
                 roomSelector,
-                roomOptions,
+                controlBox,
                 mapBox,
 
                 // Place the top things last for z-index reasons
                 regionSelector,
                 scugSelector,
-                new OpLabel(new Vector2(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "EDIT MAP", FLabelAlignment.Center, true)
+                saveButton,
+                new OpLabel(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH * 2 - ITEM_GAP, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "EDIT MAP", FLabelAlignment.Center, true)
             );
             mapBox.Initialize();
+            controlBox.Initialize(mapBox);
         }
 
         public override void Update()
@@ -121,14 +122,6 @@ namespace MapExporter.Tabs
             roomSelector.items.Clear();
             roomSelector.SetContentSize(0);
 
-            foreach (var el in roomOptions.items)
-            {
-                el.Deactivate();
-                el.tab.items.Remove(el);
-            }
-            roomOptions.items.Clear();
-            roomOptions.SetContentSize(0);
-
             // Don't put any new stuff if there is no region
             var scug = new SlugcatStats.Name(scugSelector.value, false);
             if (acronym == null || scug.Index == -1 || !Data.RenderedRegions.ContainsKey(scug) ||
@@ -143,7 +136,6 @@ namespace MapExporter.Tabs
             {
                 const float LIST_EDGE_PAD = 6f;
                 const float LIST_LH = 24f;
-                const float SCROLL_WIDTH = OIUtil.SLIDER_WIDTH;
 
                 activeRegion = RegionInfo.FromJSON((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
                     Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json"))));
@@ -155,7 +147,7 @@ namespace MapExporter.Tabs
                 {
                     y -= LIST_LH;
                     height += LIST_LH;
-                    var button = new OpTextButton(new Vector2(LIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - LIST_EDGE_PAD * 2 - SCROLL_WIDTH, LIST_LH), room)
+                    var button = new OpTextButton(new Vector2(LIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - LIST_EDGE_PAD * 2 - SCROLLBAR_WIDTH, LIST_LH), room)
                     {
                         alignment = FLabelAlignment.Left
                     };
@@ -184,6 +176,11 @@ namespace MapExporter.Tabs
         private void SwitchToRoom(string room)
         {
             mapBox.FocusRoom(room);
+        }
+
+        private void SaveButton_OnClick(UIfocusable trigger)
+        {
+            throw new NotImplementedException();
         }
     }
 }

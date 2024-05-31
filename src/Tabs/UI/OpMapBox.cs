@@ -8,18 +8,18 @@ namespace MapExporter.Tabs.UI
 {
     internal class OpMapBox : OpScrollBox
     {
-        private RegionInfo activeRegion = null;
+        public RegionInfo activeRegion = null;
         private OpImage mapOpImage = null;
         private Texture2D texture = null;
         private bool mapDirty = false;
-        private string activeRoom = null;
+        public string activeRoom = null;
 
         private static readonly int[] OFFSCREEN_SIZE = [10, 10];
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
         private static readonly Color CAMERA_COLOR = new(1f, 1f, 0.5f);
 
-        public OpMapBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, contentSize, horizontal, hasSlideBar)
+        public OpMapBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, 0, horizontal, hasSlideBar)
         {
             throw new NotImplementedException(); // nope, not for you :3
         }
@@ -47,122 +47,127 @@ namespace MapExporter.Tabs.UI
             if (texture != null && mapDirty)
             {
                 mapDirty = false;
-                ClearCanvas();
+                Draw();
+            }
+        }
 
-                // Remove old labels
-                List<UIelement> toRemove = [];
-                foreach (var item in items)
+        private void Draw()
+        {
+            ClearCanvas();
+
+            // Remove old labels
+            List<UIelement> toRemove = [];
+            foreach (var item in items)
+            {
+                if (item != mapOpImage)
                 {
-                    if (item != mapOpImage)
-                    {
-                        toRemove.Add(item);
-                    }
+                    toRemove.Add(item);
                 }
-                foreach (var item in toRemove)
+            }
+            foreach (var item in toRemove)
+            {
+                item.Deactivate();
+                item.tab.items.Remove(item);
+                items.Remove(item);
+            }
+
+            // Draw nothing if there is no active region
+            if (activeRegion == null)
+            {
+                return;
+            }
+
+            // Figure out our draw area
+            Vector2 drawPosition = new(0, 0);
+            if (activeRoom != null)
+            {
+                var room = activeRegion.rooms[activeRoom];
+                var size = room.size ?? OFFSCREEN_SIZE;
+                drawPosition = room.devPos + new Vector2(size[0], size[1]) / 2;
+            }
+
+            Rect drawArea = new(drawPosition - size / 2, size);
+            Vector2 drawBL = drawPosition - size / 2;
+
+            // Figure out what rooms and connections lie within our draw area
+            List<RegionInfo.RoomEntry> showRooms = [];
+            List<RegionInfo.ConnectionEntry> showConns = [];
+
+            foreach (var room in activeRegion.rooms.Values)
+            {
+                var size = room.size ?? OFFSCREEN_SIZE;
+                if (drawArea.CheckIntersect(new Rect(room.devPos, new Vector2(size[0], size[1]))))
                 {
-                    item.Deactivate();
-                    item.tab.items.Remove(item);
-                    items.Remove(item);
+                    showRooms.Add(room);
                 }
+            }
+            foreach (var conn in activeRegion.connections)
+            {
+                if (!activeRegion.rooms.ContainsKey(conn.roomA) || !activeRegion.rooms.ContainsKey(conn.roomB))
+                    continue;
 
-                // Draw nothing if there is no active region
-                if (activeRegion == null)
+                Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2();
+                Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2();
+                if (drawArea.Contains(A) || drawArea.Contains(B) || LineIntersectsRect(drawArea, A, B))
                 {
-                    return;
+                    showConns.Add(conn);
                 }
+            }
 
-                // Figure out our draw area
-                Vector2 drawPosition = new(0, 0);
-                if (activeRoom != null)
+            // Draw rooms
+            foreach (var room in showRooms)
+            {
+                int startX = Mathf.RoundToInt(room.devPos.x);
+                int startY = Mathf.RoundToInt(room.devPos.y);
+
+                // Draw the pixels of the room geometry
+                var size = room.size ?? OFFSCREEN_SIZE;
+                for (int i = 0; i < size[0]; i++)
                 {
-                    var room = activeRegion.rooms[activeRoom];
-                    var size = room.size ?? OFFSCREEN_SIZE;
-                    drawPosition = room.devPos + new Vector2(size[0], size[1]) / 2;
-                }
-
-                Rect drawArea = new(drawPosition - size / 2, size);
-                Vector2 drawBL = drawPosition - size / 2;
-
-                // Figure out what rooms and connections lie within our draw area
-                List<RegionInfo.RoomEntry> showRooms = [];
-                List<RegionInfo.ConnectionEntry> showConns = [];
-
-                foreach (var room in activeRegion.rooms.Values)
-                {
-                    var size = room.size ?? OFFSCREEN_SIZE;
-                    if (drawArea.CheckIntersect(new Rect(room.devPos, new Vector2(size[0], size[1]))))
-                    {
-                        showRooms.Add(room);
-                    }
-                }
-                foreach (var conn in activeRegion.connections)
-                {
-                    if (!activeRegion.rooms.ContainsKey(conn.roomA) || !activeRegion.rooms.ContainsKey(conn.roomB))
+                    if (startX + i < drawArea.xMin || startX + i > drawArea.xMax)
                         continue;
 
-                    Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2();
-                    Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2();
-                    if (drawArea.Contains(A) || drawArea.Contains(B) || LineIntersectsRect(drawArea, A, B))
+                    for (int j = 0; j < size[1]; j++)
                     {
-                        showConns.Add(conn);
-                    }
-                }
-
-                // Draw rooms
-                foreach (var room in showRooms)
-                {
-                    int startX = Mathf.RoundToInt(room.devPos.x);
-                    int startY = Mathf.RoundToInt(room.devPos.y);
-
-                    // Draw the pixels of the room geometry
-                    var size = room.size ?? OFFSCREEN_SIZE;
-                    for (int i = 0; i < size[0]; i++)
-                    {
-                        if (startX + i < drawArea.xMin || startX + i > drawArea.xMax)
+                        if (startY + j < drawArea.yMin || startY + j > drawArea.yMax)
                             continue;
 
-                        for (int j = 0; j < size[1]; j++)
-                        {
-                            if (startY + j < drawArea.yMin || startY + j > drawArea.yMax)
-                                continue;
-
-                            var p = new Vector2(startX + i - drawBL.x, startY + j - drawBL.y);
-                            texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), GetTileColor(room.tiles?[i, j]));
-                        }
+                        var p = new Vector2(startX + i - drawBL.x, startY + j - drawBL.y);
+                        texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), GetTileColor(room.tiles?[i, j]));
                     }
-
-                    // Draw camera outlines
-                    if (room.cameras != null)
-                    {
-                        foreach (var cam in room.cameras)
-                        {
-                            // Cameras are 1400x800, tiles are 20x20. Using this, we can determine cameras here should be 70x40 pixels.
-                            DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, new Vector2(70f, 40f), CAMERA_COLOR, 1);
-                        }
-                    }
-
-                    // Give it a border if it is the focused room
-                    if (activeRoom != null && room.roomName == activeRoom)
-                    {
-                        DrawRectOutline(new Vector2(startX - 1, startY - 1) - drawBL, new Vector2(size[0] + 2, size[1] + 2), FOCUS_COLOR, 2);
-                    }
-
-                    // Give it an OpLabel name
-                    AddItems(new OpLabel(startX - drawBL.x, startY + size[1] - drawBL.y, room.roomName == activeRoom ? "> " + room.roomName : room.roomName));
                 }
 
-                // Draw connections
-                foreach (var conn in showConns)
+                // Draw camera outlines
+                if (room.cameras != null)
                 {
-                    Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2() - drawBL;
-                    Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2() - drawBL;
-
-                    DrawLine(A, B, CONNECTION_COLOR, 1);
+                    foreach (var cam in room.cameras)
+                    {
+                        // Cameras are 1400x800, tiles are 20x20. Using this, we can determine cameras here should be 70x40 pixels.
+                        DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, new Vector2(70f, 40f), CAMERA_COLOR, 1);
+                    }
                 }
 
-                // Apply texture so it actually shows lol
-                UpdateTexture();
+                // Give it a border if it is the focused room
+                if (activeRoom != null && room.roomName == activeRoom)
+                {
+                    DrawRectOutline(new Vector2(startX - 1, startY - 1) - drawBL, new Vector2(size[0] + 2, size[1] + 2), FOCUS_COLOR, 2);
+                }
+
+                // Give it an OpLabel name
+                AddItems(new OpLabel(startX - drawBL.x, startY + size[1] - drawBL.y, room.roomName == activeRoom ? "> " + room.roomName : room.roomName));
             }
+
+            // Draw connections
+            foreach (var conn in showConns)
+            {
+                Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2() - drawBL;
+                Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2() - drawBL;
+
+                DrawLine(A, B, CONNECTION_COLOR, 1);
+            }
+
+            // Apply texture so it actually shows lol
+            UpdateTexture();
         }
 
         public void LoadRegion(RegionInfo region)
@@ -196,7 +201,8 @@ namespace MapExporter.Tabs.UI
 
         public void UpdateMap()
         {
-            mapDirty = true;
+            // mapDirty = true;
+            Draw();
         }
 
         private void ClearCanvas()
