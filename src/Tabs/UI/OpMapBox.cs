@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Menu.Remix.MixedUI;
-using RWCustom;
 using UnityEngine;
 
 namespace MapExporter.Tabs.UI
@@ -9,12 +8,16 @@ namespace MapExporter.Tabs.UI
     internal class OpMapBox : OpScrollBox
     {
         public RegionInfo activeRegion = null;
-        private OpImage mapOpImage = null;
-        private Texture2D texture = null;
-        private bool mapDirty = false;
         public string activeRoom = null;
 
-        private static readonly int[] OFFSCREEN_SIZE = [10, 10];
+        private OpImage mapOpImage = null;
+        private Texture2D texture = null;
+
+        private bool mapDirty = false;
+        public Vector2 viewOffset = Vector2.zero;
+        private LabelBorrower labelBorrower;
+
+        private static readonly int[] OFFSCREEN_SIZE = [0, 0];
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
         private static readonly Color CAMERA_COLOR = new(1f, 1f, 0.5f);
@@ -26,6 +29,7 @@ namespace MapExporter.Tabs.UI
 
         public OpMapBox(Vector2 pos, Vector2 size) : base(pos, size, size.y, false, true, false)
         {
+            labelBorrower = new(this);
         }
 
         public void Initialize()
@@ -54,22 +58,7 @@ namespace MapExporter.Tabs.UI
         private void Draw()
         {
             ClearCanvas();
-
-            // Remove old labels
-            List<UIelement> toRemove = [];
-            foreach (var item in items)
-            {
-                if (item != mapOpImage)
-                {
-                    toRemove.Add(item);
-                }
-            }
-            foreach (var item in toRemove)
-            {
-                item.Deactivate();
-                item.tab.items.Remove(item);
-                items.Remove(item);
-            }
+            labelBorrower.Update();
 
             // Draw nothing if there is no active region
             if (activeRegion == null)
@@ -78,12 +67,13 @@ namespace MapExporter.Tabs.UI
             }
 
             // Figure out our draw area
-            Vector2 drawPosition = new(0, 0);
+            Vector2 drawPosition = viewOffset;
             if (activeRoom != null)
             {
                 var room = activeRegion.rooms[activeRoom];
                 var size = room.size ?? OFFSCREEN_SIZE;
                 drawPosition = room.devPos + new Vector2(size[0], size[1]) / 2;
+                viewOffset = drawPosition;
             }
 
             Rect drawArea = new(drawPosition - size / 2, size);
@@ -154,7 +144,7 @@ namespace MapExporter.Tabs.UI
                 }
 
                 // Give it an OpLabel name
-                AddItems(new OpLabel(startX - drawBL.x, startY + size[1] - drawBL.y, room.roomName == activeRoom ? "> " + room.roomName : room.roomName));
+                labelBorrower.AddLabel(room.roomName == activeRoom ? "> " + room.roomName : room.roomName, new Vector2(startX, startY + size[1]) - drawBL);
             }
 
             // Draw connections
@@ -175,6 +165,7 @@ namespace MapExporter.Tabs.UI
             activeRegion = region;
             activeRoom = null;
             mapDirty = true;
+            viewOffset = Vector2.zero;
         }
 
         public void UnloadRegion()
@@ -184,6 +175,7 @@ namespace MapExporter.Tabs.UI
                 activeRegion = null;
                 activeRoom = null;
                 mapDirty = true;
+                viewOffset = Vector2.zero;
             }
         }
 
@@ -203,6 +195,18 @@ namespace MapExporter.Tabs.UI
         {
             // mapDirty = true;
             Draw();
+        }
+
+        public void Move(Vector2 dir)
+        {
+            if (activeRoom != null)
+            {
+                activeRegion.rooms[activeRoom].devPos += dir;
+            }
+            else if (activeRegion != null)
+            {
+                viewOffset += dir;
+            }
         }
 
         private void ClearCanvas()

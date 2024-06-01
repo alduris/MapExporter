@@ -55,62 +55,66 @@ namespace MapExporter.Tabs.UI
 
         private void UpArrow_OnUpdate()
         {
-            if (upArrow.held && mapBox.activeRoom != null)
+            var self = upArrow;
+            if (self.held)
             {
-                mapBox.activeRegion.rooms[mapBox.activeRoom].devPos += Vector2.up;
+                mapBox.Move(Vector2.up * (self.CtlrInput.pckp ? 5f : 1f));
                 mapBox.UpdateMap();
             }
 
-            if (upArrow.held != _lhu)
+            if (self.held != _lhu)
             {
-                upArrow.sprite.SetElementByName(upArrow.held ? "keyArrowB" : "keyArrowA");
+                self.sprite.SetElementByName(self.held ? "keyArrowB" : "keyArrowA");
             }
-            _lhu = upArrow.held;
+            _lhu = self.held;
         }
 
         private void RightArrow_OnUpdate()
         {
-            if (rightArrow.held && mapBox.activeRoom != null)
+            var self = rightArrow;
+            if (self.held)
             {
-                mapBox.activeRegion.rooms[mapBox.activeRoom].devPos += Vector2.right;
+                mapBox.Move(Vector2.right * (upArrow.CtlrInput.pckp ? 5f : 1f));
                 mapBox.UpdateMap();
             }
 
-            if (rightArrow.held != _lhr)
+            if (self.held != _lhr)
             {
-                rightArrow.sprite.SetElementByName(rightArrow.held ? "keyArrowB" : "keyArrowA");
+                self.sprite.SetElementByName(self.held ? "keyArrowB" : "keyArrowA");
             }
-            _lhr = rightArrow.held;
+            _lhr = self.held;
         }
 
         private void DownArrow_OnUpdate()
         {
-            if (downArrow.held && mapBox.activeRoom != null)
+            var self = downArrow;
+            if (self.held)
             {
-                mapBox.activeRegion.rooms[mapBox.activeRoom].devPos += Vector2.down;
+                mapBox.Move(Vector2.down * (self.CtlrInput.pckp ? 5f : 1f));
                 mapBox.UpdateMap();
             }
 
-            if (downArrow.held != _lhd)
+            if (self.held != _lhd)
             {
-                downArrow.sprite.SetElementByName(downArrow.held ? "keyArrowB" : "keyArrowA");
+                self.sprite.SetElementByName(self.held ? "keyArrowB" : "keyArrowA");
             }
-            _lhd = downArrow.held;
+            _lhd = self.held;
         }
 
         private void LeftArrow_OnUpdate()
         {
-            if (leftArrow.held && mapBox.activeRoom != null)
+            var self = leftArrow;
+            if (self.held)
             {
-                mapBox.activeRegion.rooms[mapBox.activeRoom].devPos += Vector2.left;
+                mapBox.Move(Vector2.left * (self.CtlrInput.pckp ? 5f : 1f));
                 mapBox.UpdateMap();
             }
 
-            if (leftArrow.held != _lhl)
+            if (self.held != _lhl)
             {
-                leftArrow.sprite.SetElementByName(leftArrow.held ? "keyArrowB" : "keyArrowA");
+                self.sprite.SetElementByName(self.held ? "keyArrowB" : "keyArrowA");
             }
-            _lhl = leftArrow.held;
+            _lhl = self.held;
         }
     }
 }
