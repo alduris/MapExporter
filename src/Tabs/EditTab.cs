@@ -32,7 +32,7 @@ namespace MapExporter.Tabs
             const float TOPBAR_UNIT_WIDTH = (MENU_SIZE - SIDE_PADDING * 2f - ITEM_GAP * 2) / 5f;
             scugSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f), TOPBAR_UNIT_WIDTH, scugList.Select(x => x.value).ToArray());
             scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
-            regionSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH + ITEM_GAP, scugSelector.pos.y), TOPBAR_UNIT_WIDTH * 2, [""]);
+            regionSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH + ITEM_GAP, scugSelector.pos.y), TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP, [""]);
             regionSelector.OnValueChanged += RegionSelector_OnValueChanged;
             var saveButton = new OpSimpleButton(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 24f), "SAVE")
             {
@@ -65,7 +65,7 @@ namespace MapExporter.Tabs
                 regionSelector,
                 scugSelector,
                 saveButton,
-                new OpLabel(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH * 2 - ITEM_GAP, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "EDIT MAP", FLabelAlignment.Center, true)
+                new OpLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "EDIT MAP", FLabelAlignment.Center, true)
             );
             mapBox.Initialize();
             controlBox.Initialize(mapBox);
