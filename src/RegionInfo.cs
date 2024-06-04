@@ -10,10 +10,10 @@ using DevInterface;
 
 namespace MapExporter
 {
-    internal sealed class NewRegionInfo : IJsonObject
+    internal sealed class RegionInfo : IJsonObject
     {
-        public Dictionary<string, NewRoomEntry> rooms = [];
-        public List<NewConnectionEntry> connections = [];
+        public Dictionary<string, RoomEntry> rooms = [];
+        public List<ConnectionEntry> connections = [];
         public string acronym;
         public string name;
         public string echoRoom;
@@ -25,9 +25,9 @@ namespace MapExporter
         private readonly Dictionary<string, Vector2> devPos = [];
         private readonly World world;
 
-        public NewRegionInfo() { }
+        public RegionInfo() { }
 
-        public NewRegionInfo(World world)
+        public RegionInfo(World world)
         {
             this.world = world;
 
@@ -74,8 +74,27 @@ namespace MapExporter
             // Ok continue on with initializing the rest of the object
             foreach (var room in world.abstractRooms)
             {
-                rooms[room.name] = new NewRoomEntry(this, room);
+                rooms[room.name] = new RoomEntry(this, room);
                 // I would initialize connections here but they require a loaded room so nope :3
+            }
+        }
+
+        public void LogPalette(RoomPalette currentPalette)
+        {
+            // get sky color and fg color (px 00 and 07)
+            Color fg = currentPalette.texture.GetPixel(0, 0);
+            Color bg = currentPalette.texture.GetPixel(0, 7);
+            Color sc = currentPalette.shortCutSymbol;
+            fgcolors.Add(fg);
+            bgcolors.Add(bg);
+            sccolors.Add(sc);
+        }
+
+        public void UpdateRoom(Room room)
+        {
+            if (rooms.ContainsKey(room.abstractRoom.name))
+            {
+                rooms[room.abstractRoom.name].UpdateEntry(room);
             }
         }
 
@@ -94,9 +113,9 @@ namespace MapExporter
             };
         }
 
-        public static NewRegionInfo FromJson(Dictionary<string, object> json)
+        public static RegionInfo FromJson(Dictionary<string, object> json)
         {
-            var entry = new NewRegionInfo
+            var entry = new RegionInfo
             {
                 acronym = (string)json["acronym"],
                 name = (string)json["name"],
@@ -112,13 +131,13 @@ namespace MapExporter
             // Add rooms
             foreach (var kv in (Dictionary<string, object>)json["rooms"])
             {
-                entry.rooms[kv.Key] = NewRoomEntry.FromJson((Dictionary<string, object>)kv.Value);
+                entry.rooms[kv.Key] = RoomEntry.FromJson((Dictionary<string, object>)kv.Value);
             }
 
             // Add connections
             foreach (var data in ((List<object>)json["connections"]).Cast<Dictionary<string, object>>())
             {
-                entry.connections.Add(NewConnectionEntry.FromJson(data));
+                entry.connections.Add(ConnectionEntry.FromJson(data));
             }
 
             return entry;
@@ -132,25 +151,25 @@ namespace MapExporter
 
         static int IntVec2Dir(IntVector2 vec) => vec.x != 0 ? (vec.x < 0 ? 0 : 2) : (vec.y < 0 ? 1 : 3);
 
-        public class NewRoomEntry : IJsonObject
+        public class RoomEntry : IJsonObject
         {
-            private readonly NewRegionInfo regionInfo;
+            private readonly RegionInfo regionInfo;
 
             public string roomName;
             public string subregion;
             public Vector2 devPos;
 
             public Vector2[] cameras;
-            public IntVector2 size;
+            public IntVector2 size = new(0, 0);
             public int[,][] tiles;
             public IntVector2[] nodes;
 
             public DenSpawnData[][] spawns;
             public string[] tags;
 
-            public NewRoomEntry() { }
+            public RoomEntry() { }
 
-            public NewRoomEntry(NewRegionInfo owner, AbstractRoom room)
+            public RoomEntry(RegionInfo owner, AbstractRoom room)
             {
                 regionInfo = owner;
 
@@ -232,7 +251,7 @@ namespace MapExporter
                             _ = new RoomPreparer(otherRoom, false, false, true);
                             // we don't actually need to load it further than that lol
                         }
-                        var conn = new NewConnectionEntry()
+                        var conn = new ConnectionEntry()
                         {
                             roomA = aRoom.name,
                             roomB = other.name,
@@ -264,9 +283,9 @@ namespace MapExporter
                 };
             }
 
-            public static NewRoomEntry FromJson(Dictionary<string, object> json)
+            public static RoomEntry FromJson(Dictionary<string, object> json)
             {
-                var entry = new NewRoomEntry
+                var entry = new RoomEntry
                 {
                     roomName = (string)json["name"],
                     subregion = (string)json["subregion"],
@@ -342,7 +361,7 @@ namespace MapExporter
             }
         }
 
-        public class NewConnectionEntry : IJsonObject
+        public class ConnectionEntry : IJsonObject
         {
             public string roomA;
             public string roomB;
@@ -351,9 +370,9 @@ namespace MapExporter
             public int dirA;
             public int dirB;
 
-            public NewConnectionEntry() { } // empty
+            public ConnectionEntry() { } // empty
 
-            public NewConnectionEntry(string entry) // old version read from world file, obsolete now
+            public ConnectionEntry(string entry) // old version read from world file, obsolete now
             {
                 string[] fields = Regex.Split(entry, ",");
                 roomA = fields[0];
@@ -377,9 +396,9 @@ namespace MapExporter
                 };
             }
 
-            public static NewConnectionEntry FromJson(Dictionary<string, object> json)
+            public static ConnectionEntry FromJson(Dictionary<string, object> json)
             {
-                var entry = new NewConnectionEntry
+                var entry = new ConnectionEntry
                 {
                     roomA = (string)json["roomA"],
                     roomB = (string)json["roomB"],

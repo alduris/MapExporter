@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Menu.Remix.MixedUI;
+using RWCustom;
 using UnityEngine;
 
 namespace MapExporter.Tabs.UI
@@ -15,9 +16,8 @@ namespace MapExporter.Tabs.UI
 
         private bool mapDirty = false;
         public Vector2 viewOffset = Vector2.zero;
-        private LabelBorrower labelBorrower;
+        private readonly LabelBorrower labelBorrower;
 
-        private static readonly int[] OFFSCREEN_SIZE = [0, 0];
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
         private static readonly Color CAMERA_COLOR = new(1f, 1f, 0.5f);
@@ -71,8 +71,7 @@ namespace MapExporter.Tabs.UI
             if (activeRoom != null)
             {
                 var room = activeRegion.rooms[activeRoom];
-                var size = room.size ?? OFFSCREEN_SIZE;
-                drawPosition = room.devPos + new Vector2(size[0], size[1]) / 2;
+                drawPosition = room.devPos + room.size.ToVector2() / 2;
                 viewOffset = drawPosition;
             }
 
@@ -85,8 +84,7 @@ namespace MapExporter.Tabs.UI
 
             foreach (var room in activeRegion.rooms.Values)
             {
-                var size = room.size ?? OFFSCREEN_SIZE;
-                if (drawArea.CheckIntersect(new Rect(room.devPos, new Vector2(size[0], size[1]))))
+                if (drawArea.CheckIntersect(new Rect(room.devPos, new Vector2(room.size.x, room.size.y))))
                 {
                     showRooms.Add(room);
                 }
@@ -111,13 +109,12 @@ namespace MapExporter.Tabs.UI
                 int startY = Mathf.RoundToInt(room.devPos.y);
 
                 // Draw the pixels of the room geometry
-                var size = room.size ?? OFFSCREEN_SIZE;
-                for (int i = 0; i < size[0]; i++)
+                for (int i = 0; i < room.size.x; i++)
                 {
                     if (startX + i < drawArea.xMin || startX + i > drawArea.xMax)
                         continue;
 
-                    for (int j = 0; j < size[1]; j++)
+                    for (int j = 0; j < room.size.y; j++)
                     {
                         if (startY + j < drawArea.yMin || startY + j > drawArea.yMax)
                             continue;
@@ -140,11 +137,11 @@ namespace MapExporter.Tabs.UI
                 // Give it a border if it is the focused room
                 if (activeRoom != null && room.roomName == activeRoom)
                 {
-                    DrawRectOutline(new Vector2(startX - 1, startY - 1) - drawBL, new Vector2(size[0] + 2, size[1] + 2), FOCUS_COLOR, 2);
+                    DrawRectOutline(new Vector2(startX - 1, startY - 1) - drawBL, new Vector2(room.size.x + 2, room.size.y + 2), FOCUS_COLOR, 2);
                 }
 
                 // Give it an OpLabel name
-                labelBorrower.AddLabel(room.roomName == activeRoom ? "> " + room.roomName : room.roomName, new Vector2(startX, startY + size[1]) - drawBL);
+                labelBorrower.AddLabel(room.roomName == activeRoom ? "> " + room.roomName : room.roomName, new Vector2(startX, startY + room.size.y) - drawBL);
             }
 
             // Draw connections

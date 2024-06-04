@@ -137,7 +137,7 @@ namespace MapExporter.Tabs
                 const float LIST_EDGE_PAD = 6f;
                 const float LIST_LH = 24f;
 
-                activeRegion = RegionInfo.FromJSON((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
+                activeRegion = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
                     Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json"))));
                 var roomList = activeRegion.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
 

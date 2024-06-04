@@ -127,18 +127,18 @@ namespace MapExporter.Screenshotter
             // Don't image offscreen dens
             rooms.RemoveAll(r => r.offScreenDen);
 
-            if (ReusedRooms.SlugcatRoomsToUse(slugcat.value, game.world, rooms) is string copyRooms)
-            {
-                mapContent.copyRooms = copyRooms;
-            }
-            else
-            {
+            //if (ReusedRooms.SlugcatRoomsToUse(slugcat.value, game.world, rooms) is string copyRooms)
+            //{
+            //    mapContent.copyRooms = copyRooms;
+            //}
+            //else
+            //{
                 foreach (var room in rooms)
                 {
                     foreach (var step in CaptureRoom(room, mapContent))
                         yield return step;
                 }
-            }
+            //}
 
             File.WriteAllText(PathOfMetadata(slugcat.value, region), Json.Serialize(mapContent));
 
