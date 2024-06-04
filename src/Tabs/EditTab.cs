@@ -88,6 +88,7 @@ namespace MapExporter.Tabs
                 scugSelector._itemList = scugList.Select((x, i) => new ListItem(x.value, i)).ToArray();
                 scugSelector._ResetIndex();
                 scugSelector.Change();
+                ScugSelector_OnValueChanged(null, scugSelector.value, null);
             }
         }
 

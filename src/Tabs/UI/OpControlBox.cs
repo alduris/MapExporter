@@ -10,6 +10,7 @@ namespace MapExporter.Tabs.UI
         private OpMapBox mapBox;
         private OpSimpleImageButton upArrow, rightArrow, downArrow, leftArrow;
         private bool _lhu, _lhr, _lhd, _lhl;
+        private float speedMultiplier = 1f;
 
         public OpControlBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, contentSize, horizontal, hasSlideBar)
         {
@@ -45,7 +46,21 @@ namespace MapExporter.Tabs.UI
             downArrow.OnUpdate += DownArrow_OnUpdate;
             leftArrow.OnUpdate += LeftArrow_OnUpdate;
 
-            AddItems(upArrow, rightArrow, downArrow, leftArrow);
+            var speedButton = new OpSimpleButton(new Vector2(INNER_PAD * 2f + arrowSize, INNER_PAD * 2f + arrowSize + SCROLLBAR_WIDTH), new Vector2(arrowSize, arrowSize), "x1");
+            speedButton.OnClick += (_) =>
+            {
+                speedMultiplier = speedMultiplier switch
+                {
+                    1f => 2f,
+                    2f => 4f,
+                    4f => 8f,
+                    _  => 1f
+                };
+                speedButton.text = "x" + ((int)speedMultiplier);
+            };
+
+            // Add items, finally
+            AddItems(upArrow, rightArrow, downArrow, leftArrow, speedButton);
         }
 
         public override void Update()
@@ -58,7 +73,7 @@ namespace MapExporter.Tabs.UI
             var self = upArrow;
             if (self.held)
             {
-                mapBox.Move(Vector2.up * (self.CtlrInput.pckp ? 5f : 1f));
+                mapBox.Move(Vector2.up * speedMultiplier);
                 mapBox.UpdateMap();
             }
 
@@ -74,7 +89,7 @@ namespace MapExporter.Tabs.UI
             var self = rightArrow;
             if (self.held)
             {
-                mapBox.Move(Vector2.right * (upArrow.CtlrInput.pckp ? 5f : 1f));
+                mapBox.Move(Vector2.right * speedMultiplier);
                 mapBox.UpdateMap();
             }
 
@@ -90,7 +105,7 @@ namespace MapExporter.Tabs.UI
             var self = downArrow;
             if (self.held)
             {
-                mapBox.Move(Vector2.down * (self.CtlrInput.pckp ? 5f : 1f));
+                mapBox.Move(Vector2.down * speedMultiplier);
                 mapBox.UpdateMap();
             }
 
@@ -106,7 +121,7 @@ namespace MapExporter.Tabs.UI
             var self = leftArrow;
             if (self.held)
             {
-                mapBox.Move(Vector2.left * (self.CtlrInput.pckp ? 5f : 1f));
+                mapBox.Move(Vector2.left * speedMultiplier);
                 mapBox.UpdateMap();
             }
 
