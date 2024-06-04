@@ -1,24 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using RWCustom;
 using UnityEngine;
-using static MapExporter.RegionInfo;
+using DevInterface;
 
 namespace MapExporter
 {
     internal sealed class NewRegionInfo : IJsonObject
     {
-        public readonly Dictionary<string, NewRoomEntry> rooms = [];
-        public readonly List<NewConnectionEntry> connections = [];
-        public readonly string acronym;
-        public readonly string echoRoom;
-        public readonly List<Color> fgcolors = [];
-        public readonly List<Color> bgcolors = [];
-        public readonly List<Color> sccolors = [];
+        public Dictionary<string, NewRoomEntry> rooms = [];
+        public List<NewConnectionEntry> connections = [];
+        public string acronym;
+        public string name;
+        public string echoRoom;
+        public List<Color> fgcolors = [];
+        public List<Color> bgcolors = [];
+        public List<Color> sccolors = [];
 
+        // For passing data down to children
         private readonly Dictionary<string, Vector2> devPos = [];
         private readonly World world;
 
@@ -28,36 +31,110 @@ namespace MapExporter
         {
             this.world = world;
 
-            // rooms
-            //connections
+            // Region identity + echo room because why not grab that here
             acronym = world.name;
+            name = Region.GetRegionFullName(acronym, null);
             echoRoom = world?.worldGhost?.ghostRoom?.name;
+
+            // Figure out where the rooms are in dev tools so we can create our room representations
+            var devMap = (MapPage)FormatterServices.GetUninitializedObject(typeof(MapPage));
+            string slugcatFilePath = AssetManager.ResolveFilePath(
+                Path.Combine(
+                    "World",
+                    world.name,
+                    "map_" + world.name + "-" + (world.game.StoryCharacter?.value ?? "") + ".txt"
+                ));
+            string normalFilePath = AssetManager.ResolveFilePath(
+                Path.Combine(
+                    "World",
+                    world.name,
+                    "map_" + world.name + ".txt"
+                ));
+            devMap.filePath = File.Exists(slugcatFilePath) ? slugcatFilePath : normalFilePath;
+            if (devMap.filePath == normalFilePath && !File.Exists(normalFilePath))
+            {
+                throw new FileNotFoundException("Map file doesn't exist for region " + acronym + "!");
+            }
+            foreach (var room in world.abstractRooms)
+            {
+                var panel = (RoomPanel)FormatterServices.GetUninitializedObject(typeof(RoomPanel));
+                panel.roomRep = (MapObject.RoomRepresentation)FormatterServices.GetUninitializedObject(typeof(MapObject.RoomRepresentation));
+                panel.roomRep.room = room;
+                devMap.subNodes.Add(panel);
+            }
+
+            devMap.LoadMapConfig();
+
+            foreach (var node in devMap.subNodes)
+            {
+                var panel = node as RoomPanel;
+                devPos[panel.roomRep.room.name] = panel.devPos;
+            }
+
+            // Ok continue on with initializing the rest of the object
+            foreach (var room in world.abstractRooms)
+            {
+                rooms[room.name] = new NewRoomEntry(this, room);
+                // I would initialize connections here but they require a loaded room so nope :3
+            }
         }
 
         public Dictionary<string, object> ToJson()
         {
-            throw new System.NotImplementedException();
+            return new()
+            {
+                { "acronym", acronym },
+                { "name", name },
+                { "echoRoom", echoRoom },
+                { "rooms", rooms },
+                { "connections", connections },
+                { "fgcolors", fgcolors },
+                { "bgcolors", bgcolors },
+                { "sccolors", sccolors },
+            };
         }
 
         public static NewRegionInfo FromJson(Dictionary<string, object> json)
         {
-            var entry = new NewRegionInfo();
+            var entry = new NewRegionInfo
+            {
+                acronym = (string)json["acronym"],
+                name = (string)json["name"],
+                echoRoom = (string)json["echoRoom"],
 
-            throw new NotImplementedException();
+                rooms = [],
+                connections = [],
+                fgcolors = ((List<object>)json["fgcolors"]).Cast<List<object>>().Select(Arr2Color).ToList(),
+                bgcolors = ((List<object>)json["bgcolors"]).Cast<List<object>>().Select(Arr2Color).ToList(),
+                sccolors = ((List<object>)json["sccolors"]).Cast<List<object>>().Select(Arr2Color).ToList()
+            };
+
+            // Add rooms
+            foreach (var kv in (Dictionary<string, object>)json["rooms"])
+            {
+                entry.rooms[kv.Key] = NewRoomEntry.FromJson((Dictionary<string, object>)kv.Value);
+            }
+
+            // Add connections
+            foreach (var data in ((List<object>)json["connections"]).Cast<Dictionary<string, object>>())
+            {
+                entry.connections.Add(NewConnectionEntry.FromJson(data));
+            }
 
             return entry;
         }
 
         static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
-        static float[] Vec2arr(Vector3 vec) => [vec.x, vec.y, vec.z];
         static int[] Intvec2arr(IntVector2 vec) => [vec.x, vec.y];
         static Vector2 Arr2Vec2(List<object> arr) => new((float)(double)arr[0], (float)(double)arr[1]);
-        static Vector3 Arr2Vec3(List<object> arr) => new((float)(double)arr[0], (float)(double)arr[1], (float)(double)arr[2]);
+        static Color Arr2Color(List<object> arr) => new((float)(double)arr[0], (float)(double)arr[1], (float)(double)arr[2]);
         static IntVector2 Arr2IntVec2(List<object> arr) => new((int)(long)arr[0], (int)(long)arr[1]);
+
+        static int IntVec2Dir(IntVector2 vec) => vec.x != 0 ? (vec.x < 0 ? 0 : 2) : (vec.y < 0 ? 1 : 3);
 
         public class NewRoomEntry : IJsonObject
         {
-            private NewRegionInfo regionInfo;
+            private readonly NewRegionInfo regionInfo;
 
             public string roomName;
             public string subregion;
@@ -141,6 +218,32 @@ namespace MapExporter
                     }
                 }
                 nodes = room.exitAndDenIndex;
+
+                // Initialize connections
+                var aRoom = room.abstractRoom;
+                for (int i = 0; i < aRoom.connections.Length; i++)
+                {
+                    var other = aRoom.world.GetAbstractRoom(aRoom.connections[i]);
+                    if (!regionInfo.connections.Any(x => (x.roomA == aRoom.name || x.roomB == aRoom.name) && (x.roomA == other.name || x.roomB == other.name)))
+                    {
+                        Room otherRoom = other.realizedRoom ?? new Room(aRoom.world.game, aRoom.world, other);
+                        if (other.realizedRoom == null)
+                        {
+                            _ = new RoomPreparer(otherRoom, false, false, true);
+                            // we don't actually need to load it further than that lol
+                        }
+                        var conn = new NewConnectionEntry()
+                        {
+                            roomA = aRoom.name,
+                            roomB = other.name,
+                            posA = nodes[aRoom.ExitIndex(other.index)],
+                            posB = otherRoom.exitAndDenIndex[other.ExitIndex(aRoom.index)]
+                        };
+                        conn.dirA = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posA));
+                        conn.dirB = IntVec2Dir(otherRoom.ShorcutEntranceHoleDirection(conn.posB));
+                        regionInfo.connections.Add(conn);
+                    }
+                }
             }
 
             public Dictionary<string, object> ToJson()
@@ -149,12 +252,12 @@ namespace MapExporter
                 {
                     { "name", roomName },
                     { "subregion", subregion },
-                    { "pos", new float[] { devPos.x, devPos.y } },
+                    { "pos", Vec2arr(devPos) },
 
-                    { "cameras", cameras?.Select(v => new float[] { v.x, v.y }).ToList() },
-                    { "size", size != null ? new int[] { size.x, size.y } : null },
+                    { "cameras", cameras?.Select(Vec2arr).ToList() },
+                    { "size", size != null ? Intvec2arr(size) : null },
                     { "tiles", tiles },
-                    { "nodes", nodes?.Select(v => new int[] { v.x, v.y }).ToList() },
+                    { "nodes", nodes?.Select(Intvec2arr).ToList() },
 
                     { "spawns", spawns },
                     { "tags", tags },
@@ -177,7 +280,8 @@ namespace MapExporter
                             list.Add(DenSpawnData.FromJson(spawn));
                         }
                         return list.ToArray();
-                    }).ToArray()
+                    }).ToArray(),
+                    tags = ((List<object>)json["tags"]).Cast<string>().ToArray(),
                 };
 
                 if (json["cameras"] != null)
@@ -188,7 +292,7 @@ namespace MapExporter
 
                     var (w, h) = (entry.size.x, entry.size.y);
                     entry.tiles = new int[w, h][];
-                    var rawTiles = ((List<object>)json["tiles"]).Select(x => ((List<object>)x).Select(x => (int)(long)x).ToArray()).ToList();
+                    var rawTiles = ((List<object>)json["tiles"]).Select(x => ((List<object>)x).Select(x => (int)(long)x).ToArray()).ToArray();
                     for (int i = 0; i < w; i++)
                     {
                         for (int j = 0; j < h; j++)
@@ -249,7 +353,7 @@ namespace MapExporter
 
             public NewConnectionEntry() { } // empty
 
-            public NewConnectionEntry(string entry)
+            public NewConnectionEntry(string entry) // old version read from world file, obsolete now
             {
                 string[] fields = Regex.Split(entry, ",");
                 roomA = fields[0];
