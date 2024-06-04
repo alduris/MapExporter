@@ -28,8 +28,8 @@ namespace MapExporter.Tabs
         private Process ScreenshotProcess;
         private int RetryAttempts = 0;
 
-        private bool WaitDirty = false;
-        private bool QueueDirty = false;
+        private bool WaitDirty = true;
+        private bool QueueDirty = true;
 
         public ScreenshotTab(OptionInterface owner) : base(owner, "Screenshotter")
         {
@@ -122,7 +122,7 @@ namespace MapExporter.Tabs
                 {
                     DoThings();
                 }
-                else
+                else if (Data.ScreenshotterStatus != SSStatus.Errored)
                 {
                     // Data.QueuedRegions.Dequeue();
                     // RetryAttempts = 0;

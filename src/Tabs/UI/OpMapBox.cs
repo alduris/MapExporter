@@ -17,10 +17,13 @@ namespace MapExporter.Tabs.UI
         private bool mapDirty = false;
         public Vector2 viewOffset = Vector2.zero;
         private readonly LabelBorrower labelBorrower;
+        private Vector2? lastMousePos;
+        private Vector2 accumulatedScrollAmount = Vector2.zero;
 
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
         private static readonly Color CAMERA_COLOR = new(1f, 1f, 0.5f);
+        private const float CROSSHAIR_SIZE = 6f;
 
         public OpMapBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, 0, horizontal, hasSlideBar)
         {
@@ -48,6 +51,55 @@ namespace MapExporter.Tabs.UI
         public override void Update()
         {
             base.Update();
+
+            if (activeRegion != null)
+            {
+                // Control
+                if (MenuMouseMode)
+                {
+                    if (MouseOver)
+                    {
+                        if (Input.GetMouseButton(0) && lastMousePos != null)
+                        {
+                            var scroll = lastMousePos.Value - MousePos;
+                            Move(scroll);
+                            UpdateMap();
+                            accumulatedScrollAmount += scroll;
+                        }
+                        else if (Input.GetMouseButtonUp(0) && accumulatedScrollAmount.magnitude < 10f)
+                        {
+                            // See if we are focused on a room
+                            var clickPos = viewOffset - (size / 2) + MousePos;
+                            RegionInfo.RoomEntry roomEntry = null;
+                            foreach (var room in activeRegion.rooms.Values)
+                            {
+                                if (new Rect(room.devPos, room.size.ToVector2()).Contains(clickPos))
+                                {
+                                    roomEntry = room;
+                                    break;
+                                }
+                            }
+                            FocusRoom(roomEntry?.roomName);
+                        }
+                        else
+                        {
+                            accumulatedScrollAmount = Vector2.zero;
+                        }
+                        lastMousePos = MousePos;
+                    }
+                    else
+                    {
+                        lastMousePos = null;
+                        accumulatedScrollAmount = Vector2.zero;
+                    }
+                }
+                else if (held)
+                {
+                    //
+                }
+            }
+
+            // Redraw
             if (texture != null && mapDirty)
             {
                 mapDirty = false;
@@ -153,6 +205,13 @@ namespace MapExporter.Tabs.UI
                 DrawLine(A, B, CONNECTION_COLOR, 1);
             }
 
+            // Draw cursor if needed
+            if (!MenuMouseMode && held)
+            {
+                DrawLine(size / 2 + Vector2.down * CROSSHAIR_SIZE, size / 2 + Vector2.up    * CROSSHAIR_SIZE, colorEdge, 2);
+                DrawLine(size / 2 + Vector2.left * CROSSHAIR_SIZE, size / 2 + Vector2.right * CROSSHAIR_SIZE, colorEdge, 2);
+            }
+
             // Apply texture so it actually shows lol
             UpdateTexture();
         }
@@ -190,8 +249,8 @@ namespace MapExporter.Tabs.UI
 
         public void UpdateMap()
         {
-            // mapDirty = true;
-            Draw();
+            mapDirty = true;
+            // Draw();
         }
 
         public void Move(Vector2 dir)
