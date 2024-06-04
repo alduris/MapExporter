@@ -51,6 +51,7 @@ namespace MapExporter
                     "map_" + world.name + ".txt"
                 ));
             devMap.filePath = File.Exists(slugcatFilePath) ? slugcatFilePath : normalFilePath;
+            devMap.subNodes = [];
             if (devMap.filePath == normalFilePath && !File.Exists(normalFilePath))
             {
                 throw new FileNotFoundException("Map file doesn't exist for region " + acronym + "!");
@@ -107,14 +108,17 @@ namespace MapExporter
                 { "echoRoom", echoRoom },
                 { "rooms", rooms },
                 { "connections", connections },
-                { "fgcolors", fgcolors },
-                { "bgcolors", bgcolors },
-                { "sccolors", sccolors },
+                { "fgcolors", (from s in fgcolors select Vec2arr((Vector3)(Vector4)s)).ToList() },
+                { "bgcolors", (from s in bgcolors select Vec2arr((Vector3)(Vector4)s)).ToList() },
+                { "sccolors", (from s in sccolors select Vec2arr((Vector3)(Vector4)s)).ToList() },
             };
         }
 
         public static RegionInfo FromJson(Dictionary<string, object> json)
         {
+            Plugin.Logger.LogDebug(json["fgcolors"].GetType().Name);
+            Plugin.Logger.LogDebug(((List<object>)json["fgcolors"])[0].GetType());
+            Plugin.Logger.LogDebug(((List<object>)((List<object>)json["fgcolors"])[0])[0].GetType());
             var entry = new RegionInfo
             {
                 acronym = (string)json["acronym"],
@@ -144,6 +148,7 @@ namespace MapExporter
         }
 
         static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
+        static float[] Vec2arr(Vector3 vec) => [vec.x, vec.y, vec.z];
         static int[] Intvec2arr(IntVector2 vec) => [vec.x, vec.y];
         static Vector2 Arr2Vec2(List<object> arr) => new((float)(double)arr[0], (float)(double)arr[1]);
         static Color Arr2Color(List<object> arr) => new((float)(double)arr[0], (float)(double)arr[1], (float)(double)arr[2]);
@@ -217,8 +222,8 @@ namespace MapExporter
                         Plugin.Logger.LogWarning("Invalid spawner type! Room: " + spawner.den.ResolveRoomName() + ", Type: " + spawner.GetType().FullName);
                     }
                 }
-
-                tags = [.. room.roomTags];
+                
+                tags = [.. (room.roomTags ?? [])];
             }
 
             public void UpdateEntry(Room room)
@@ -243,24 +248,34 @@ namespace MapExporter
                 for (int i = 0; i < aRoom.connections.Length; i++)
                 {
                     var other = aRoom.world.GetAbstractRoom(aRoom.connections[i]);
-                    if (!regionInfo.connections.Any(x => (x.roomA == aRoom.name || x.roomB == aRoom.name) && (x.roomA == other.name || x.roomB == other.name)))
+                    if (other == null) continue;
+
+                    ConnectionEntry conn = null;
+                    foreach (var c in regionInfo.connections)
                     {
-                        Room otherRoom = other.realizedRoom ?? new Room(aRoom.world.game, aRoom.world, other);
-                        if (other.realizedRoom == null)
+                        if (c.roomB == aRoom.name && c.roomA == other.name)
                         {
-                            _ = new RoomPreparer(otherRoom, false, false, true);
-                            // we don't actually need to load it further than that lol
+                            conn = c;
+                            break;
                         }
-                        var conn = new ConnectionEntry()
+                    }
+
+                    if (conn == null)
+                    {
+                        conn = new ConnectionEntry()
                         {
                             roomA = aRoom.name,
                             roomB = other.name,
                             posA = nodes[aRoom.ExitIndex(other.index)],
-                            posB = otherRoom.exitAndDenIndex[other.ExitIndex(aRoom.index)]
                         };
                         conn.dirA = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posA));
-                        conn.dirB = IntVec2Dir(otherRoom.ShorcutEntranceHoleDirection(conn.posB));
                         regionInfo.connections.Add(conn);
+                        // posB side of things will be initialized later when we load the room
+                    }
+                    else
+                    {
+                        conn.posB = nodes[aRoom.ExitIndex(other.index)];
+                        conn.dirB = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posB));
                     }
                 }
             }

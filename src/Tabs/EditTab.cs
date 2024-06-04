@@ -19,14 +19,18 @@ namespace MapExporter.Tabs
         private readonly WeakReference<OpTextButton> activeButton = new(null);
 
         private RegionInfo activeRegion = null;
+        private int dataVersion = 0;
 
         public override void Initialize()
         {
+            dataVersion = Data.Version;
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
             const float MENU_SIZE = 600f;
             // const float COMBOBOX_OFFSET = 4f;
             var scugList = Data.RenderedRegions.Keys.ToList();
+            if (scugList.Count == 0)
+                scugList.Add(new SlugcatStats.Name("", false)); // dummy placeholder
 
             // Top of menu
             const float TOPBAR_UNIT_WIDTH = (MENU_SIZE - SIDE_PADDING * 2f - ITEM_GAP * 2) / 5f;
@@ -73,7 +77,18 @@ namespace MapExporter.Tabs
 
         public override void Update()
         {
-            // throw new NotImplementedException();
+            if (dataVersion != Data.Version)
+            {
+                dataVersion = Data.Version;
+
+                // Update slugcat list
+                var scugList = Data.RenderedRegions.Keys.ToList();
+                if (scugList.Count == 0)
+                    scugList.Add(new SlugcatStats.Name("", false)); // dummy placeholder
+                scugSelector._itemList = scugList.Select((x, i) => new ListItem(x.value, i)).ToArray();
+                scugSelector._ResetIndex();
+                scugSelector.Change();
+            }
         }
 
         private void ScugSelector_OnValueChanged(UIconfig config, string slugcat, string oldSlugcat)

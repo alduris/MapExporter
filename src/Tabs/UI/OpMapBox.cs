@@ -119,7 +119,7 @@ namespace MapExporter.Tabs.UI
                         if (startY + j < drawArea.yMin || startY + j > drawArea.yMax)
                             continue;
 
-                        var p = new Vector2(startX + i - drawBL.x, startY + j - drawBL.y);
+                        var p = new Vector2(startX + i - drawBL.x, startY + j - drawBL.y) + Vector2.one * 0.0001f;
                         texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), GetTileColor(room.tiles?[i, j]));
                     }
                 }

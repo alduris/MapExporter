@@ -8,6 +8,8 @@ namespace MapExporter
 {
     internal static class Data
     {
+        public static int Version { get; private set; } = 0;
+
         public static string DataDirectory => Path.Combine(Custom.LegacyRootFolderDirectory(), "MapExport");
         public static string PathOf(string path) => Path.Combine(DataDirectory, path);
 
@@ -121,6 +123,8 @@ namespace MapExporter
             {
                 List<string> regions = [];
             }
+
+            Version++;
         }
 
         public static void UpdateSSStatus()
@@ -134,6 +138,8 @@ namespace MapExporter
                     Enum.TryParse((string)json["ssstatus"], out ScreenshotterStatus);
                 }
             }
+
+            Version++;
         }
 
         public static void SaveData()
