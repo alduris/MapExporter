@@ -53,15 +53,17 @@ namespace MapExporter.Tabs
             const float BODY_LEFT_WIDTH = MENU_SIZE / 3;
             const float BODY_RIGHT_WIDTH = MENU_SIZE - BODY_LEFT_WIDTH;
             const float TOPBAR_HEIGHT = 30f + SIDE_PADDING + ITEM_GAP;
+            const float CONTROLBOX_HEIGHT = (MENU_SIZE - TOPBAR_HEIGHT - SIDE_PADDING) / 3;
             roomSelector = new(
                 new Vector2(SIDE_PADDING, SIDE_PADDING),
                 new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT),
                 0, false, true, true);
-            float mapSize = BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2; // supposed to be a square
+            float mapWidth = BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2;
+            float mapHeight = MENU_SIZE - TOPBAR_HEIGHT - CONTROLBOX_HEIGHT - ITEM_GAP;
             controlBox = new(
                 new Vector2(BODY_LEFT_WIDTH + ITEM_GAP / 2, SIDE_PADDING),
-                new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, roomSelector.size.y - mapSize - ITEM_GAP));
-            mapBox = new OpMapBox(new(controlBox.pos.x, roomSelector.pos.y + roomSelector.size.y - mapSize), new(mapSize, mapSize));
+                new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, CONTROLBOX_HEIGHT));
+            mapBox = new OpMapBox(new(controlBox.pos.x, roomSelector.pos.y + CONTROLBOX_HEIGHT + ITEM_GAP), new(mapWidth, mapHeight));
 
             // Add the items
             AddItems(

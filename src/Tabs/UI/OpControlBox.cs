@@ -7,7 +7,7 @@ using static MapExporter.RegionInfo;
 
 namespace MapExporter.Tabs.UI
 {
-    internal class OpControlBox : OpScrollBox
+    internal partial class OpControlBox : OpScrollBox
     {
         private OpMapBox mapBox;
         private string lastRoom = null;
@@ -42,27 +42,31 @@ namespace MapExporter.Tabs.UI
                     tab._RemoveItem(item);
                 }
                 items.Clear();
-                SetContentSize(0f);
+                SetContentSize(size.x * 2f);
 
                 // Time to make the options and stuff!
-                const float SCROLLBAR_WIDTH = BaseTab.SCROLLBAR_WIDTH;
-                const float INNER_PAD = 6f;
-                const int CONTENT_ROWS = 4;
-                const float CONTENT_GAP = 4f;
-                float optionsHeight = size.y - SCROLLBAR_WIDTH - INNER_PAD * 2f;
+                const float SCROLLBAR_HEIGHT = BaseTab.SCROLLBAR_WIDTH;
+                const float PADDING = 6f;
+                const float MARGIN = 4f;
+                const int CONTENT_COLS = 4;
+                float columnWidth = (contentSize - PADDING * 2 - (PADDING * 2 + 2f) * (CONTENT_COLS - 1)) / CONTENT_COLS;
+                const int CONTENT_ROWS = 5;
+                float optionsHeight = size.y - PADDING * 2f - SCROLLBAR_HEIGHT;
+                float titleY = SCROLLBAR_HEIGHT + PADDING + optionsHeight - 30f;
+                float XPosForCol(int col) => PADDING + (columnWidth + PADDING * 2 + 2f) * col;
                 float YPosForRow(int row, int maxRows = CONTENT_ROWS, float height = 30f) {
-                    float rowHeight = (optionsHeight - CONTENT_GAP * (maxRows - 1)) / maxRows;
+                    float rowHeight = (optionsHeight - MARGIN * (maxRows - 1)) / maxRows;
                     float elementOffset = (rowHeight - height) / 2f;
-                    return SCROLLBAR_WIDTH + INNER_PAD + rowHeight * (maxRows - row - 1) + elementOffset;
+                    return SCROLLBAR_HEIGHT + PADDING + rowHeight * (maxRows - row - 1) + elementOffset;
                 };
 
                 // Create basic room metadata inputs
-                const float METADATA_WIDTH = 120f;
+                const int METADATA_ROWS = 4;
                 float nmWidth = LabelTest.GetWidth("NM: ");
                 var nameInput = new OpTextBox(
                     OIUtil.CosmeticBind(room.roomName),
-                    new Vector2(INNER_PAD + nmWidth, YPosForRow(0, 3, OIUtil.COMBOBOX_HEIGHT)),
-                    METADATA_WIDTH - nmWidth)
+                    new Vector2(XPosForCol(0) + nmWidth, YPosForRow(1, METADATA_ROWS, OIUtil.COMBOBOX_HEIGHT)),
+                    columnWidth - nmWidth)
                 {
                     maxLength = 240, // fun fact: 240 is the actual max length the name of a room with a settings file can be because of Windows file system restrictions
                     accept = OpTextBox.Accept.StringASCII,
@@ -75,8 +79,8 @@ namespace MapExporter.Tabs.UI
                 var sbrListItems = new HashSet<string>(mapBox.activeRegion.rooms.Values.Select(x => x.subregion ?? "")).ToArray();
                 var subregionInput = new OpComboBox(
                     OIUtil.CosmeticBind(room.subregion),
-                    new Vector2(INNER_PAD + sbrWidth, YPosForRow(1, 3, OIUtil.COMBOBOX_HEIGHT)),
-                    METADATA_WIDTH - sbrWidth,
+                    new Vector2(XPosForCol(0) + sbrWidth, YPosForRow(2, METADATA_ROWS, OIUtil.COMBOBOX_HEIGHT)),
+                    columnWidth - sbrWidth,
                     sbrListItems)
                 {
                     allowEmpty = true,
@@ -84,29 +88,46 @@ namespace MapExporter.Tabs.UI
                 };
 
                 var echoToggle = new OpTextButton(
-                    new Vector2(INNER_PAD, YPosForRow(2, 3)),
-                    new Vector2(METADATA_WIDTH, 30f),
+                    new Vector2(XPosForCol(0), YPosForRow(3, METADATA_ROWS)),
+                    new Vector2(columnWidth, 30f),
                     mapBox.activeRegion.echoRoom == room.roomName ? "Echo room" : "Not echo room");
                 echoToggle.OnClick += (_) => EchoToggle_OnClick(echoToggle, room.roomName);
 
                 AddItems(
-                    new OpLabel(INNER_PAD, YPosForRow(0, 3, OIUtil.LABEL_HEIGHT), "NM:"),
+                    new OpLabel(XPosForCol(0), titleY, "METADATA", true),
+                    new OpLabel(XPosForCol(0), YPosForRow(1, METADATA_ROWS, OIUtil.LABEL_HEIGHT), "NM:"),
                     nameInput,
-                    new OpLabel(INNER_PAD, YPosForRow(1, 3, OIUtil.LABEL_HEIGHT), "SBR:"),
+                    new OpLabel(XPosForCol(0), YPosForRow(2, METADATA_ROWS, OIUtil.LABEL_HEIGHT), "SBR:"),
                     subregionInput,
-                    echoToggle,
-                    new OpImage(new Vector2(INNER_PAD + METADATA_WIDTH + INNER_PAD, SCROLLBAR_WIDTH + INNER_PAD), "pixel")
-                    {
-                        scale = new Vector2(1f, optionsHeight),
-                        color = colorEdge
-                    }
+                    echoToggle
+                );
+
+                // Connections
+                AddItems(
+                    new OpLabel(XPosForCol(1), titleY, "EXITS", true)
+                );
+
+                // Creatures
+                AddItems(
+                    new OpLabel(XPosForCol(2), titleY, "SPAWNS", true)
                 );
 
                 // Room tags
+                var tagBox = new OpTagBox(new Vector2(XPosForCol(3), SCROLLBAR_HEIGHT + PADDING), new Vector2(columnWidth, optionsHeight - 30f - MARGIN), room);
+                AddItems(
+                    new OpLabel(XPosForCol(3), titleY, "TAGS", true),
+                    tagBox
+                );
 
-                // Connections
-
-                // Creatures
+                // Lines between columns
+                for (int i = 0; i < CONTENT_COLS; i++)
+                {
+                    AddItems(new OpImage(new Vector2(XPosForCol(i + 1) - PADDING - 2f, SCROLLBAR_HEIGHT + PADDING), "pixel")
+                    {
+                        scale = new Vector2(2f, optionsHeight),
+                        color = colorEdge
+                    });
+                }
 
                 // Move comboboxes to the front for z-indexing reasons
                 foreach (var item in items)
@@ -116,9 +137,6 @@ namespace MapExporter.Tabs.UI
                         item.MoveToFront();
                     }
                 }
-
-                SetContentSize(INNER_PAD * 2f + METADATA_WIDTH + INNER_PAD * 2f + 1f);
-                //             edge pad -----   left part ----   separator ---------
             }
         }
 

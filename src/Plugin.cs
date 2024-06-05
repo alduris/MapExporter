@@ -13,6 +13,7 @@ using MoreSlugcats;
 using RWCustom;
 using MapExporter.Screenshotter;
 using Random = UnityEngine.Random;
+using Menu.Remix.MixedUI;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -68,7 +69,6 @@ sealed class Plugin : BaseUnityPlugin
                 new Hook(typeof(RainWorldGame).GetProperty("InitialBlackSeconds").GetGetMethod(), typeof(Plugin).GetMethod("RainWorldGame_ZeroProperty"), this);
                 new Hook(typeof(RainWorldGame).GetProperty("FadeInTime").GetGetMethod(), typeof(Plugin).GetMethod("RainWorldGame_ZeroProperty"), this);
                 On.OverWorld.WorldLoaded += OverWorld_WorldLoaded;
-                // On.Room.ReadyForAI += Room_ReadyForAI;
                 On.Room.Loaded += Room_Loaded;
                 On.Room.ScreenMovement += Room_ScreenMovement;
                 On.RoomCamera.DrawUpdate += RoomCamera_DrawUpdate;
@@ -84,6 +84,9 @@ sealed class Plugin : BaseUnityPlugin
                 On.MoreSlugcats.BlinkingFlower.DrawSprites += BlinkingFlower_DrawSprites;
                 On.RoomCamera.ApplyEffectColorsToPaletteTexture += RoomCamera_ApplyEffectColorsToPaletteTexture;
                 On.SeedCob.FreezingPaletteUpdate += SeedCob_FreezingPaletteUpdate;
+                On.InsectCoordinator.CreateInsect += InsectCoordinator_CreateInsect;
+                IL.WorldLoader.MappingRooms += WorldLoader_MappingRooms;
+                On.AbstractRoom.AddTag += AbstractRoom_AddTag;
 
                 Logger.LogDebug("Finished start thingy");
             }
@@ -97,6 +100,9 @@ sealed class Plugin : BaseUnityPlugin
                 {
                     orig(self);
                     MachineConnector.SetRegisteredOI(MOD_ID, new UI());
+
+                    static float OpScrollBox_MaxScroll_get(Func<OpScrollBox, float> orig, OpScrollBox self) => self.horizontal ? -Mathf.Max(self.contentSize - self.size.x, 0f) : orig(self);
+                    _ = new Hook(typeof(OpScrollBox).GetProperty(nameof(OpScrollBox.MaxScroll)).GetGetMethod(), OpScrollBox_MaxScroll_get);
                     Logger.LogDebug("UI registered");
                 };
             }
@@ -110,6 +116,7 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
     }
 
+
     // disable resetting logs
     private void RainWorld_Awake(ILContext il)
     {
@@ -118,7 +125,7 @@ sealed class Plugin : BaseUnityPlugin
         for (int i = 0; i < 2; i++)
         {
             ILLabel brto = null;
-            if (c.TryGotoNext(x => x.MatchCall(typeof(File), "Exists"), x => x.MatchBrfalse(out brto)))
+            if (c.TryGotoNext(x => x.MatchCall(typeof(File), nameof(File.Exists)), x => x.MatchBrfalse(out brto)))
             {
                 c.Index--;
                 c.MoveAfterLabels();
@@ -129,6 +136,64 @@ sealed class Plugin : BaseUnityPlugin
     }
 
     #region fixes
+    // Always put room tags in the AbstractRoom roomTags array
+    private void AbstractRoom_AddTag(On.AbstractRoom.orig_AddTag orig, AbstractRoom self, string tg)
+    {
+        self.roomTags ??= [];
+        self.roomTags.Add(tg);
+        orig(self, tg);
+        if (self.roomTags.Count > 1 && self.roomTags[self.roomTags.Count - 1] == self.roomTags[self.roomTags.Count - 2])
+        {
+            self.roomTags.Pop();
+        }
+    }
+
+    // Always put room tags in the WorldLoader roomTags array so they get added to the room
+    private void WorldLoader_MappingRooms(ILContext il)
+    {
+        try
+        {
+            var c = new ILCursor(il);
+            int array = 0;
+            int index = 3;
+
+            c.GotoNext(x => x.MatchLdstr("SWARMROOM"));
+            c.GotoNext(x => x.MatchLdloc(out array), x => x.MatchLdloc(out index), x => x.MatchLdelemRef());
+            c.GotoNext(MoveType.AfterLabel, x => x.MatchLdloc(index), x => x.MatchLdcI4(1), x => x.MatchAdd());
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, array);
+            c.Emit(OpCodes.Ldloc, index);
+            c.Emit(OpCodes.Ldelem_Ref);
+            c.EmitDelegate((WorldLoader self, string tag) =>
+            {
+                if (self.roomTags[self.roomTags.Count - 1] == null)
+                {
+                    self.roomTags[self.roomTags.Count - 1] = [tag];
+                }
+                else
+                {
+                    var tags = self.roomTags[self.roomTags.Count - 1];
+                    if (tags[tags.Count - 1] != tag)
+                    {
+                        tags.Add(tag);
+                    }
+                }
+            });
+        }
+        catch (Exception e)
+        {
+            Logger.LogError("WorldLoader MappingRooms hook failed!");
+            Logger.LogError(e);
+        }
+    }
+
+    // Disable insects from spawning (including custom ones; was in original henpe code but didn't account for custom ones)
+    private void InsectCoordinator_CreateInsect(On.InsectCoordinator.orig_CreateInsect orig, InsectCoordinator self, CosmeticInsect.Type type, Vector2 pos, InsectCoordinator.Swarm swarm)
+    {
+        // don't call orig lol
+    }
+
 
     // Fix seed cob crash for saint ig (sorry bensone I replaced your code copied straight from RW code :leditoroverload:)
     private void SeedCob_FreezingPaletteUpdate(On.SeedCob.orig_FreezingPaletteUpdate orig, SeedCob self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
@@ -176,7 +241,7 @@ sealed class Plugin : BaseUnityPlugin
             c.GotoNext(
                 MoveType.After,
                 x => x.MatchLdarg(0),
-                x => x.MatchCall<PhysicalObject>("get_Submersion"),
+                x => x.MatchCall(typeof(PhysicalObject).GetProperty(nameof(PhysicalObject.Submersion)).GetGetMethod()),
                 x => x.Match(OpCodes.Ldc_R4),
                 x => x.MatchBltUn(out brto)
             );
@@ -369,15 +434,6 @@ sealed class Plugin : BaseUnityPlugin
         }
     }
 
-    // no orcacles
-    /*private void Room_ReadyForAI(On.Room.orig_ReadyForAI orig, Room self)
-    {
-        string oldname = self.abstractRoom.name;
-        if (self.abstractRoom.name.EndsWith("_AI")) self.abstractRoom.name = "XXX"; // oracle breaks w no player
-        orig(self);
-        self.abstractRoom.name = oldname;
-    }*/
-
     // no gate switching
     private void OverWorld_WorldLoaded(On.OverWorld.orig_WorldLoaded orig, OverWorld self)
     {
@@ -393,7 +449,6 @@ sealed class Plugin : BaseUnityPlugin
         {
             if (self.roomSettings.effects[i].type == RoomSettings.RoomEffect.Type.VoidSea) self.roomSettings.effects.RemoveAt(i); // breaks with no player
             else if (self.roomSettings.effects[i].type.ToString() == "CGCameraZoom") self.roomSettings.effects.RemoveAt(i); // bad for screenies
-            // else if (((int)self.roomSettings.effects[i].type) >= 27 && ((int)self.roomSettings.effects[i].type) <= 36) self.roomSettings.effects.RemoveAt(i); // insects bad for screenies
         }
         foreach (var item in self.roomSettings.placedObjects)
         {

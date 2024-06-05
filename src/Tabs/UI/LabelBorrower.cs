@@ -20,6 +20,7 @@ namespace MapExporter.Tabs.UI
             foreach (var label in oldLabels)
             {
                 owner.tab._RemoveItem(label);
+                labels.Remove(label);
             }
             oldLabels.Clear();
             foreach (var label in labels)
