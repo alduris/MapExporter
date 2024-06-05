@@ -5,7 +5,7 @@
   "authors": "Henpemaz, DualIron, Noblecat57, Alduris<LINE>Code help: Bro748, Vigaro, BensoneWhite",
   "description": "Creates images for an online interactable map",
   "tags": [],
-  "requirements": [],
-  "requirements_names": [],
+  "requirements": ["bro.mergefix"],
+  "requirements_names": ["Merge Fix"],
   "checksum_override_version": true
 }

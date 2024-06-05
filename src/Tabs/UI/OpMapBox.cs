@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Menu.Remix.MixedUI;
 using RWCustom;
 using UnityEngine;
+using static MapExporter.RegionInfo;
 
 namespace MapExporter.Tabs.UI
 {
@@ -18,7 +19,7 @@ namespace MapExporter.Tabs.UI
         public Vector2 viewOffset = Vector2.zero;
         private readonly LabelBorrower labelBorrower;
         private Vector2? lastMousePos;
-        private Vector2 accumulatedScrollAmount = Vector2.zero;
+        private float accumulatedScrollAmount = 0f;
 
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
@@ -64,13 +65,13 @@ namespace MapExporter.Tabs.UI
                             var scroll = lastMousePos.Value - MousePos;
                             Move(scroll);
                             UpdateMap();
-                            accumulatedScrollAmount += scroll;
+                            accumulatedScrollAmount += scroll.magnitude;
                         }
-                        else if (Input.GetMouseButtonUp(0) && accumulatedScrollAmount.magnitude < 10f)
+                        else if (Input.GetMouseButtonUp(0) && accumulatedScrollAmount < 40f)
                         {
                             // See if we are focused on a room
                             var clickPos = viewOffset - (size / 2) + MousePos;
-                            RegionInfo.RoomEntry roomEntry = null;
+                            RoomEntry roomEntry = null;
                             foreach (var room in activeRegion.rooms.Values)
                             {
                                 if (new Rect(room.devPos, room.size.ToVector2()).Contains(clickPos))
@@ -80,22 +81,57 @@ namespace MapExporter.Tabs.UI
                                 }
                             }
                             FocusRoom(roomEntry?.roomName);
+                            (tab as EditTab)._SwitchActiveButton(roomEntry?.roomName);
                         }
                         else
                         {
-                            accumulatedScrollAmount = Vector2.zero;
+                            accumulatedScrollAmount = 0f;
                         }
                         lastMousePos = MousePos;
                     }
                     else
                     {
                         lastMousePos = null;
-                        accumulatedScrollAmount = Vector2.zero;
+                        accumulatedScrollAmount = 0f;
                     }
                 }
                 else if (held)
                 {
-                    //
+                    var dir = new Vector2(CtlrInput.x, CtlrInput.y) * (CtlrInput.pckp ? 4f : 1f);
+                    Move(dir);
+
+                    if (CtlrInput.jmp && !LastCtlrInput.jmp)
+                    {
+                        if (activeRoom == null)
+                        {
+                            RoomEntry roomEntry = null;
+                            foreach (var room in activeRegion.rooms.Values)
+                            {
+                                if (new Rect(room.devPos, room.size.ToVector2()).Contains(viewOffset))
+                                {
+                                    roomEntry = room;
+                                    break;
+                                }
+                            }
+
+                            if (roomEntry != null)
+                            {
+                                FocusRoom(roomEntry.roomName);
+                                (tab as EditTab)._SwitchActiveButton(roomEntry.roomName);
+                            }
+                            else
+                            {
+                                PlaySound(SoundID.MENU_Error_Ping);
+                            }
+                        }
+                        else
+                        {
+                            FocusRoom(null);
+                            (tab as EditTab)._SwitchActiveButton(null);
+                        }
+                    }
+
+                    UpdateMap();
                 }
             }
 

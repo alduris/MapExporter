@@ -166,21 +166,7 @@ namespace MapExporter.Tabs
                     {
                         alignment = FLabelAlignment.Left
                     };
-                    button.OnClick += (_) => {
-                        if (button.Active)
-                        {
-                            button.Active = false;
-                            activeButton.SetTarget(null);
-                            SwitchToRoom(null);
-                        }
-                        else
-                        {
-                            if (activeButton.TryGetTarget(out var oldButton)) oldButton.Active = false;
-                            button.Active = true;
-                            activeButton.SetTarget(button);
-                            SwitchToRoom(room);
-                        }
-                    };
+                    button.OnClick += (_) => RoomButton_OnClick(button, room);
                     roomSelector.AddItems(button);
                 }
                 roomSelector.SetContentSize(height);
@@ -191,6 +177,37 @@ namespace MapExporter.Tabs
         private void SwitchToRoom(string room)
         {
             mapBox.FocusRoom(room);
+        }
+
+        internal void _SwitchActiveButton(string room)
+        {
+            activeButton.SetTarget(null);
+            foreach (var item in roomSelector.items)
+            {
+                if (item is OpTextButton button && button.text == room)
+                {
+                    activeButton.SetTarget(button);
+                    roomSelector.ScrollToRect(new Rect(button.pos, button.size));
+                    break;
+                }
+            }
+        }
+
+        private void RoomButton_OnClick(OpTextButton button, string room)
+        {
+            if (button.Active)
+            {
+                button.Active = false;
+                activeButton.SetTarget(null);
+                SwitchToRoom(null);
+            }
+            else
+            {
+                if (activeButton.TryGetTarget(out var oldButton)) oldButton.Active = false;
+                button.Active = true;
+                activeButton.SetTarget(button);
+                SwitchToRoom(room);
+            }
         }
 
         private void SaveButton_OnClick(UIfocusable trigger)
