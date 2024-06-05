@@ -50,16 +50,19 @@ namespace MapExporter.Tabs.UI
                 const int CONTENT_ROWS = 4;
                 const float CONTENT_GAP = 4f;
                 float optionsHeight = size.y - SCROLLBAR_WIDTH - INNER_PAD * 2f;
-                float YPosForRow(int row, int maxRows=CONTENT_ROWS) {
+                float YPosForRow(int row, int maxRows = CONTENT_ROWS, float height = 30f) {
                     float rowHeight = (optionsHeight - CONTENT_GAP * (maxRows - 1)) / maxRows;
-                    float elementOffset = (rowHeight - 30f) / 2f;
+                    float elementOffset = (rowHeight - height) / 2f;
                     return SCROLLBAR_WIDTH + INNER_PAD + rowHeight * (maxRows - row - 1) + elementOffset;
                 };
 
                 // Create basic room metadata inputs
                 const float METADATA_WIDTH = 120f;
                 float nmWidth = LabelTest.GetWidth("NM: ");
-                var nameInput = new OpTextBox(OIUtil.CosmeticBind(room.roomName), new Vector2(INNER_PAD + nmWidth, YPosForRow(0, 3)), METADATA_WIDTH - nmWidth)
+                var nameInput = new OpTextBox(
+                    OIUtil.CosmeticBind(room.roomName),
+                    new Vector2(INNER_PAD + nmWidth, YPosForRow(0, 3, OIUtil.COMBOBOX_HEIGHT)),
+                    METADATA_WIDTH - nmWidth)
                 {
                     maxLength = 240, // fun fact: 240 is the actual max length the name of a room with a settings file can be because of Windows file system restrictions
                     accept = OpTextBox.Accept.StringASCII,
@@ -70,7 +73,11 @@ namespace MapExporter.Tabs.UI
 
                 float sbrWidth = LabelTest.GetWidth("SBR: ");
                 var sbrListItems = new HashSet<string>(mapBox.activeRegion.rooms.Values.Select(x => x.subregion ?? "")).ToArray();
-                var subregionInput = new OpComboBox(OIUtil.CosmeticBind(room.subregion), new Vector2(INNER_PAD + sbrWidth, YPosForRow(1, 3)), METADATA_WIDTH - sbrWidth, sbrListItems)
+                var subregionInput = new OpComboBox(
+                    OIUtil.CosmeticBind(room.subregion),
+                    new Vector2(INNER_PAD + sbrWidth, YPosForRow(1, 3, OIUtil.COMBOBOX_HEIGHT)),
+                    METADATA_WIDTH - sbrWidth,
+                    sbrListItems)
                 {
                     allowEmpty = true,
                     description = "Subregion"
@@ -83,9 +90,9 @@ namespace MapExporter.Tabs.UI
                 echoToggle.OnClick += (_) => EchoToggle_OnClick(echoToggle, room.roomName);
 
                 AddItems(
-                    new OpLabel(INNER_PAD, YPosForRow(0, 3), "NM:"),
+                    new OpLabel(INNER_PAD, YPosForRow(0, 3, OIUtil.LABEL_HEIGHT), "NM:"),
                     nameInput,
-                    new OpLabel(INNER_PAD, YPosForRow(1, 3), "SBR:"),
+                    new OpLabel(INNER_PAD, YPosForRow(1, 3, OIUtil.LABEL_HEIGHT), "SBR:"),
                     subregionInput,
                     echoToggle,
                     new OpImage(new Vector2(INNER_PAD + METADATA_WIDTH + INNER_PAD, SCROLLBAR_WIDTH + INNER_PAD), "pixel")
@@ -94,6 +101,12 @@ namespace MapExporter.Tabs.UI
                         color = colorEdge
                     }
                 );
+
+                // Room tags
+
+                // Connections
+
+                // Creatures
 
                 // Move comboboxes to the front for z-indexing reasons
                 foreach (var item in items)
