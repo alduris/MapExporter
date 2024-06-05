@@ -7,7 +7,7 @@ using static MapExporter.RegionInfo;
 
 namespace MapExporter.Tabs.UI
 {
-    internal partial class OpControlBox : OpScrollBox
+    internal class OpControlBox : OpScrollBox
     {
         private OpMapBox mapBox;
         private string lastRoom = null;
@@ -50,22 +50,20 @@ namespace MapExporter.Tabs.UI
                 const float MARGIN = 4f;
                 const int CONTENT_COLS = 4;
                 float columnWidth = (contentSize - PADDING * 2 - (PADDING * 2 + 2f) * (CONTENT_COLS - 1)) / CONTENT_COLS;
-                const int CONTENT_ROWS = 5;
+                const int CONTENT_ROWS = 4;
                 float optionsHeight = size.y - PADDING * 2f - SCROLLBAR_HEIGHT;
-                float titleY = SCROLLBAR_HEIGHT + PADDING + optionsHeight - 30f;
                 float XPosForCol(int col) => PADDING + (columnWidth + PADDING * 2 + 2f) * col;
-                float YPosForRow(int row, int maxRows = CONTENT_ROWS, float height = 30f) {
-                    float rowHeight = (optionsHeight - MARGIN * (maxRows - 1)) / maxRows;
+                float YPosForRow(int row, float height = 30f) {
+                    float rowHeight = (optionsHeight - MARGIN * (CONTENT_ROWS - 1)) / CONTENT_ROWS;
                     float elementOffset = (rowHeight - height) / 2f;
-                    return SCROLLBAR_HEIGHT + PADDING + rowHeight * (maxRows - row - 1) + elementOffset;
+                    return SCROLLBAR_HEIGHT + PADDING + rowHeight * (CONTENT_ROWS - row - 1) + elementOffset;
                 };
 
                 // Create basic room metadata inputs
-                const int METADATA_ROWS = 4;
                 float nmWidth = LabelTest.GetWidth("NM: ");
                 var nameInput = new OpTextBox(
                     OIUtil.CosmeticBind(room.roomName),
-                    new Vector2(XPosForCol(0) + nmWidth, YPosForRow(1, METADATA_ROWS, OIUtil.COMBOBOX_HEIGHT)),
+                    new Vector2(XPosForCol(0) + nmWidth, YPosForRow(1, OIUtil.COMBOBOX_HEIGHT)),
                     columnWidth - nmWidth)
                 {
                     maxLength = 240, // fun fact: 240 is the actual max length the name of a room with a settings file can be because of Windows file system restrictions
@@ -79,7 +77,7 @@ namespace MapExporter.Tabs.UI
                 var sbrListItems = new HashSet<string>(mapBox.activeRegion.rooms.Values.Select(x => x.subregion ?? "")).ToArray();
                 var subregionInput = new OpComboBox(
                     OIUtil.CosmeticBind(room.subregion),
-                    new Vector2(XPosForCol(0) + sbrWidth, YPosForRow(2, METADATA_ROWS, OIUtil.COMBOBOX_HEIGHT)),
+                    new Vector2(XPosForCol(0) + sbrWidth, YPosForRow(2, OIUtil.COMBOBOX_HEIGHT)),
                     columnWidth - sbrWidth,
                     sbrListItems)
                 {
@@ -88,35 +86,55 @@ namespace MapExporter.Tabs.UI
                 };
 
                 var echoToggle = new OpTextButton(
-                    new Vector2(XPosForCol(0), YPosForRow(3, METADATA_ROWS)),
+                    new Vector2(XPosForCol(0), YPosForRow(3)),
                     new Vector2(columnWidth, 30f),
                     mapBox.activeRegion.echoRoom == room.roomName ? "Echo room" : "Not echo room");
                 echoToggle.OnClick += (_) => EchoToggle_OnClick(echoToggle, room.roomName);
 
                 AddItems(
-                    new OpLabel(XPosForCol(0), titleY, "METADATA", true),
-                    new OpLabel(XPosForCol(0), YPosForRow(1, METADATA_ROWS, OIUtil.LABEL_HEIGHT), "NM:"),
+                    new OpLabel(XPosForCol(0), YPosForRow(0), "METADATA", true),
+                    new OpLabel(XPosForCol(0), YPosForRow(1, OIUtil.LABEL_HEIGHT), "NM:"),
                     nameInput,
-                    new OpLabel(XPosForCol(0), YPosForRow(2, METADATA_ROWS, OIUtil.LABEL_HEIGHT), "SBR:"),
+                    new OpLabel(XPosForCol(0), YPosForRow(2, OIUtil.LABEL_HEIGHT), "SBR:"),
                     subregionInput,
                     echoToggle
                 );
 
                 // Connections
                 AddItems(
-                    new OpLabel(XPosForCol(1), titleY, "EXITS", true)
+                    new OpLabel(XPosForCol(1), YPosForRow(0), "EXITS", true)
                 );
 
                 // Creatures
                 AddItems(
-                    new OpLabel(XPosForCol(2), titleY, "SPAWNS", true)
+                    new OpLabel(XPosForCol(2), YPosForRow(0), "SPAWNS", true)
                 );
 
                 // Room tags
-                var tagBox = new OpTagBox(new Vector2(XPosForCol(3), SCROLLBAR_HEIGHT + PADDING), new Vector2(columnWidth, optionsHeight - 30f - MARGIN), room);
+                var tagBtnWidth = Mathf.Max(LabelTest.GetWidth("ADD"), LabelTest.GetWidth("DEL")) + 8f;
+                var tagBox = new OpComboBox(OIUtil.CosmeticBind(""), new(XPosForCol(3), YPosForRow(2)), columnWidth - tagBtnWidth - MARGIN, room.tags.Length == 0 ? [""] : room.tags);
+                var tagAddInput = new OpTextBox(OIUtil.CosmeticBind(""), new Vector2(XPosForCol(3), YPosForRow(1)), columnWidth - tagBtnWidth - MARGIN)
+                {
+                    maxLength = int.MaxValue
+                };
+                var tagAddButton = new OpSimpleButton(new Vector2(XPosForCol(3) + columnWidth - tagBtnWidth, YPosForRow(1)), new Vector2(tagBtnWidth, OIUtil.TEXTBOX_HEIGHT), "ADD")
+                {
+                    colorEdge = BaseTab.GreenColor,
+                    colorFill = BaseTab.GreenColor
+                };
+                var tagDelButton = new OpSimpleButton(new Vector2(XPosForCol(3) + columnWidth - tagBtnWidth, YPosForRow(2)), new Vector2(tagBtnWidth, OIUtil.TEXTBOX_HEIGHT), "DEL")
+                {
+                    colorEdge = BaseTab.RedColor,
+                    colorFill = BaseTab.RedColor
+                };
+                var tagCountLabel = new OpLabel(XPosForCol(3), YPosForRow(3), room.tags.Length + " room tags");
+                tagAddButton.OnClick += (_) => TagAddButton_OnClick(tagAddInput, tagBox, tagCountLabel, room);
+                tagDelButton.OnClick += (_) => TagDelButton_OnCllick(tagBox, tagCountLabel, room);
                 AddItems(
-                    new OpLabel(XPosForCol(3), titleY, "TAGS", true),
-                    tagBox
+                    new OpLabel(XPosForCol(3), YPosForRow(0), "TAGS", true),
+                    tagAddInput, tagAddButton,
+                    tagBox, tagDelButton,
+                    tagCountLabel
                 );
 
                 // Lines between columns
@@ -138,6 +156,49 @@ namespace MapExporter.Tabs.UI
                     }
                 }
             }
+        }
+
+        private void TagAddButton_OnClick(OpTextBox textBox, OpComboBox comboBox, OpLabel label, RoomEntry room)
+        {
+            var tag = textBox.value.ToUpperInvariant().Trim();
+            if (tag.Length == 0 || new HashSet<string>(room.tags).Contains(tag))
+            {
+                PlaySound(SoundID.MENU_Error_Ping);
+                return;
+            }
+            Array.Resize(ref room.tags, room.tags.Length + 1);
+            room.tags[room.tags.Length - 1] = tag;
+
+            comboBox._itemList = room.tags.Select(x => new ListItem(x)).ToArray();
+            comboBox._ResetIndex();
+            comboBox.Change();
+
+            label.text = room.tags.Length + " room tags";
+            textBox.value = "";
+            textBox.Change();
+
+            PlaySound(SoundID.HUD_Food_Meter_Fill_Plop_A);
+        }
+
+        private void TagDelButton_OnCllick(OpComboBox comboBox, OpLabel label, RoomEntry room)
+        {
+            var tag = comboBox.value.ToUpperInvariant();
+            var list = room.tags.ToList();
+            if (!list.Remove(tag))
+            {
+                PlaySound(SoundID.MENU_Error_Ping);
+                return;
+            }
+            room.tags = [.. list];
+
+            comboBox._itemList = room.tags.Length > 0 ? room.tags.Select(x => new ListItem(x)).ToArray() : [new ListItem("")];
+            comboBox._ResetIndex();
+            comboBox.value = null;
+            comboBox.Change();
+
+            label.text = room.tags.Length + " room tags";
+
+            PlaySound(SoundID.HUD_Food_Meter_Deplete_Plop_A);
         }
 
         private void EchoToggle_OnClick(OpTextButton trigger, string room)

@@ -103,6 +103,7 @@ sealed class Plugin : BaseUnityPlugin
 
                     static float OpScrollBox_MaxScroll_get(Func<OpScrollBox, float> orig, OpScrollBox self) => self.horizontal ? -Mathf.Max(self.contentSize - self.size.x, 0f) : orig(self);
                     _ = new Hook(typeof(OpScrollBox).GetProperty(nameof(OpScrollBox.MaxScroll)).GetGetMethod(), OpScrollBox_MaxScroll_get);
+
                     Logger.LogDebug("UI registered");
                 };
             }
