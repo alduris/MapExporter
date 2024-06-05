@@ -7,6 +7,8 @@ using Menu.Remix.MixedUI;
 using MoreSlugcats;
 using UnityEngine;
 
+#pragma warning disable IDE1006 // Naming Styles (beginning with underscore)
+
 namespace MapExporter.Tabs
 {
     internal class EditTab(OptionInterface owner) : BaseTab(owner, "Editor")
@@ -20,6 +22,9 @@ namespace MapExporter.Tabs
 
         private RegionInfo activeRegion = null;
         private int dataVersion = 0;
+
+        private const float ROOMLIST_EDGE_PAD = 6f;
+        private const float ROOMLIST_LH = 24f;
 
         public override void Initialize()
         {
@@ -149,20 +154,18 @@ namespace MapExporter.Tabs
             // Find the room list and add its contents
             if (File.Exists(Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json")))
             {
-                const float LIST_EDGE_PAD = 6f;
-                const float LIST_LH = 24f;
 
                 activeRegion = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
                     Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json"))));
                 var roomList = activeRegion.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
 
-                float y = roomSelector.size.y - LIST_EDGE_PAD;
-                float height = LIST_EDGE_PAD * 2;
+                float y = roomSelector.size.y - ROOMLIST_EDGE_PAD;
+                float height = ROOMLIST_EDGE_PAD * 2;
                 foreach (var room in roomList)
                 {
-                    y -= LIST_LH;
-                    height += LIST_LH;
-                    var button = new OpTextButton(new Vector2(LIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - LIST_EDGE_PAD * 2 - SCROLLBAR_WIDTH, LIST_LH), room)
+                    y -= ROOMLIST_LH;
+                    height += ROOMLIST_LH;
+                    var button = new OpTextButton(new Vector2(ROOMLIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - ROOMLIST_EDGE_PAD * 2 - SCROLLBAR_WIDTH, ROOMLIST_LH), room)
                     {
                         alignment = FLabelAlignment.Left
                     };
@@ -181,16 +184,54 @@ namespace MapExporter.Tabs
 
         internal void _SwitchActiveButton(string room)
         {
+            if (activeButton.TryGetTarget(out var oldButton))
+            {
+                oldButton.Active = false;
+            }
             activeButton.SetTarget(null);
             foreach (var item in roomSelector.items)
             {
                 if (item is OpTextButton button && button.text == room)
                 {
+                    button.Active = true;
                     activeButton.SetTarget(button);
                     roomSelector.ScrollToRect(new Rect(button.pos, button.size));
                     break;
                 }
             }
+        }
+
+        internal void _UpdateButtonText()
+        {
+            // Remove items from boxes
+            foreach (var item in roomSelector.items)
+            {
+                _RemoveItem(item);
+            }
+            roomSelector.items.Clear();
+            roomSelector.SetContentSize(0);
+
+            _SwitchActiveButton(null);
+
+            // New room list
+            var roomList = activeRegion.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+            float y = roomSelector.size.y - ROOMLIST_EDGE_PAD;
+            float height = ROOMLIST_EDGE_PAD * 2;
+            foreach (var room in roomList)
+            {
+                y -= ROOMLIST_LH;
+                height += ROOMLIST_LH;
+                var button = new OpTextButton(new Vector2(ROOMLIST_EDGE_PAD, y), new Vector2(roomSelector.size.x - ROOMLIST_EDGE_PAD * 2 - SCROLLBAR_WIDTH, ROOMLIST_LH), room)
+                {
+                    alignment = FLabelAlignment.Left
+                };
+                button.OnClick += (_) => RoomButton_OnClick(button, room);
+                roomSelector.AddItems(button);
+            }
+            roomSelector.SetContentSize(height);
+
+            _SwitchActiveButton(mapBox.activeRoom);
         }
 
         private void RoomButton_OnClick(OpTextButton button, string room)
