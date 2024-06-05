@@ -244,8 +244,8 @@ namespace MapExporter.Tabs.UI
             // Draw cursor if needed
             if (!MenuMouseMode && held)
             {
-                DrawLine(size / 2 + Vector2.down * CROSSHAIR_SIZE, size / 2 + Vector2.up    * CROSSHAIR_SIZE, colorEdge, 2);
-                DrawLine(size / 2 + Vector2.left * CROSSHAIR_SIZE, size / 2 + Vector2.right * CROSSHAIR_SIZE, colorEdge, 2);
+                DrawLine(size / 2 + Vector2.down * CROSSHAIR_SIZE, size / 2 + Vector2.up    * CROSSHAIR_SIZE, colorEdge, 1);
+                DrawLine(size / 2 + Vector2.left * CROSSHAIR_SIZE, size / 2 + Vector2.right * CROSSHAIR_SIZE, colorEdge, 1);
             }
 
             // Apply texture so it actually shows lol
