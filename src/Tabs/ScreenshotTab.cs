@@ -139,8 +139,7 @@ namespace MapExporter.Tabs
                 // Remove previous items
                 foreach (var item in waitBox.items)
                 {
-                    item.Deactivate();
-                    item.tab.items.Remove(item);
+                    _RemoveItem(item);
                 }
                 waitBox.items.Clear();
                 waitBox.SetContentSize(0f);
@@ -231,8 +230,7 @@ namespace MapExporter.Tabs
                 // Remove previous items
                 foreach (var item in queueBox.items)
                 {
-                    item.Deactivate();
-                    item.tab.items.Remove(item);
+                    _RemoveItem(item);
                 }
                 queueBox.items.Clear();
                 queueBox.SetContentSize(0f);

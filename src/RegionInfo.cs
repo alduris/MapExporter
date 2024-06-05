@@ -116,9 +116,6 @@ namespace MapExporter
 
         public static RegionInfo FromJson(Dictionary<string, object> json)
         {
-            Plugin.Logger.LogDebug(json["fgcolors"].GetType().Name);
-            Plugin.Logger.LogDebug(((List<object>)json["fgcolors"])[0].GetType());
-            Plugin.Logger.LogDebug(((List<object>)((List<object>)json["fgcolors"])[0])[0].GetType());
             var entry = new RegionInfo
             {
                 acronym = (string)json["acronym"],

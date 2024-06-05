@@ -130,10 +130,9 @@ namespace MapExporter.Tabs
             if (acronym == oldAcronym) return;
 
             // Remove items from boxes
-            foreach (var el in roomSelector.items)
+            foreach (var item in roomSelector.items)
             {
-                el.Deactivate();
-                el.tab.items.Remove(el);
+                _RemoveItem(item);
             }
             roomSelector.items.Clear();
             roomSelector.SetContentSize(0);
