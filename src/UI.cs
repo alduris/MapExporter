@@ -5,10 +5,15 @@ internal class UI : OptionInterface
 {
     public UI()
     {
-        /* TODO:
-         * remix user interface where users can select regions and slugcats (optional) to render for, then the game opens up new instances of itself
-         * but those versions actually get the screenshots and then once it's done, the game allows you to move around rooms and finally puts them
-         * together in place of the python script to remove the dependency of having python installed
+        // todo: configurable settings
+        /**todo: configurable settings
+         * list:
+         * - show echoes
+         * - show insects
+         * - show rain room setting
+         * - collect all placed objects
+         * - skip existing rooms in generator tab
+         * - skip already rendered rooms in screenshotter
          */
     }
 
