@@ -16,7 +16,6 @@ namespace MapExporter.Tabs
         private OpComboBox scugSelector;
         private OpComboBox regionSelector;
         private OpScrollBox roomSelector;
-        private OpControlBox controlBox;
         private OpMapBox mapBox;
         private readonly WeakReference<OpTextButton> activeButton = new(null);
 
@@ -32,7 +31,6 @@ namespace MapExporter.Tabs
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
             const float MENU_SIZE = 600f;
-            // const float COMBOBOX_OFFSET = 4f;
             var scugList = Data.RenderedRegions.Keys.ToList();
             if (scugList.Count == 0)
                 scugList.Add(new SlugcatStats.Name("", false)); // dummy placeholder
@@ -50,36 +48,29 @@ namespace MapExporter.Tabs
             saveButton.OnClick += SaveButton_OnClick;
 
             // Body boxes and such
-            const float BODY_LEFT_WIDTH = MENU_SIZE / 3;
+            const float BODY_LEFT_WIDTH = MENU_SIZE * 0.25f;
             const float BODY_RIGHT_WIDTH = MENU_SIZE - BODY_LEFT_WIDTH;
             const float TOPBAR_HEIGHT = 30f + SIDE_PADDING + ITEM_GAP;
-            const float CONTROLBOX_HEIGHT = (MENU_SIZE - TOPBAR_HEIGHT - SIDE_PADDING) / 3;
             roomSelector = new(
                 new Vector2(SIDE_PADDING, SIDE_PADDING),
                 new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT),
                 0, false, true, true);
             float mapWidth = BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2;
-            float mapHeight = MENU_SIZE - TOPBAR_HEIGHT - CONTROLBOX_HEIGHT - ITEM_GAP;
-            controlBox = new(
-                new Vector2(BODY_LEFT_WIDTH + ITEM_GAP / 2, SIDE_PADDING),
-                new Vector2(BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2, CONTROLBOX_HEIGHT));
-            mapBox = new OpMapBox(new(controlBox.pos.x, roomSelector.pos.y + CONTROLBOX_HEIGHT + ITEM_GAP), new(mapWidth, mapHeight));
+            mapBox = new OpMapBox(new(BODY_LEFT_WIDTH + ITEM_GAP / 2, roomSelector.pos.y), new(mapWidth, roomSelector.size.y));
 
             // Add the items
             AddItems(
                 // Input boxes and such
                 roomSelector,
-                controlBox,
                 mapBox,
 
                 // Place the top things last for z-index reasons
                 regionSelector,
                 scugSelector,
                 saveButton,
-                new OpLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "EDIT MAP", FLabelAlignment.Center, true)
+                new OpLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "MOVE", FLabelAlignment.Center, true)
             );
             mapBox.Initialize();
-            controlBox.Initialize(mapBox);
         }
 
         public override void Update()

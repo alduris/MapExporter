@@ -99,6 +99,39 @@ namespace MapExporter
             }
         }
 
+        public void TrimEntries()
+        {
+            HashSet<string> toRemove = [];
+            foreach (var kv in rooms)
+            {
+                if (kv.Value.offscreenDen) continue;
+                if (kv.Value.size.x == 0 || kv.Value.size.y == 0 || (kv.Value.cameras?.Length ?? 0) == 0)
+                {
+                    toRemove.Add(kv.Key);
+                }
+            }
+
+            foreach (var key in toRemove)
+            {
+                rooms.Remove(key);
+            }
+
+            // Theoretically any of these removed rooms shouldn't have any connections but you never know
+            int i = 0;
+            while (i < connections.Count)
+            {
+                var conn = connections[i];
+                if (toRemove.Contains(conn.roomA) || toRemove.Contains(conn.roomB))
+                {
+                    connections.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+        }
+
         public Dictionary<string, object> ToJson()
         {
             return new()
@@ -169,11 +202,14 @@ namespace MapExporter
             public DenSpawnData[][] spawns;
             public string[] tags;
 
+            internal bool offscreenDen = false;
+
             public RoomEntry() { }
 
             public RoomEntry(RegionInfo owner, AbstractRoom room)
             {
                 regionInfo = owner;
+                offscreenDen = room.offScreenDen;
 
                 roomName = room.name;
                 subregion = room.subregionName;

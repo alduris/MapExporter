@@ -117,29 +117,10 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
     }
 
-
-    // disable resetting logs
-    private void RainWorld_Awake(ILContext il)
-    {
-        var c = new ILCursor(il);
-
-        for (int i = 0; i < 2; i++)
-        {
-            ILLabel brto = null;
-            if (c.TryGotoNext(x => x.MatchCall(typeof(File), nameof(File.Exists)), x => x.MatchBrfalse(out brto)))
-            {
-                c.Index--;
-                c.MoveAfterLabels();
-                c.EmitDelegate(() => FlagTriggered);
-                c.Emit(OpCodes.Brtrue, brto);
-            }
-        }
-    }
-
-    #region fixes
-    // Always put room tags in the AbstractRoom roomTags array
+    // Make sure to grab all tags
     private void AbstractRoom_AddTag(On.AbstractRoom.orig_AddTag orig, AbstractRoom self, string tg)
     {
+        // Always put room tags in the AbstractRoom roomTags array
         self.roomTags ??= [];
         self.roomTags.Add(tg);
         orig(self, tg);
@@ -149,9 +130,9 @@ sealed class Plugin : BaseUnityPlugin
         }
     }
 
-    // Always put room tags in the WorldLoader roomTags array so they get added to the room
     private void WorldLoader_MappingRooms(ILContext il)
     {
+        // Always put room tags in the WorldLoader roomTags array so they get added to the room
         try
         {
             var c = new ILCursor(il);
@@ -161,6 +142,7 @@ sealed class Plugin : BaseUnityPlugin
             c.GotoNext(x => x.MatchLdstr("SWARMROOM"));
             c.GotoNext(x => x.MatchLdloc(out array), x => x.MatchLdloc(out index), x => x.MatchLdelemRef());
             c.GotoNext(MoveType.AfterLabel, x => x.MatchLdloc(index), x => x.MatchLdcI4(1), x => x.MatchAdd());
+            Logger.LogDebug(array + ";" + index);
 
             c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Ldloc, array);
@@ -168,6 +150,7 @@ sealed class Plugin : BaseUnityPlugin
             c.Emit(OpCodes.Ldelem_Ref);
             c.EmitDelegate((WorldLoader self, string tag) =>
             {
+                Logger.LogDebug(tag);
                 if (self.roomTags[self.roomTags.Count - 1] == null)
                 {
                     self.roomTags[self.roomTags.Count - 1] = [tag];
@@ -188,6 +171,27 @@ sealed class Plugin : BaseUnityPlugin
             Logger.LogError(e);
         }
     }
+
+
+    // disable resetting logs
+    private void RainWorld_Awake(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        for (int i = 0; i < 2; i++)
+        {
+            ILLabel brto = null;
+            if (c.TryGotoNext(x => x.MatchCall(typeof(File), nameof(File.Exists)), x => x.MatchBrfalse(out brto)))
+            {
+                c.Index--;
+                c.MoveAfterLabels();
+                c.EmitDelegate(() => FlagTriggered);
+                c.Emit(OpCodes.Brtrue, brto);
+            }
+        }
+    }
+
+    #region fixes
 
     // Disable insects from spawning (including custom ones; was in original henpe code but didn't account for custom ones)
     private void InsectCoordinator_CreateInsect(On.InsectCoordinator.orig_CreateInsect orig, InsectCoordinator self, CosmeticInsect.Type type, Vector2 pos, InsectCoordinator.Swarm swarm)

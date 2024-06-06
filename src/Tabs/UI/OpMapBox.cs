@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Menu.Remix.MixedUI;
-using RWCustom;
 using UnityEngine;
 using static MapExporter.RegionInfo;
 
@@ -19,7 +18,7 @@ namespace MapExporter.Tabs.UI
         public Vector2 viewOffset = Vector2.zero;
         private readonly LabelBorrower labelBorrower;
         private Vector2? lastMousePos;
-        private float accumulatedScrollAmount = 0f;
+        private float mouseMoveAmt = 0f;
 
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
@@ -42,8 +41,7 @@ namespace MapExporter.Tabs.UI
             texture = new Texture2D(Mathf.CeilToInt(size.x), Mathf.CeilToInt(size.y), TextureFormat.ARGB32, false);
             mapOpImage = new OpImage(new(0, 0), texture)
             {
-                color = new Color(0f, 0f, 0f, 0f),
-                //scale = new Vector2(2f, 2f)
+                color = new Color(0f, 0f, 0f, 0f)
             };
             AddItems(mapOpImage);
             ClearCanvas();
@@ -60,14 +58,11 @@ namespace MapExporter.Tabs.UI
                 {
                     if (MouseOver)
                     {
-                        if (Input.GetMouseButton(0) && lastMousePos != null)
+                        if (Input.GetMouseButtonDown(0))
                         {
-                            var scroll = lastMousePos.Value - MousePos;
-                            Move(scroll);
-                            UpdateMap();
-                            accumulatedScrollAmount += scroll.magnitude;
+                            mouseMoveAmt = 0f;
                         }
-                        else if (Input.GetMouseButtonUp(0) && accumulatedScrollAmount < 40f)
+                        else if (Input.GetMouseButtonUp(0) && mouseMoveAmt < 10f)
                         {
                             // See if we are focused on a room
                             var clickPos = viewOffset - (size / 2) + MousePos;
@@ -80,19 +75,31 @@ namespace MapExporter.Tabs.UI
                                     break;
                                 }
                             }
+
                             FocusRoom(roomEntry?.roomName);
                             (tab as EditTab)._SwitchActiveButton(roomEntry?.roomName);
                         }
+                        else if (Input.GetMouseButton(0))
+                        {
+                            // Try to move map
+                            if (lastMousePos != null)
+                            {
+                                var scroll = lastMousePos.Value - (Vector2)Futile.mousePosition;
+                                Move(scroll);
+                                UpdateMap();
+
+                                mouseMoveAmt += scroll.magnitude;
+                            }
+                            lastMousePos = (Vector2)Futile.mousePosition;
+                        }
                         else
                         {
-                            accumulatedScrollAmount = 0f;
+                            lastMousePos = null;
                         }
-                        lastMousePos = MousePos;
                     }
                     else
                     {
                         lastMousePos = null;
-                        accumulatedScrollAmount = 0f;
                     }
                 }
                 else if (held)
@@ -167,8 +174,8 @@ namespace MapExporter.Tabs.UI
             Vector2 drawBL = drawPosition - size / 2;
 
             // Figure out what rooms and connections lie within our draw area
-            List<RegionInfo.RoomEntry> showRooms = [];
-            List<RegionInfo.ConnectionEntry> showConns = [];
+            List<RoomEntry> showRooms = [];
+            List<ConnectionEntry> showConns = [];
 
             foreach (var room in activeRegion.rooms.Values)
             {
@@ -184,7 +191,7 @@ namespace MapExporter.Tabs.UI
 
                 Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2();
                 Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2();
-                if (drawArea.Contains(A) || drawArea.Contains(B) || LineIntersectsRect(drawArea, A, B))
+                if (LineCloseEnough(drawArea, A, B))
                 {
                     showConns.Add(conn);
                 }
@@ -454,29 +461,16 @@ namespace MapExporter.Tabs.UI
             }
         }
 
-        private static bool LineIntersectsRect(Rect self, Vector2 A, Vector2 B)
+        private bool LineCloseEnough(Rect rect, Vector2 A, Vector2 B)
         {
-            // This is perhaps the worst possible way to do it but I hate linear algebra lol so homebrew it is
-            if (A.x == B.x) return A.x > self.xMin && A.x < self.xMax;
-            if (A.y == B.y) return A.y > self.yMin && A.y < self.yMax;
-
-            float m = (A.y + B.y) / (A.x + B.x);
-            float b = A.y - m * A.x;
-
-            float yl = m * self.xMin + b;
-            float yu = m * self.xMax + b;
-            float xl = (self.yMin - b) / m;
-            float xu = (self.yMax - b) / m;
+            if (rect.Contains(A) || rect.Contains(B)) return true;
 
             return
-                (xl > self.xMin && xl < self.xMax && In01(InvLerpUnclamped(A.x, B.x, xl))) ||
-                (xu > self.xMin && xu < self.xMax && In01(InvLerpUnclamped(A.x, B.x, xu))) ||
-                (yl > self.yMin && yl < self.yMax && In01(InvLerpUnclamped(A.y, B.y, yl))) ||
-                (yu > self.yMin && yu < self.yMax && In01(InvLerpUnclamped(A.y, B.y, yu)));
+                !(A.x < rect.xMin && B.x < rect.xMin) &&
+                !(A.x > rect.xMax && B.x > rect.xMax) &&
+                !(A.y < rect.yMin && B.y < rect.yMin) &&
+                !(A.y > rect.yMax && B.y > rect.yMax);
         }
-
-        private static float InvLerpUnclamped(float a, float b, float x) => (x - a) / (b - a);
-        private static bool In01(float val) => val >= 0 && val <= 1;
 
         private static Color GetTileColor(int[] tile)
         {
