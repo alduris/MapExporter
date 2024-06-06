@@ -18,7 +18,7 @@ namespace MapExporter.Tabs.UI
         public Vector2 viewOffset = Vector2.zero;
         private readonly LabelBorrower labelBorrower;
         private Vector2? lastMousePos;
-        private float mouseMoveAmt = 0f;
+        private bool hasPicked = false;
 
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
@@ -33,6 +33,7 @@ namespace MapExporter.Tabs.UI
         public OpMapBox(Vector2 pos, Vector2 size) : base(pos, size, size.y, false, true, false)
         {
             labelBorrower = new(this);
+            description = "Left click + drag to move, right click to pick room (or use list)";
         }
 
         public void Initialize()
@@ -58,28 +59,7 @@ namespace MapExporter.Tabs.UI
                 {
                     if (MouseOver)
                     {
-                        if (Input.GetMouseButtonDown(0))
-                        {
-                            mouseMoveAmt = 0f;
-                        }
-                        else if (Input.GetMouseButtonUp(0) && mouseMoveAmt < 10f)
-                        {
-                            // See if we are focused on a room
-                            var clickPos = viewOffset - (size / 2) + MousePos;
-                            RoomEntry roomEntry = null;
-                            foreach (var room in activeRegion.rooms.Values)
-                            {
-                                if (new Rect(room.devPos, room.size.ToVector2()).Contains(clickPos))
-                                {
-                                    roomEntry = room;
-                                    break;
-                                }
-                            }
-
-                            FocusRoom(roomEntry?.roomName);
-                            (tab as EditTab)._SwitchActiveButton(roomEntry?.roomName);
-                        }
-                        else if (Input.GetMouseButton(0))
+                        if (Input.GetMouseButton(0))
                         {
                             // Try to move map
                             if (lastMousePos != null)
@@ -87,25 +67,48 @@ namespace MapExporter.Tabs.UI
                                 var scroll = lastMousePos.Value - (Vector2)Futile.mousePosition;
                                 Move(scroll);
                                 UpdateMap();
-
-                                mouseMoveAmt += scroll.magnitude;
                             }
                             lastMousePos = (Vector2)Futile.mousePosition;
+                        }
+                        else if (Input.GetMouseButton(1))
+                        {
+                            if (!hasPicked)
+                            {
+                                hasPicked = true;
+
+                                // See if we are focused on a room
+                                var clickPos = viewOffset - (size / 2) + MousePos;
+                                RoomEntry roomEntry = null;
+                                foreach (var room in activeRegion.rooms.Values)
+                                {
+                                    if (new Rect(room.devPos, room.size.ToVector2()).Contains(clickPos))
+                                    {
+                                        roomEntry = room;
+                                        break;
+                                    }
+                                }
+
+                                FocusRoom(roomEntry?.roomName);
+                                (tab as EditTab)._SwitchActiveButton(roomEntry?.roomName);
+                            }
                         }
                         else
                         {
                             lastMousePos = null;
+                            hasPicked = false;
                         }
                     }
                     else
                     {
                         lastMousePos = null;
+                        hasPicked = false;
                     }
                 }
                 else if (held)
                 {
                     var dir = new Vector2(CtlrInput.x, CtlrInput.y) * (CtlrInput.pckp ? 4f : 1f);
                     Move(dir);
+                    bool redraw = dir.magnitude > 0f;
 
                     if (CtlrInput.jmp && !LastCtlrInput.jmp)
                     {
@@ -125,6 +128,7 @@ namespace MapExporter.Tabs.UI
                             {
                                 FocusRoom(roomEntry.roomName);
                                 (tab as EditTab)._SwitchActiveButton(roomEntry.roomName);
+                                redraw = true;
                             }
                             else
                             {
@@ -135,10 +139,12 @@ namespace MapExporter.Tabs.UI
                         {
                             FocusRoom(null);
                             (tab as EditTab)._SwitchActiveButton(null);
+                            redraw = true;
                         }
                     }
 
-                    UpdateMap();
+                    if (redraw)
+                        UpdateMap();
                 }
             }
 

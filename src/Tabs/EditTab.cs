@@ -50,7 +50,7 @@ namespace MapExporter.Tabs
             // Body boxes and such
             const float BODY_LEFT_WIDTH = MENU_SIZE * 0.25f;
             const float BODY_RIGHT_WIDTH = MENU_SIZE - BODY_LEFT_WIDTH;
-            const float TOPBAR_HEIGHT = 30f + SIDE_PADDING + ITEM_GAP;
+            const float TOPBAR_HEIGHT = 50f + SIDE_PADDING + ITEM_GAP;
             roomSelector = new(
                 new Vector2(SIDE_PADDING, SIDE_PADDING),
                 new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT),
@@ -63,6 +63,9 @@ namespace MapExporter.Tabs
                 // Input boxes and such
                 roomSelector,
                 mapBox,
+
+                // Tutorial
+                new OpLabel(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 50f, "Left click + drag to move, right click to pick room (or use list on left)"),
 
                 // Place the top things last for z-index reasons
                 regionSelector,
@@ -246,7 +249,31 @@ namespace MapExporter.Tabs
 
         private void SaveButton_OnClick(UIfocusable trigger)
         {
-            throw new NotImplementedException();
+            if (activeRegion == null)
+            {
+                return;
+            }
+
+            // Zero the rooms
+            Vector2 midpoint = Vector2.zero;
+            foreach (var room in activeRegion.rooms.Values)
+            {
+                midpoint += room.devPos;
+            }
+            midpoint /= activeRegion.rooms.Count;
+            foreach (var room in activeRegion.rooms.Values)
+            {
+                room.devPos -= midpoint;
+            }
+
+            // Save
+            File.WriteAllText(Path.Combine(Data.RenderOutputDir(scugSelector.value, activeRegion.acronym), "metadata.json"), Json.Serialize(activeRegion));
+
+            // Reset
+            SwitchToRoom(null);
+            _SwitchActiveButton(null);
+            mapBox.viewOffset = Vector2.zero;
+            mapBox.UpdateMap();
         }
     }
 }

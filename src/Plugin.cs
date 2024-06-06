@@ -53,9 +53,9 @@ sealed class Plugin : BaseUnityPlugin
         Logger.LogDebug("Started start thingy");
         try
         {
+            On.Json.Serializer.SerializeValue += Serializer_SerializeValue;
             if (FlagTriggered)
             {
-                On.Json.Serializer.SerializeValue += Serializer_SerializeValue;
                 On.RainWorld.LoadSetupValues += RainWorld_LoadSetupValues;
                 On.RainWorld.Update += RainWorld_Update;
                 On.World.SpawnGhost += World_SpawnGhost;
