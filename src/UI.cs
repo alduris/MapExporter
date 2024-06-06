@@ -17,9 +17,11 @@ internal class UI : OptionInterface
         base.Initialize();
 
         Tabs = [
+            // General settings tab
             new ScreenshotTab(this),
             new EditTab(this),
-            // new GenerateTab(this)
+            new GenerateTab(this),
+            // Export tab
         ];
 
         foreach (var tab in Tabs)

@@ -2,20 +2,16 @@
 
 namespace MapExporter.Tabs
 {
-    internal class GenerateTab : BaseTab
+    internal class GenerateTab(OptionInterface owner) : BaseTab(owner, "Generator")
     {
-        public GenerateTab(OptionInterface owner) : base(owner, "Generator")
-        {
-        }
-
         public override void Initialize()
         {
-            throw new NotImplementedException();
+            // throw new NotImplementedException();
         }
 
         public override void Update()
         {
-            throw new NotImplementedException();
+            // throw new NotImplementedException();
         }
     }
 }
