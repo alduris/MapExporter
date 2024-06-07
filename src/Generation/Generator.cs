@@ -105,7 +105,38 @@ namespace MapExporter.Generation
                     }
                 case MetadataStep.Rooms:
                     {
-                        //
+                        // Find room outlines
+                        List<RoomBoxInfo> boxes = [];
+                        foreach (var room in regionInfo.rooms.Values)
+                        {
+                            Rect borderRect;
+                            Vector2 namePos;
+                            if (room.cameras == null || room.cameras.Length == 0)
+                            {
+                                borderRect = new Rect(room.devPos, offscreenSize);
+                                namePos = room.devPos + offscreenSize + Vector2.left * (offscreenSize.x / 2f);
+                            }
+                            else
+                            {
+                                Vector2 blPos = room.cameras[0];
+                                Vector2 trPos = room.cameras[0] + screenSize;
+                                for (int i = 1; i < room.cameras.Length; i++)
+                                {
+                                    var cam = room.cameras[i];
+                                    blPos = new Vector2(Mathf.Min(blPos.x, cam.x), Mathf.Min(blPos.y, cam.y));
+                                    trPos = new Vector2(Mathf.Max(trPos.x, cam.x + screenSize.x), Mathf.Max(trPos.y, cam.y + screenSize.y));
+                                }
+                                borderRect = new Rect(blPos, trPos - blPos);
+                                namePos = trPos + Vector2.left * ((trPos.x - blPos.x) / 2f);
+                            }
+                            boxes.Add(new RoomBoxInfo
+                            {
+                                name = room.roomName,
+                                box = borderRect,
+                                namePos = namePos
+                            });
+                        }
+
                         metadataStep = MetadataStep.Connections;
                         break;
                     }
@@ -195,7 +226,15 @@ namespace MapExporter.Generation
         private static readonly Vector2    screenSize = screenSizeInt.ToVector2();
         private static IntVector2 Vec2IntVecFloor(Vector2 v) => new(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
         private static IntVector2 Vec2IntVecCeil(Vector2 v) => new(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
+        private static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
         private static float[] Color2Arr(Color vec) => [vec.r, vec.g, vec.b];
+        private static float[][] Rect2Arr(Rect rect) => [
+                Vec2arr(new Vector2(rect.xMin, rect.yMin)),
+                Vec2arr(new Vector2(rect.xMin, rect.yMax)),
+                Vec2arr(new Vector2(rect.xMax, rect.yMax)),
+                Vec2arr(new Vector2(rect.xMax, rect.yMin)),
+                Vec2arr(new Vector2(rect.xMin, rect.yMin))
+            ];
 
         private void ProcessZoomLevel(int zoom)
         {
@@ -379,6 +418,37 @@ namespace MapExporter.Generation
         {
             float l = v * (1f - s / 2f);
             return new HSLColor(h, (l == 0 || l == 1) ? 0f : ((v - l) / Mathf.Min(l, 1 - l)), l);
+        }
+
+        private struct RoomBoxInfo : IJsonObject
+        {
+            public string name;
+            public Rect box;
+            public Vector2 namePos;
+
+            public readonly Dictionary<string, object> ToJson()
+            {
+                return new Dictionary<string, object>()
+                {
+                    { "type", "Feature" },
+                    {
+                        "geometry",
+                        new Dictionary<string, object>
+                        {
+                            { "type", "Polygon" },
+                            { "coordinates", new float[][][] { Rect2Arr(box) } }
+                        }
+                    },
+                    {
+                        "properties",
+                        new Dictionary<string, object>
+                        {
+                            { "name", name },
+                            { "popupcoords", Vec2arr(namePos) },
+                        }
+                    }
+                };
+            }
         }
     }
 }
