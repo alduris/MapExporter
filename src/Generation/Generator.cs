@@ -22,6 +22,20 @@ namespace MapExporter.Generation
         public float Progress { get; private set; } = 0f;
 
         private readonly int[,] progress = new int[8,2];
+        private bool imagesDone = false;
+        private MetadataStep metadataStep = 0;
+        private Dictionary<string, object> metadata = [];
+
+        private enum MetadataStep
+        {
+            Tiles,
+            Rooms,
+            Connections,
+            Geometry,
+            Spawns,
+            Misc,
+            Done
+        }
 
 
         public Generator(SlugcatStats.Name scug, string region)
@@ -46,41 +60,80 @@ namespace MapExporter.Generation
         {
             if (Done) return;
 
-            if (threads == null)
+            switch (metadataStep)
             {
-                threads = new Task[8];
-                for (int i = 0; i < threads.Length; i++)
-                {
-                    threads[i] = Task.Run(() => ProcessZoomLevel(-i));
-                }
-            }
+                case MetadataStep.Tiles:
+                    {
+                        if (threads == null)
+                        {
+                            threads = new Task[8];
+                            for (int i = 0; i < threads.Length; i++)
+                            {
+                                threads[i] = Task.Run(() => ProcessZoomLevel(-i));
+                            }
+                        }
 
-            int tilesDone = 0;
-            int totalTiles = 0;
-            int tasksDone = 0;
-            for (int i = 0; i < threads.Length; i++)
-            {
-                tilesDone += progress[i, 0];
-                totalTiles += progress[i, 1];
+                        int tilesDone = 0;
+                        int totalTiles = 0;
+                        int tasksDone = 0;
+                        for (int i = 0; i < threads.Length; i++)
+                        {
+                            tilesDone += progress[i, 0];
+                            totalTiles += progress[i, 1];
 
-                var thread = threads[i];
-                if (thread.IsCompleted)
-                {
-                    tasksDone++;
-                }
-                else if (thread.IsFaulted)
-                {
-                    Done = true;
-                    Failed = true;
-                    break;
-                }
-            }
+                            var thread = threads[i];
+                            if (thread.IsCompleted)
+                            {
+                                tasksDone++;
+                            }
+                            else if (thread.IsFaulted)
+                            {
+                                Done = true;
+                                Failed = true;
+                                break;
+                            }
+                        }
 
-            Progress = (float)tilesDone / totalTiles;
+                        Progress = (float)tilesDone / totalTiles;
 
-            if (tasksDone == threads.Length)
-            {
-                Done = true;
+                        if (tasksDone == threads.Length)
+                        {
+                            imagesDone = true;
+                            metadataStep = MetadataStep.Rooms;
+                        }
+                        break;
+                    }
+                case MetadataStep.Rooms:
+                    {
+                        //
+                        break;
+                    }
+                case MetadataStep.Connections:
+                    {
+                        //
+                        break;
+                    }
+                case MetadataStep.Geometry:
+                    {
+                        //
+                        break;
+                    }
+                case MetadataStep.Spawns:
+                    {
+                        //
+                        break;
+                    }
+                case MetadataStep.Misc:
+                    {
+                        //
+                        break;
+                    }
+                case MetadataStep.Done:
+                    {
+                        Done = true;
+                        break;
+                    }
+                default: break;
             }
         }
 
@@ -119,7 +172,7 @@ namespace MapExporter.Generation
 
                 // Make images
                 progress[-zoom, 0] = 0;
-                progress[-zoom, 1] = (urbTile.x - llbTile.x) * (urbTile.y - llbTile.y) + 1;
+                progress[-zoom, 1] = (urbTile.x - llbTile.x) * (urbTile.y - llbTile.y);
                 for (int tileY = llbTile.y; tileY <= urbTile.y; tileY++)
                 {
                     // Attempt to save file reads. Camera textures are saved until an iteration is found where they aren't used.
@@ -230,14 +283,6 @@ namespace MapExporter.Generation
                         Object.Destroy(cam.Value);
                     }
                 }
-
-                // Find colors
-                Color fgcolor = Mode(regionInfo.fgcolors);
-                Color bgcolor = Mode(regionInfo.bgcolors);
-                Color sccolor = Mode(regionInfo.sccolors);
-
-                // Export metadata
-                // todo
             }
             catch (Exception e)
             {
