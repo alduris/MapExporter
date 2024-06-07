@@ -144,7 +144,20 @@ namespace MapExporter.Generation
                     }
                 case MetadataStep.Connections:
                     {
-                        //
+                        // Find room connections
+                        List<ConnectionInfo> connections = [];
+                        foreach (var conn in regionInfo.connections)
+                        {
+                            connections.Add(new ConnectionInfo
+                            {
+                                pointA = regionInfo.rooms[conn.roomA].devPos + conn.posA.ToVector2() * 20f + Vector2.one * 10f,
+                                pointB = regionInfo.rooms[conn.roomB].devPos + conn.posB.ToVector2() * 20f + Vector2.one * 10f,
+                                dirA = conn.dirA,
+                                dirB = conn.dirB
+                            });
+                        }
+
+                        metadata["connection_features"] = connections;
 
                         metadataStep = MetadataStep.Geometry;
                         break;
@@ -451,6 +464,37 @@ namespace MapExporter.Generation
                     }
                 };
             }
+        }
+
+        private struct ConnectionInfo : IJsonObject
+        {
+            public Vector2 pointA;
+            public int dirA;
+            public Vector2 pointB;
+            public int dirB;
+
+            private static readonly Vector2[] fourDirections = [Vector2.left, Vector2.down, Vector2.right, Vector2.up];
+            public readonly Dictionary<string, object> ToJson()
+            {
+                float dist = (pointB - pointA).magnitude;
+                Vector2 handleA = pointA + fourDirections[dirA] * dist;
+                Vector2 handleB = pointB + fourDirections[dirB] * dist;
+                return new Dictionary<string, object>()
+                {
+                    { "type", "Feature" },
+                    {
+                        "geometry",
+                        new Dictionary<string, object>
+                        {
+                            { "type", "LineString" },
+                            { "coordinates", new float[][] { Vec2arr(pointA), Vec2arr(handleA), Vec2arr(handleB), Vec2arr(pointB) } }
+                        }
+                    },
+                    { "properties", new Dictionary<string, object> {} }
+                };
+            }
+
+            //
         }
     }
 }
