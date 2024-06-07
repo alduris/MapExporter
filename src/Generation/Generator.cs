@@ -23,7 +23,7 @@ namespace MapExporter.Generation
 
         private readonly int[,] progress = new int[8,2];
         private bool imagesDone = false;
-        private MetadataStep metadataStep = 0;
+        private MetadataStep metadataStep = MetadataStep.Tiles;
         private Dictionary<string, object> metadata = [];
 
         private enum MetadataStep
@@ -36,6 +36,7 @@ namespace MapExporter.Generation
             Misc,
             Done
         }
+        private static readonly int MetadataStepCount = Enum.GetNames(typeof(MetadataStep)).Length;
 
 
         public Generator(SlugcatStats.Name scug, string region)
@@ -59,7 +60,6 @@ namespace MapExporter.Generation
         public void Update()
         {
             if (Done) return;
-
             switch (metadataStep)
             {
                 case MetadataStep.Tiles:
@@ -74,7 +74,7 @@ namespace MapExporter.Generation
                         }
 
                         int tilesDone = 0;
-                        int totalTiles = 0;
+                        int totalTiles = MetadataStepCount;
                         int tasksDone = 0;
                         for (int i = 0; i < threads.Length; i++)
                         {
@@ -106,34 +106,80 @@ namespace MapExporter.Generation
                 case MetadataStep.Rooms:
                     {
                         //
+                        metadataStep = MetadataStep.Connections;
                         break;
                     }
                 case MetadataStep.Connections:
                     {
                         //
+
+                        metadataStep = MetadataStep.Geometry;
                         break;
                     }
                 case MetadataStep.Geometry:
                     {
                         //
+
+                        metadataStep = MetadataStep.Spawns;
                         break;
                     }
                 case MetadataStep.Spawns:
                     {
                         //
+
+                        metadataStep = MetadataStep.Misc;
                         break;
                     }
                 case MetadataStep.Misc:
                     {
-                        //
+                        // Find colors
+                        Color fgcolor = Mode(regionInfo.fgcolors);
+                        Color bgcolor = Mode(regionInfo.bgcolors);
+                        Color sccolor = Mode(regionInfo.sccolors);
+
+                        metadata["bgcolor"] = fgcolor;
+                        metadata["highlightcolor"] = bgcolor;
+                        metadata["shortcutcolor"] = sccolor;
+
+                        // Calculate a geo color
+                        Vector3 bv = Custom.RGB2HSL(bgcolor);
+                        Vector3 fv = Custom.RGB2HSL(fgcolor);
+                        var (bh, bs, bl) = (bv.x, bv.y, bv.z);
+                        var (fh, fs, fl) = (fv.x, fv.y, fv.z);
+                        float sh, ss, sl;
+                        
+                        if (Mathf.Abs(bh - fh) < 0.5f)
+                        {
+                            if (bh < fh)
+                                bh += 1;
+                            else
+                                fh += 1;
+                        }
+                        if (bs == 0 && fs == 0)
+                        {
+                            //
+                        }
+
+                        metadataStep = MetadataStep.Done;
                         break;
                     }
                 case MetadataStep.Done:
                     {
+                        File.WriteAllText(Path.Combine(outputDir, "region.json"), Json.Serialize(metadata));
                         Done = true;
                         break;
                     }
                 default: break;
+            }
+
+            if (threads != null && metadataStep != MetadataStep.Tiles)
+            {
+                int count = 0;
+                for (int i = 0; i < threads.Length; i++)
+                {
+                    count += progress[i, 1];
+                }
+                Progress = (float)(count + (int)metadataStep) / (count + MetadataStepCount);
             }
         }
 
