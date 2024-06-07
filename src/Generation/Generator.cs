@@ -137,6 +137,8 @@ namespace MapExporter.Generation
                             });
                         }
 
+                        metadata["room_features"] = boxes;
+
                         metadataStep = MetadataStep.Connections;
                         break;
                     }
