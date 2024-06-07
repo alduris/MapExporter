@@ -25,7 +25,7 @@ namespace MapExporter;
 sealed class Plugin : BaseUnityPlugin
 {
     // Config
-    public const string MOD_ID = "henpemaz-dual-noblecat-alduris.mapexporter";
+    public const string MOD_ID = "mapexporter";
     public const string FLAG_TRIGGER = "--mapexport";
 
     public static bool FlagTriggered => Environment.GetCommandLineArgs().Contains(FLAG_TRIGGER);
