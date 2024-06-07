@@ -137,16 +137,16 @@ namespace MapExporter.Generation
                         Color bgcolor = Mode(regionInfo.bgcolors);
                         Color sccolor = Mode(regionInfo.sccolors);
 
-                        metadata["bgcolor"] = fgcolor;
-                        metadata["highlightcolor"] = bgcolor;
-                        metadata["shortcutcolor"] = sccolor;
+                        metadata["bgcolor"] = Color2Arr(fgcolor);
+                        metadata["highlightcolor"] = Color2Arr(bgcolor);
+                        metadata["shortcutcolor"] = Color2Arr(sccolor);
 
                         // Calculate a geo color
-                        Vector3 bv = Custom.RGB2HSL(bgcolor);
-                        Vector3 fv = Custom.RGB2HSL(fgcolor);
-                        var (bh, bs, bl) = (bv.x, bv.y, bv.z);
-                        var (fh, fs, fl) = (fv.x, fv.y, fv.z);
-                        float sh, ss, sl;
+                        Vector3 bvec = HSL2HSV(Custom.RGB2HSL(bgcolor));
+                        Vector3 fvec = HSL2HSV(Custom.RGB2HSL(fgcolor));
+                        var (bh, bs, bv) = (bvec.x, bvec.y, bvec.z);
+                        var (fh, fs, fv) = (fvec.x, fvec.y, fvec.z);
+                        float sh, ss, sv;
                         
                         if (Mathf.Abs(bh - fh) < 0.5f)
                         {
@@ -155,10 +155,13 @@ namespace MapExporter.Generation
                             else
                                 fh += 1;
                         }
-                        if (bs == 0 && fs == 0)
-                        {
-                            //
-                        }
+                        sh = (bs == 0 && fs == 0) ? 0.5f : ((bh * fs + fh * bs) / (bs + fs));
+                        sh = sh < 0 ? (1 + (sh % 1f)) : (sh % 1f);
+
+                        ss = Mathf.Sqrt((bs*bs + fs*fs) / 2.0f); // this does some circle math stuff
+                        sv = Mathf.Sqrt((bv*bv + fv*fv) / 2.0f); // ditto
+
+                        metadata["geocolor"] = Color2Arr(HSV2HSL(sh, ss, sv).rgb);
 
                         metadataStep = MetadataStep.Done;
                         break;
@@ -192,6 +195,7 @@ namespace MapExporter.Generation
         private static readonly Vector2    screenSize = screenSizeInt.ToVector2();
         private static IntVector2 Vec2IntVecFloor(Vector2 v) => new(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
         private static IntVector2 Vec2IntVecCeil(Vector2 v) => new(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
+        private static float[] Color2Arr(Color vec) => [vec.r, vec.g, vec.b];
 
         private void ProcessZoomLevel(int zoom)
         {
@@ -362,6 +366,19 @@ namespace MapExporter.Generation
             }
 
             return maxColor;
+        }
+
+        private static Vector3 HSL2HSV(Vector3 hsl)
+        {
+            var (h, s, l) = (hsl.x, hsl.y, hsl.z);
+            float v = l + s * Mathf.Min(l, 1 - l);
+            return new Vector3(h, v == 0f ? 0f : 2 * (1 - l / v), v);
+        }
+
+        private static HSLColor HSV2HSL(float h, float s, float v)
+        {
+            float l = v * (1f - s / 2f);
+            return new HSLColor(h, (l == 0 || l == 1) ? 0f : ((v - l) / Mathf.Min(l, 1 - l)), l);
         }
     }
 }
