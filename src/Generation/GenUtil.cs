@@ -45,7 +45,6 @@ namespace MapExporter.Generation
 
             // Set the new texture's content
             texture.SetPixels(pixels);
-            texture.Apply();
         }
 
         public static Color Mode(List<Color> colors)

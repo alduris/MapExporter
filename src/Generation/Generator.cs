@@ -325,8 +325,11 @@ namespace MapExporter.Generation
                                     {
                                         camTexture = new(screenSizeInt.x, screenSizeInt.y);
                                         camTexture.LoadImage(File.ReadAllBytes(Path.Combine(inputDir, fileName)));
+
+                                        if (zoom != 0) // No need to scale to the same resolution
+                                            ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
+
                                         camTexture.Apply();
-                                        ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
                                         cameraCache.Add(fileName, camTexture);
                                     }
                                     encountered.Add(fileName);
