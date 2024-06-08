@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using RWCustom;
 using UnityEngine;
+using static MapExporter.Generation.GenUtil;
 using Object = UnityEngine.Object;
 
 namespace MapExporter.Generation
@@ -22,9 +23,8 @@ namespace MapExporter.Generation
         public float Progress { get; private set; } = 0f;
 
         private readonly int[,] progress = new int[8,2];
-        private bool imagesDone = false;
         private MetadataStep metadataStep = MetadataStep.Tiles;
-        private Dictionary<string, object> metadata = [];
+        private readonly Dictionary<string, object> metadata = [];
 
         private enum MetadataStep
         {
@@ -98,7 +98,6 @@ namespace MapExporter.Generation
 
                         if (tasksDone == threads.Length)
                         {
-                            imagesDone = true;
                             metadataStep = MetadataStep.Rooms;
                         }
                         break;
@@ -239,17 +238,6 @@ namespace MapExporter.Generation
         private static readonly Vector2    offscreenSize = offscreenSizeInt.ToVector2();
         private static readonly IntVector2 screenSizeInt = new(1400, 800);
         private static readonly Vector2    screenSize = screenSizeInt.ToVector2();
-        private static IntVector2 Vec2IntVecFloor(Vector2 v) => new(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
-        private static IntVector2 Vec2IntVecCeil(Vector2 v) => new(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
-        private static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
-        private static float[] Color2Arr(Color vec) => [vec.r, vec.g, vec.b];
-        private static float[][] Rect2Arr(Rect rect) => [
-                Vec2arr(new Vector2(rect.xMin, rect.yMin)),
-                Vec2arr(new Vector2(rect.xMin, rect.yMax)),
-                Vec2arr(new Vector2(rect.xMax, rect.yMax)),
-                Vec2arr(new Vector2(rect.xMax, rect.yMin)),
-                Vec2arr(new Vector2(rect.xMin, rect.yMin))
-            ];
 
         private void ProcessZoomLevel(int zoom)
         {
@@ -395,46 +383,6 @@ namespace MapExporter.Generation
             }
         }
 
-        private static Color Mode(List<Color> colors)
-        {
-            Dictionary<Color, int> map = [];
-            int max = 0;
-            Color maxColor = Color.black;
-            for (int i = 0; i < colors.Count; i++)
-            {
-                var color = colors[i];
-                if (map.ContainsKey(color))
-                {
-                    map[color]++;
-                }
-                else
-                {
-                    map.Add(color, 0);
-                }
-
-                if (map[color] > max)
-                {
-                    max = map[color];
-                    maxColor = color;
-                }
-            }
-
-            return maxColor;
-        }
-
-        private static Vector3 HSL2HSV(Vector3 hsl)
-        {
-            var (h, s, l) = (hsl.x, hsl.y, hsl.z);
-            float v = l + s * Mathf.Min(l, 1 - l);
-            return new Vector3(h, v == 0f ? 0f : 2 * (1 - l / v), v);
-        }
-
-        private static HSLColor HSV2HSL(float h, float s, float v)
-        {
-            float l = v * (1f - s / 2f);
-            return new HSLColor(h, (l == 0 || l == 1) ? 0f : ((v - l) / Mathf.Min(l, 1 - l)), l);
-        }
-
         private struct RoomBoxInfo : IJsonObject
         {
             public string name;
@@ -493,8 +441,6 @@ namespace MapExporter.Generation
                     { "properties", new Dictionary<string, object> {} }
                 };
             }
-
-            //
         }
     }
 }
