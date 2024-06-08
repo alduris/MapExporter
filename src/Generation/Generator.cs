@@ -303,7 +303,7 @@ namespace MapExporter.Generation
                                     // Create the tile if necessary
                                     if (tile == null)
                                     {
-                                        tile = new Texture2D(tileSizeInt.x, tileSizeInt.y);
+                                        tile = new Texture2D(tileSizeInt.x, tileSizeInt.y, TextureFormat.RGBA32, false, false);
 
                                         // Fill with transparent color
                                         var pixels = tile.GetPixels();
@@ -323,7 +323,7 @@ namespace MapExporter.Generation
                                     }
                                     else
                                     {
-                                        camTexture = new(screenSizeInt.x, screenSizeInt.y);
+                                        camTexture = new(screenSizeInt.x, screenSizeInt.y, TextureFormat.RGBA32, false, false);
                                         camTexture.LoadImage(File.ReadAllBytes(Path.Combine(inputDir, fileName)));
 
                                         if (zoom != 0) // No need to scale to the same resolution
