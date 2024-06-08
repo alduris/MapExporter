@@ -326,6 +326,7 @@ namespace MapExporter.Generation
                                         camTexture = new(screenSizeInt.x, screenSizeInt.y);
                                         camTexture.LoadImage(File.ReadAllBytes(Path.Combine(inputDir, fileName)));
                                         camTexture.Apply();
+                                        ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
                                         cameraCache.Add(fileName, camTexture);
                                     }
                                     encountered.Add(fileName);
@@ -382,6 +383,9 @@ namespace MapExporter.Generation
                 throw;
             }
         }
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////
 
         private struct RoomBoxInfo : IJsonObject
         {

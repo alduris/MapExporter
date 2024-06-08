@@ -18,6 +18,36 @@ namespace MapExporter.Generation
                 Vec2arr(new Vector2(rect.xMin, rect.yMin))
             ];
 
+        public static void ScaleTexture(Texture2D texture, int width, int height)
+        {
+            int oldW = texture.width, oldH = texture.height;
+            Color[] oldPixels = texture.GetPixels();
+
+            // Create the new texture
+            texture.Resize(width, height);
+            Color[] pixels = new Color[width * height];
+
+            // Use bilinear filtering
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    float u = Custom.LerpMap(x, 0, width - 1, 0, oldW - 1);
+                    float v = Custom.LerpMap(x, 0, height - 1, 0, oldH - 1);
+
+                    Color tl = oldPixels[Mathf.FloorToInt(u) + Mathf.FloorToInt(v) * oldW];
+                    Color tr = oldPixels[Mathf.CeilToInt(u) + Mathf.FloorToInt(v) * oldW];
+                    Color bl = oldPixels[Mathf.FloorToInt(u) + Mathf.CeilToInt(v) * oldW];
+                    Color br = oldPixels[Mathf.CeilToInt(u) + Mathf.CeilToInt(v) * oldW];
+                    pixels[x + y * width] = Color.LerpUnclamped(Color.LerpUnclamped(tl, tr, u % 1f), Color.LerpUnclamped(bl, br, u % 1f), v % 1f);
+                }
+            }
+
+            // Set the new texture's content
+            texture.SetPixels(pixels);
+            texture.Apply();
+        }
+
         public static Color Mode(List<Color> colors)
         {
             Dictionary<Color, int> map = [];
