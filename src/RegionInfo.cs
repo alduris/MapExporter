@@ -23,14 +23,11 @@ namespace MapExporter
 
         // For passing data down to children
         private readonly Dictionary<string, Vector2> devPos = [];
-        private readonly World world;
 
         public RegionInfo() { }
 
         public RegionInfo(World world)
         {
-            this.world = world;
-
             // Region identity + echo room because why not grab that here
             acronym = world.name;
             name = Region.GetRegionFullName(acronym, null);
@@ -75,7 +72,7 @@ namespace MapExporter
             // Ok continue on with initializing the rest of the object
             foreach (var room in world.abstractRooms)
             {
-                rooms[room.name] = new RoomEntry(this, room);
+                rooms[room.name] = new RoomEntry(this, world, room);
                 // I would initialize connections here but they require a loaded room so nope :3
             }
         }
@@ -206,7 +203,7 @@ namespace MapExporter
 
             public RoomEntry() { }
 
-            public RoomEntry(RegionInfo owner, AbstractRoom room)
+            public RoomEntry(RegionInfo owner, World world, AbstractRoom room)
             {
                 regionInfo = owner;
                 offscreenDen = room.offScreenDen;
@@ -215,7 +212,7 @@ namespace MapExporter
                 subregion = room.subregionName;
                 devPos = owner.devPos[room.name];
 
-                var spawners = owner.world.spawners;
+                var spawners = world.spawners;
                 spawns = new DenSpawnData[spawners.Length][];
                 for (int i = 0; i < spawners.Length; i++)
                 {

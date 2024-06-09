@@ -142,7 +142,6 @@ sealed class Plugin : BaseUnityPlugin
             c.GotoNext(x => x.MatchLdstr("SWARMROOM"));
             c.GotoNext(x => x.MatchLdloc(out array), x => x.MatchLdloc(out index), x => x.MatchLdelemRef());
             c.GotoNext(MoveType.AfterLabel, x => x.MatchLdloc(index), x => x.MatchLdcI4(1), x => x.MatchAdd());
-            Logger.LogDebug(array + ";" + index);
 
             c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Ldloc, array);

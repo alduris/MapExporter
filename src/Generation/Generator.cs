@@ -168,6 +168,8 @@ namespace MapExporter.Generation
                         foreach (var room in regionInfo.rooms.Values)
                         {
                             if (room.size == default || room.size.x == 0 || room.size.y == 0) continue;
+
+                            // I think the code for processing geo changed the most from how the Python file did it, I pretty much rewrote it from scratch lol
                             geo.Add(ProcessRoomGeometry(room));
                         }
 
@@ -397,7 +399,7 @@ namespace MapExporter.Generation
 
         private GeometryInfo ProcessRoomGeometry(RegionInfo.RoomEntry room)
         {
-            List<(Vector2 A, Vector2 B)> lines = [];
+            LinkedList<(Vector2 A, Vector2 B)> lines = [];
 
             // Create the lines
             for (int j = 0; j < room.size.y; j++)
@@ -419,7 +421,7 @@ namespace MapExporter.Generation
                                 int neighbor = room.tiles[i + 1, j][0];
                                 if (type != neighbor && (neighbor & -2) == 0) // number & -2 will return 0 for either 0 or 1
                                 {
-                                    lines.Add((new(x, y), new(x, y + 20f)));
+                                    lines.AddLast((new(x, y), new(x, y + 20f)));
                                 }
                             }
                             if (j != room.size.y - 1)
@@ -427,7 +429,7 @@ namespace MapExporter.Generation
                                 int neighbor = room.tiles[i, j + 1][0];
                                 if (type != neighbor && (neighbor & -2) == 0)
                                 {
-                                    lines.Add((new(x, y), new(x + 20f, y)));
+                                    lines.AddLast((new(x, y), new(x + 20f, y)));
                                 }
                             }
                             break;
@@ -441,17 +443,17 @@ namespace MapExporter.Generation
 
                             if (up == left && down == right)
                             {
-                                lines.Add((new(x, y), new(x + 20f, y + 20f)));
+                                lines.AddLast((new(x, y), new(x + 20f, y + 20f)));
                             }
                             else if (up == right && down == left)
                             {
-                                lines.Add((new(x, y + 20f), new(x, y + 20f)));
+                                lines.AddLast((new(x, y + 20f), new(x, y + 20f)));
                             }
                             break;
                         case 3: // half floors
                             // Top and bottom lines always get drawn
-                            lines.Add((new(x, y + 20f), new(x + 20f, y + 20f)));
-                            lines.Add((new(x, y + 10f), new(x + 20f, y + 10f)));
+                            lines.AddLast((new(x, y + 20f), new(x + 20f, y + 20f)));
+                            lines.AddLast((new(x, y + 10f), new(x + 20f, y + 10f)));
 
                             // The edges get a little funky.
                             // We don't draw if there is another half floor there but otherwise a line needs to be drawn *somewhere*.
@@ -460,12 +462,12 @@ namespace MapExporter.Generation
                             if (l != 3)
                             {
                                 float o = l == 1 ? 0f : 10f;
-                                lines.Add((new(x, y + o), new(x, y + o + 10f)));
+                                lines.AddLast((new(x, y + o), new(x, y + o + 10f)));
                             }
                             if (r != 3)
                             {
                                 float o = l == 1 ? 0f : 10f;
-                                lines.Add((new(x + 20f, y + o), new(x + 20f, y + o + 10f)));
+                                lines.AddLast((new(x + 20f, y + o), new(x + 20f, y + o + 10f)));
                             }
                             break;
                         default: // anything else
@@ -476,15 +478,64 @@ namespace MapExporter.Generation
                     if (type != 1) // don't draw poles if solid
                     {
                         if (hpole)
-                            lines.Add((new(x, y + 10f), new(x + 20f, y + 10f)));
+                            lines.AddLast((new(x, y + 10f), new(x + 20f, y + 10f)));
                         if (vpole)
-                            lines.Add((new(x + 10f, y), new(x + 10f, y + 20f)));
+                            lines.AddLast((new(x + 10f, y), new(x + 10f, y + 20f)));
                     }
                 }
             }
 
             // Optimize the lines (combining)
-            List<List<Vector2>> optimized = [];
+            List<LinkedList<Vector2>> optimized = [];
+            HashSet<(Vector2, Vector2)> seen = [];
+
+            var node = lines.First; // the type for this is very long lol
+            while (node != null)
+            {
+                // Don't add duplicate elements
+                if (!seen.Add(node.Value))
+                {
+                    continue;
+                }
+
+                // Try to create a continuous line segment as long as possible
+                LinkedList<Vector2> line = new([node.Value.A, node.Value.B]);
+
+                var curr = node.Next;
+                while (curr != null)
+                {
+                    var next = curr.Next;
+                    bool remove = true;
+
+                    if (line.First.Value == curr.Value.A)
+                    {
+                        line.AddFirst(curr.Value.B);
+                    }
+                    else if(line.First.Value == curr.Value.B) {
+                        line.AddFirst(curr.Value.A);
+                    }
+                    else if (line.Last.Value == curr.Value.A)
+                    {
+                        line.AddLast(curr.Value.B);
+                    }
+                    else if(line.Last.Value == curr.Value.B) {
+                        line.AddLast(curr.Value.A);
+                    }
+                    else
+                    {
+                        remove = false;
+                    }
+
+                    if (remove)
+                    {
+                        lines.Remove(curr);
+                    }
+
+                    curr = next;
+                }
+
+                node = node.Next;
+            }
 
             // Return
             return new GeometryInfo
