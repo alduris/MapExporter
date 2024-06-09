@@ -87,6 +87,8 @@ sealed class Plugin : BaseUnityPlugin
                 On.InsectCoordinator.CreateInsect += InsectCoordinator_CreateInsect;
                 IL.WorldLoader.MappingRooms += WorldLoader_MappingRooms;
                 On.AbstractRoom.AddTag += AbstractRoom_AddTag;
+                IL.WorldLoader.NextActivity += WorldLoader_NextActivity;
+                On.WorldLoader.FindingCreaturesThread += WorldLoader_FindingCreaturesThread;
 
                 Logger.LogDebug("Finished start thingy");
             }
@@ -115,6 +117,26 @@ sealed class Plugin : BaseUnityPlugin
         }
 
         orig(self);
+    }
+
+    // Save and remove spawns
+    private void WorldLoader_FindingCreaturesThread(On.WorldLoader.orig_FindingCreaturesThread orig, WorldLoader self)
+    {
+        orig(self);
+        RegionInfo.spawnerCWT.Add(self.world, self.spawners);
+        self.spawners = [];
+    }
+
+    // Make spawns be read, even though we remove them later
+    private void WorldLoader_NextActivity(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        c.GotoNext(x => x.MatchLdftn<WorldLoader>(nameof(WorldLoader.FindingCreaturesThread)));
+        c.GotoPrev(x => x.MatchBrtrue(out _));
+        c.EmitDelegate((bool _) => false);
+        c.GotoPrev(x => x.MatchBrfalse(out _));
+        c.EmitDelegate((bool _) => true);
     }
 
     // Make sure to grab all tags

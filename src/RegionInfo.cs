@@ -7,11 +7,13 @@ using System.Text.RegularExpressions;
 using RWCustom;
 using UnityEngine;
 using DevInterface;
+using System.Runtime.CompilerServices;
 
 namespace MapExporter
 {
     internal sealed class RegionInfo : IJsonObject
     {
+        public static readonly ConditionalWeakTable<World, List<World.CreatureSpawner>> spawnerCWT = new();
         public Dictionary<string, RoomEntry> rooms = [];
         public List<ConnectionEntry> connections = [];
         public string acronym;
@@ -212,45 +214,50 @@ namespace MapExporter
                 subregion = room.subregionName;
                 devPos = owner.devPos[room.name];
 
-                var spawners = world.spawners;
-                spawns = new DenSpawnData[spawners.Length][];
-                for (int i = 0; i < spawners.Length; i++)
+                if (spawnerCWT.TryGetValue(world, out var spawners))
                 {
-                    var spawner = spawners[i];
-                    if (spawner.den.room != room.index) continue;
-                    if (spawner is World.Lineage lineage)
+                    List<DenSpawnData[]> spawns = [];
+                    for (int i = 0; i < spawners.Count; i++)
                     {
-                        spawns[i] = new DenSpawnData[lineage.creatureTypes.Length];
-                        for (int j = 0; j < spawns[i].Length; j++)
+                        var spawner = spawners[i];
+                        if (spawner.den.room != room.index) continue;
+                        if (spawner is World.Lineage lineage)
                         {
-                            spawns[i][j] = new DenSpawnData()
+                            var den = new DenSpawnData[lineage.creatureTypes.Length];
+                            spawns.Add(den);
+                            for (int j = 0; j < den.Length; j++)
                             {
-                                chance = lineage.progressionChances[j],
-                                count = 1,
-                                type = lineage.creatureTypes[j] < 0 ? "" : new CreatureTemplate.Type(ExtEnum<CreatureTemplate.Type>.values.GetEntry(lineage.creatureTypes[j]), false).value,
-                                night = lineage.nightCreature,
-                                data = lineage.spawnData[j],
-                                den = lineage.den.abstractNode
-                            };
+                                den[j] = new DenSpawnData()
+                                {
+                                    chance = lineage.progressionChances[j],
+                                    count = 1,
+                                    type = lineage.creatureTypes[j] < 0 ? "" : new CreatureTemplate.Type(ExtEnum<CreatureTemplate.Type>.values.GetEntry(lineage.creatureTypes[j]), false).value,
+                                    night = lineage.nightCreature,
+                                    data = lineage.spawnData[j],
+                                    den = lineage.den.abstractNode
+                                };
+                            }
+                        }
+                        else if (spawner is World.SimpleSpawner simple)
+                        {
+                            spawns.Add([
+                                new DenSpawnData() {
+                                    chance = -1f,
+                                    count = simple.amount,
+                                    type = simple.creatureType?.value ?? "",
+                                    night = simple.nightCreature,
+                                    data = simple.spawnDataString,
+                                    den = simple.den.abstractNode
+                                }
+                            ]);
+                        }
+                        else
+                        {
+                            Plugin.Logger.LogWarning("Invalid spawner type! Room: " + spawner.den.ResolveRoomName() + ", Type: " + spawner.GetType().FullName);
                         }
                     }
-                    else if (spawner is World.SimpleSpawner simple)
-                    {
-                        spawns[i] = [
-                            new DenSpawnData() {
-                                chance = -1f,
-                                count = simple.amount,
-                                type = simple.creatureType?.value ?? "",
-                                night = simple.nightCreature,
-                                data = simple.spawnDataString,
-                                den = simple.den.abstractNode
-                            }
-                        ];
-                    }
-                    else
-                    {
-                        Plugin.Logger.LogWarning("Invalid spawner type! Room: " + spawner.den.ResolveRoomName() + ", Type: " + spawner.GetType().FullName);
-                    }
+
+                    this.spawns = [.. spawns];
                 }
                 
                 tags = [.. (room.roomTags ?? [])];
