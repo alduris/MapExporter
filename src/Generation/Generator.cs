@@ -291,6 +291,7 @@ namespace MapExporter.Generation
             // Make images
             progress[-zoom, 0] = 0;
             progress[-zoom, 1] = (urbTile.x - llbTile.x) * (urbTile.y - llbTile.y);
+            Texture2D camTexture = new(1, 1, TextureFormat.RGBA32, false, false);
             for (int tileY = llbTile.y; tileY <= urbTile.y; tileY++)
             {
                 for (int tileX = llbTile.x; tileX <= urbTile.x; tileX++)
@@ -338,27 +339,25 @@ namespace MapExporter.Generation
                                 }
 
                                 // Open the camera so we can use it
-                                Texture2D camTexture;
-                                camTexture = new(screenSizeInt.x, screenSizeInt.y, TextureFormat.RGBA32, false, false);
                                 camTexture.LoadImage(File.ReadAllBytes(Path.Combine(inputDir, fileName)), false);
 
                                 if (zoom != 0) // No need to scale to the same resolution
                                     ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
 
-                                camTexture.Apply();
+                                // camTexture.Apply();
 
                                 // Copy pixels
                                 Vector2 copyOffsetVec = cam + Vector2.up * screenSize.y * multFac - tileCoords - Vector2.up * tileSize.y;
                                 copyOffsetVec.x *= -1; // this makes it the flipped version of pasteoffset from the original script, which we need for the copy offset
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
-                                int x = Math.Max(0, Math.Min(screenSizeInt.x, copyOffset.x));
-                                int y = Math.Max(0, Math.Min(screenSizeInt.y, copyOffset.y));
-                                int w = Math.Min(tileSizeInt.x - Math.Min(0, copyOffset.x), screenSizeInt.x - copyOffset.x);
-                                int h = Math.Min(tileSizeInt.y - Math.Min(0, copyOffset.y), screenSizeInt.y - copyOffset.y);
-                                var pixelData = camTexture.GetPixels(x, y, w, h);
-                                tile.SetPixels(copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0, w, h, pixelData);
-                                Object.Destroy(camTexture);
+                                // int x = Math.Max(0, Math.Min(camTexture.width, copyOffset.x));
+                                // int y = Math.Max(0, Math.Min(camTexture.height, copyOffset.y));
+                                // int w = Math.Min(tileSizeInt.x - Math.Min(0, copyOffset.x), camTexture.width - copyOffset.x);
+                                // int h = Math.Min(tileSizeInt.y - Math.Min(0, copyOffset.y), camTexture.height - copyOffset.y);
+                                CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, -copyOffset.x, -copyOffset.y);
+                                // tile.SetPixels(copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0, w, h, pixelData);
+                                yield return null;
                             }
                         }
                     }

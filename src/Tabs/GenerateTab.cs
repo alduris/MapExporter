@@ -130,7 +130,7 @@ namespace MapExporter.Tabs
                 if (current != null)
                 {
                     progressBar = new OpProgressBar(new Vector2(C_SPACING, C_SPACING), currentBox.size.x - C_SPACING * 2);
-                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, "Progress: 0.0%", false);
+                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, "Progress: 0.000%", false);
                     var displayText = slugQueue.Peek().value + " - " + Region.GetRegionFullName(current, slugQueue.Peek());
 
                     currentBox.AddItems(
@@ -153,7 +153,7 @@ namespace MapExporter.Tabs
                 else
                 {
                     generator.Update();
-                    progressLabel.text = "Progress: " + (generator.Progress * 100f).ToString("0.0%");
+                    progressLabel.text = "Progress: " + (generator.Progress).ToString("0.0%");
                     progressBar.Update(generator.Progress);
                     if (generator.Done)
                     {
