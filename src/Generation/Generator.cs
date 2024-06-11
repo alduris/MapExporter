@@ -9,6 +9,7 @@ using static MapExporter.Generation.GenUtil;
 using Object = UnityEngine.Object;
 using RoomEntry = MapExporter.RegionInfo.RoomEntry;
 using DenSpawnData = MapExporter.RegionInfo.RoomEntry.DenSpawnData;
+using System.Threading;
 
 namespace MapExporter.Generation
 {
@@ -72,7 +73,9 @@ namespace MapExporter.Generation
                             threads = new Task[8];
                             for (int i = 0; i < threads.Length; i++)
                             {
-                                threads[i] = Task.Run(() => ProcessZoomLevel(-i));
+                                int j = i;
+                                threads[i] = new Task(() => ProcessZoomLevel(-j));
+                                threads[i].Start();
                             }
                         }
 
@@ -664,6 +667,7 @@ namespace MapExporter.Generation
                     { "is_lineage", isLineage },
                     { "amount", spawnData[0].count },
                     { "creature", spawnData[0].type },
+                    { "spawn_data", spawnData[0].data },
                     { "pre_cycle", false }, // TODO: remove these
                     { "night", spawnData[0].night }
                 };
@@ -673,6 +677,7 @@ namespace MapExporter.Generation
                 {
                     spawnDict["lineage"] = spawnData.Select(x => x.type).ToArray();
                     spawnDict["lineage_probs"] = spawnData.Select(x => x.chance.ToString("0.0000")).ToArray();
+                    spawnDict["lineage_data"] = spawnData.Select(x => x.data).ToArray();
                 }
 
                 return new Dictionary<string, object>()
