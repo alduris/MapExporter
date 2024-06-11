@@ -74,6 +74,7 @@ namespace MapExporter.Generation
                             for (int i = 0; i < tasks.Length; i++)
                             {
                                 tasks[i] = ProcessZoomLevel(-i);
+                                tasks[i].MoveNext();
                             }
                         }
 
@@ -267,7 +268,7 @@ namespace MapExporter.Generation
         private static readonly IntVector2 screenSizeInt = new(1400, 800);
         private static readonly Vector2    screenSize = screenSizeInt.ToVector2();
 
-        private System.Collections.IEnumerator ProcessZoomLevel(int zoom)
+        private IEnumerator ProcessZoomLevel(int zoom)
         {
             string outputPath = Directory.CreateDirectory(OutputPathForStep(zoom)).FullName;
             float multFac = Mathf.Pow(2, zoom);
@@ -291,7 +292,9 @@ namespace MapExporter.Generation
             // Make images
             progress[-zoom, 0] = 0;
             progress[-zoom, 1] = (urbTile.x - llbTile.x) * (urbTile.y - llbTile.y);
-            Texture2D camTexture = new(1, 1, TextureFormat.RGBA32, false, false);
+            yield return null;
+
+            Texture2D camTexture = new(1, 1, TextureFormat.ARGB32, false, false);
             for (int tileY = llbTile.y; tileY <= urbTile.y; tileY++)
             {
                 for (int tileX = llbTile.x; tileX <= urbTile.x; tileX++)
@@ -326,7 +329,7 @@ namespace MapExporter.Generation
                                 // Create the tile if necessary
                                 if (tile == null)
                                 {
-                                    tile = new Texture2D(tileSizeInt.x, tileSizeInt.y, TextureFormat.RGBA32, false, false);
+                                    tile = new Texture2D(tileSizeInt.x, tileSizeInt.y, TextureFormat.ARGB32, false, false);
 
                                     // Fill with transparent color
                                     var pixels = tile.GetPixels();
@@ -335,7 +338,6 @@ namespace MapExporter.Generation
                                         pixels[i] = new Color(0f, 0f, 0f, 0f); // original implementation used fgcolor
                                     }
                                     tile.SetPixels(pixels);
-                                    tile.Apply();
                                 }
 
                                 // Open the camera so we can use it
@@ -344,19 +346,12 @@ namespace MapExporter.Generation
                                 if (zoom != 0) // No need to scale to the same resolution
                                     ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
 
-                                // camTexture.Apply();
-
                                 // Copy pixels
                                 Vector2 copyOffsetVec = cam + Vector2.up * screenSize.y * multFac - tileCoords - Vector2.up * tileSize.y;
                                 copyOffsetVec.x *= -1; // this makes it the flipped version of pasteoffset from the original script, which we need for the copy offset
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
-                                // int x = Math.Max(0, Math.Min(camTexture.width, copyOffset.x));
-                                // int y = Math.Max(0, Math.Min(camTexture.height, copyOffset.y));
-                                // int w = Math.Min(tileSizeInt.x - Math.Min(0, copyOffset.x), camTexture.width - copyOffset.x);
-                                // int h = Math.Min(tileSizeInt.y - Math.Min(0, copyOffset.y), camTexture.height - copyOffset.y);
-                                CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, -copyOffset.x, -copyOffset.y);
-                                // tile.SetPixels(copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0, w, h, pixelData);
+                                CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0);
                                 yield return null;
                             }
                         }
