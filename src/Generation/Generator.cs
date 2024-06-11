@@ -7,6 +7,8 @@ using RWCustom;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
 using Object = UnityEngine.Object;
+using RoomEntry = MapExporter.RegionInfo.RoomEntry;
+using DenSpawnData = MapExporter.RegionInfo.RoomEntry.DenSpawnData;
 
 namespace MapExporter.Generation
 {
@@ -100,6 +102,7 @@ namespace MapExporter.Generation
                         if (tasksDone == threads.Length)
                         {
                             metadataStep = MetadataStep.Rooms;
+                            threads = null;
                         }
                         break;
                     }
@@ -170,7 +173,7 @@ namespace MapExporter.Generation
                             if (room.size == default || room.size.x == 0 || room.size.y == 0) continue;
 
                             // I think the code for processing geo changed the most from how the Python file did it, I pretty much rewrote it from scratch lol
-                            geo.Add(ProcessRoomGeometry(room));
+                            geo.Add(ProcessRoomGeometry(room)); // note: this is a separate method in case I want to multithread this
                         }
 
                         metadata["geometry_features"] = geo;
@@ -180,7 +183,22 @@ namespace MapExporter.Generation
                     }
                 case MetadataStep.Spawns:
                     {
-                        //
+                        List<SpawnInfo> spawns = [];
+
+                        foreach (var room in regionInfo.rooms.Values)
+                        {
+                            foreach (var data in room.spawns)
+                            {
+                                spawns.Add(new SpawnInfo
+                                {
+                                    roomName = room.roomName,
+                                    spawnData = data,
+                                    coords = room.devPos + room.nodes[data[0].den].ToVector2() * 20f + new Vector2(10f, 10f)
+                                });
+                            }
+                        }
+
+                        metadata["spawn_features"] = spawns;
 
                         metadataStep = MetadataStep.Misc;
                         break;
@@ -397,7 +415,7 @@ namespace MapExporter.Generation
             }
         }
 
-        private GeometryInfo ProcessRoomGeometry(RegionInfo.RoomEntry room)
+        private GeometryInfo ProcessRoomGeometry(RoomEntry room)
         {
             LinkedList<(Vector2 A, Vector2 B)> lines = [];
 
@@ -613,7 +631,7 @@ namespace MapExporter.Generation
             public string room;
             public float[][][] lines;
 
-            public Dictionary<string, object> ToJson()
+            public readonly Dictionary<string, object> ToJson()
             {
                 return new Dictionary<string, object>()
                 {
@@ -627,6 +645,56 @@ namespace MapExporter.Generation
                         }
                     },
                     { "properties", new Dictionary<string, object> { { "room", room } } }
+                };
+            }
+        }
+
+        private struct SpawnInfo : IJsonObject
+        {
+            public Vector2 coords;
+            public string roomName;
+            public DenSpawnData[] spawnData;
+
+            public readonly Dictionary<string, object> ToJson()
+            {
+                // Put together part of the dictionary
+                bool isLineage = spawnData[0].chance >= 0f;
+                var spawnDict = new Dictionary<string, object>()
+                {
+                    { "is_lineage", isLineage },
+                    { "amount", spawnData[0].count },
+                    { "creature", spawnData[0].type },
+                    { "pre_cycle", false }, // TODO: remove these
+                    { "night", spawnData[0].night }
+                };
+
+                // Lineage has extra data
+                if (isLineage)
+                {
+                    spawnDict["lineage"] = spawnData.Select(x => x.type).ToArray();
+                    spawnDict["lineage_probs"] = spawnData.Select(x => x.chance.ToString("0.0000")).ToArray();
+                }
+
+                return new Dictionary<string, object>()
+                {
+                    { "type", "Feature" },
+                    {
+                        "geometry",
+                        new Dictionary<string, object>
+                        {
+                            { "type", "Point" },
+                            { "coordinates", Vec2arr(coords) }
+                        }
+                    },
+                    {
+                        "properties",
+                        new Dictionary<string, object>
+                        {
+                            { "room", roomName },
+                            { "den", spawnData[0].den },
+                            { "spawns",  spawnDict }
+                        }
+                    }
                 };
             }
         }
