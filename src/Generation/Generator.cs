@@ -283,6 +283,14 @@ namespace MapExporter.Generation
                     mapMin = new(Mathf.Min(room.devPos.x, mapMin.x), Mathf.Min(room.devPos.y, mapMin.y));
                     mapMax = new(Mathf.Max(room.devPos.x + offscreenSize.x, mapMax.x), Mathf.Max(room.devPos.y + offscreenSize.y, mapMax.y));
                 }
+                else
+                {
+                    foreach (var cam in room.cameras)
+                    {
+                        mapMin = new(Mathf.Min(room.devPos.x + cam.x, mapMin.x), Mathf.Min(room.devPos.y + cam.y, mapMin.y));
+                        mapMax = new(Mathf.Max(room.devPos.x + cam.x + screenSize.x, mapMax.x), Mathf.Max(room.devPos.y + cam.y + screenSize.y, mapMax.y));
+                    }
+                }
             }
 
             // Find tile boundaries (lower left inclusive, upper right non-inclusive)
@@ -322,7 +330,7 @@ namespace MapExporter.Generation
                         {
                             var cam = room.cameras[camNo];
                             // Determine if the camera can be seen
-                            if (camRect.CheckIntersect(new Rect(cam * multFac, screenSize * multFac)))
+                            if (camRect.CheckIntersect(new Rect((room.devPos + cam) * multFac - tileCoords, tileSize)))
                             {
                                 string fileName = $"{room.roomName}_{camNo}.png";
 
@@ -347,7 +355,7 @@ namespace MapExporter.Generation
                                     ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
 
                                 // Copy pixels
-                                Vector2 copyOffsetVec = cam + Vector2.up * screenSize.y * multFac - tileCoords - Vector2.up * tileSize.y;
+                                Vector2 copyOffsetVec = (room.devPos + cam) * multFac + Vector2.up * screenSize.y * multFac - tileCoords - Vector2.up * tileSize.y;
                                 copyOffsetVec.x *= -1; // this makes it the flipped version of pasteoffset from the original script, which we need for the copy offset
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
@@ -357,17 +365,17 @@ namespace MapExporter.Generation
                         }
                     }
 
+                    // Update progress
+                    progress[-zoom, 0]++;
+
                     // Write tile if we drew anything
                     if (tile != null)
                     {
                         tile.Apply();
                         File.WriteAllBytes(Path.Combine(outputPath, $"{tileX}_{-1 - tileY}.png"), tile.EncodeToPNG());
                         Object.Destroy(tile);
+                        yield return null;
                     }
-
-                    // Update progress
-                    progress[-zoom, 0]++;
-                    yield return null;
                 }
             }
         }

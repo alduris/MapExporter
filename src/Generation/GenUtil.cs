@@ -34,7 +34,7 @@ namespace MapExporter.Generation
                 for (int y = 0; y < height; y++)
                 {
                     float u = Custom.LerpMap(x, 0, width - 1, 0, oldW - 1);
-                    float v = Custom.LerpMap(x, 0, height - 1, 0, oldH - 1);
+                    float v = Custom.LerpMap(y, 0, height - 1, 0, oldH - 1);
 
                     Color tl = oldPixels[Mathf.FloorToInt(u) + Mathf.FloorToInt(v) * oldW];
                     Color tr = oldPixels[Mathf.CeilToInt(u) + Mathf.FloorToInt(v) * oldW];
