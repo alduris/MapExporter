@@ -20,6 +20,7 @@ namespace MapExporter.Tabs.UI
         public void Update(float progress)
         {
             inner.size.Set(Mathf.Max(14f, size.x * progress), inner.size.y);
+            inner.Change();
         }
 
         public override void Update()

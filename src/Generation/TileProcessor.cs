@@ -7,7 +7,7 @@ using IEnumerator = System.Collections.IEnumerator;
 
 namespace MapExporter.Generation
 {
-    internal class TileProcessor(Generator owner, int zoom) : GenProcessor(owner)
+    internal class TileProcessor(Generator owner, int zoom) : Processor(owner)
     {
         private readonly int zoom = zoom;
         private readonly string outputDir = owner.outputDir;
@@ -134,7 +134,7 @@ namespace MapExporter.Generation
                 }
             }
 
-            Finished = true;
+            Done = true;
         }
     }
 }

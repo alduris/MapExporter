@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MapExporter.Generation
 {
-    internal abstract class GenProcessor(Generator owner) : IEnumerator<float>
+    internal abstract class Processor(Generator owner) : IEnumerator<float>
     {
         // For IEnumerator
         public float Current => Progress;
@@ -16,8 +16,13 @@ namespace MapExporter.Generation
 
         public bool MoveNext()
         {
-            process ??= Process();
-            return !Finished && process.MoveNext();
+            if (process == null)
+            {
+                process = Process();
+                return true;
+            }
+
+            return !Done && process.MoveNext();
         }
 
         /// <summary>
@@ -32,7 +37,7 @@ namespace MapExporter.Generation
         public Generator owner = owner;
         protected abstract IEnumerator Process();
         public float Progress { get; protected set; }
-        public bool Finished { get; protected set; }
+        public bool Done { get; protected set; }
         public abstract string ProcessName { get; }
         private IEnumerator process = null;
     }
