@@ -26,6 +26,7 @@ internal class UI : OptionInterface
             new ScreenshotTab(this),
             new EditTab(this),
             new GenerateTab(this),
+            new ServerTab(this),
             // Export tab
         ];
 

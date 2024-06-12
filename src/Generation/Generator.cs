@@ -19,18 +19,6 @@ namespace MapExporter.Generation
         private readonly Queue<Processor> processes = [];
         internal readonly Dictionary<string, object> metadata = [];
 
-        private enum MetadataStep
-        {
-            Tiles,
-            Rooms,
-            Connections,
-            Geometry,
-            Spawns,
-            Misc,
-            Done
-        }
-        private static readonly int MetadataStepCount = Enum.GetNames(typeof(MetadataStep)).Length;
-
 
         public Generator(SlugcatStats.Name scug, string region)
         {
