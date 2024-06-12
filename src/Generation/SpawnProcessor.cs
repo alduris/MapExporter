@@ -15,6 +15,7 @@ namespace MapExporter.Generation
 
             foreach (var room in owner.regionInfo.rooms.Values)
             {
+                if (room.nodes == null) continue;
                 foreach (var data in room.spawns)
                 {
                     spawns.Add(new SpawnInfo

@@ -69,6 +69,12 @@ namespace MapExporter.Generation
             bool move = !process.MoveNext();
             Progress = process.Progress;
             CurrentTask = process.ProcessName;
+            if (process.Failed)
+            {
+                Done = true;
+                Failed = true;
+                return;
+            }
             if (move)
             {
                 process.Dispose(); // I don't think anything actually uses this but just in case for the future

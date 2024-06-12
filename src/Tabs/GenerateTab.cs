@@ -31,7 +31,7 @@ namespace MapExporter.Tabs
         {
             const float PADDING = 10f;
             const float MARGIN = 6f;
-            const float BOX_HEIGHT = (MENU_SIZE - 4 * PADDING - 3 * BIG_LINE_HEIGHT - 3 * MARGIN) / 2;
+            const float BOX_HEIGHT = (MENU_SIZE - 4 * PADDING - 3 * BIG_LINE_HEIGHT - 3 * MARGIN - 24f) / 2;
 
             var allRegions = new HashSet<string>(Data.RenderedRegions.Values.SelectMany(x => x))
                 .Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i))
@@ -140,6 +140,11 @@ namespace MapExporter.Tabs
                     );
                     progressBar.Initialize();
                 }
+                else
+                {
+                    progressBar = null;
+                    progressLabel = null;
+                }
             }
 
             // Update generator
@@ -153,13 +158,22 @@ namespace MapExporter.Tabs
                 else
                 {
                     generator.Update();
-                    progressLabel.text = $"Progress: {generator.Progress.ToString("0.000%")} ({generator.CurrentTask})";
+                    progressLabel.text = $"Progress: {generator.Progress:0.000%} ({generator.CurrentTask})";
                     progressBar.Update(generator.Progress);
                     if (generator.Done)
                     {
                         currentDirty = true;
                         if (!generator.Failed)
                         {
+                            if (Data.FinishedRegions.TryGetValue(current, out var slugcats))
+                            {
+                                Data.FinishedRegions[current].Add(slugQueue.Peek());
+                            }
+                            else
+                            {
+                                Data.FinishedRegions.Add(current, [slugQueue.Peek()]);
+                            }
+                            Data.SaveData();
                             slugQueue.Dequeue();
                             if (slugQueue.Count == 0)
                             {

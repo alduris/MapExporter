@@ -66,6 +66,7 @@ namespace MapExporter
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;
 
         public static readonly Dictionary<SlugcatStats.Name, List<string>> RenderedRegions = [];
+        public static readonly Dictionary<string, List<SlugcatStats.Name>> FinishedRegions = [];
 
         public static void GetData()
         {
@@ -116,6 +117,32 @@ namespace MapExporter
                         }
                     }
                 }
+
+                if (json.ContainsKey("finished"))
+                {
+                    var regions = (Dictionary<string, object>)json["finished"];
+                    foreach (var finishedRegions in regions)
+                    {
+                        var region = finishedRegions.Key;
+                        var savedList = ((List<object>)finishedRegions.Value).Select(x => new SlugcatStats.Name((string)x)).ToList();
+
+                        // Make sure the regions still exist in our file system
+                        var scugList = new List<SlugcatStats.Name>();
+                        foreach (var scug in savedList)
+                        {
+                            if (Directory.Exists(FinalOutputDir(finishedRegions.Key, region)))
+                            {
+                                scugList.Add(scug);
+                            }
+                        }
+
+                        // Don't add the scug to the list if they have no rendered regions in the file system
+                        if (scugList.Count > 0)
+                        {
+                            FinishedRegions.Add(region, scugList);
+                        }
+                    }
+                }
             }
 
             // Regions
@@ -149,6 +176,11 @@ namespace MapExporter
             {
                 rendered.Add(kv.Key.value, [.. kv.Value]);
             }
+            Dictionary<string, string[]> finished = [];
+            foreach (var kv in FinishedRegions)
+            {
+                finished.Add(kv.Key, [.. kv.Value.Select(x => x.value)]);
+            }
             Dictionary<string, object> dict = new()
             {
                 {
@@ -157,6 +189,7 @@ namespace MapExporter
                 },
                 { "ssstatus", ScreenshotterStatus.ToString() },
                 { "rendered", rendered },
+                { "finished", finished },
             };
             File.WriteAllText(DataFileDir, Json.Serialize(dict));
         }

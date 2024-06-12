@@ -16,13 +16,23 @@ namespace MapExporter.Generation
 
         public bool MoveNext()
         {
-            if (process == null)
+            try
             {
-                process = Process();
-                return true;
-            }
+                if (process == null)
+                {
+                    process = Process();
+                    return true;
+                }
 
-            return !Done && process.MoveNext();
+                return !Done && process.MoveNext();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogError(ex);
+                Done = true;
+                Failed = true;
+                return false;
+            }
         }
 
         /// <summary>
@@ -38,6 +48,7 @@ namespace MapExporter.Generation
         protected abstract IEnumerator Process();
         public float Progress { get; protected set; }
         public bool Done { get; protected set; }
+        public bool Failed { get; private set; }
         public abstract string ProcessName { get; }
         private IEnumerator process = null;
     }

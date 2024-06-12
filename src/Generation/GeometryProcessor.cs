@@ -108,7 +108,7 @@ namespace MapExporter.Generation
                     }
                 }
 
-                Progress = (processed + 1f) / (regionInfo.rooms.Count * 2f);
+                Progress = (processed + 0.5f) / regionInfo.rooms.Count;
                 yield return null;
 
                 // Optimize the lines (combining)
@@ -121,6 +121,7 @@ namespace MapExporter.Generation
                     // Don't add duplicate elements
                     if (!seen.Add(node.Value))
                     {
+                        node = node.Next;
                         continue;
                     }
 
@@ -162,6 +163,7 @@ namespace MapExporter.Generation
                         curr = next;
                     }
 
+                    optimized.Add(line);
                     node = node.Next;
                 }
 
@@ -178,8 +180,9 @@ namespace MapExporter.Generation
 
             owner.metadata["geometry_features"] = geo;
             
-            Done = true;
             Progress = 1f;
+            yield return null;
+            Done = true;
         }
     }
 }

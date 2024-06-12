@@ -8,7 +8,7 @@ namespace MapExporter.Generation
 {
     internal class ConnectionProcessor(Generator owner) : Processor(owner)
     {
-        public override string ProcessName => throw new NotImplementedException();
+        public override string ProcessName => "Connections";
 
         protected override IEnumerator Process()
         {

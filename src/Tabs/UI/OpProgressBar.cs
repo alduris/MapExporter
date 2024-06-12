@@ -3,13 +3,14 @@ using UnityEngine;
 
 namespace MapExporter.Tabs.UI
 {
-    internal class OpProgressBar(Vector2 pos, float width) : OpRect(pos, new Vector2(width, 14f), 0.3f)
+    internal class OpProgressBar(Vector2 pos, float width) : OpRect(pos, new Vector2(width, HEIGHT), 0.3f)
     {
+        private const float HEIGHT = 16f;
         public OpRect inner;
 
         public void Initialize()
         {
-            inner = new OpRect(pos, new Vector2(14f, 14f), 1f)
+            inner = new OpRect(pos, new Vector2(HEIGHT, HEIGHT), 1f)
             {
                 colorFill = colorEdge,
                 colorEdge = colorEdge,
@@ -19,7 +20,7 @@ namespace MapExporter.Tabs.UI
 
         public void Update(float progress)
         {
-            inner.size.Set(Mathf.Max(14f, size.x * progress), inner.size.y);
+            inner.size = new Vector2(Mathf.Max(HEIGHT, size.x * progress), inner.size.y);
             inner.Change();
         }
 

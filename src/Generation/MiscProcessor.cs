@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using RWCustom;
 using UnityEngine;
@@ -9,7 +8,7 @@ namespace MapExporter.Generation
 {
     internal class MiscProcessor(Generator owner) : Processor(owner)
     {
-        public override string ProcessName => throw new NotImplementedException();
+        public override string ProcessName => "Misc";
 
         protected override IEnumerator Process()
         {

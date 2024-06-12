@@ -53,7 +53,7 @@ namespace MapExporter.Generation
             IntVector2 urbTile = Vec2IntVecCeil(multFac * mapMax / tileSize);
 
             // Make images
-            int totalTiles = (urbTile.x - llbTile.x) * (urbTile.y - llbTile.y);
+            int totalTiles = (urbTile.x - llbTile.x + 1) * (urbTile.y - llbTile.y + 1);
             int processed = 0;
 
             Texture2D camTexture = new(1, 1, TextureFormat.ARGB32, false, false);
