@@ -2,23 +2,22 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using RWCustom;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
+using static MapExporter.Generation.GenStructures;
 using Object = UnityEngine.Object;
 using RoomEntry = MapExporter.RegionInfo.RoomEntry;
-using DenSpawnData = MapExporter.RegionInfo.RoomEntry.DenSpawnData;
 using IEnumerator = System.Collections.IEnumerator;
 
 namespace MapExporter.Generation
 {
     internal class Generator
     {
-        private readonly string inputDir;
-        private readonly string outputDir;
-        private readonly RegionInfo regionInfo;
-        private readonly bool skipExistingTiles;
+        internal readonly string inputDir;
+        internal readonly string outputDir;
+        internal readonly RegionInfo regionInfo;
+        internal readonly bool skipExistingTiles;
 
         private IEnumerator[] tasks;
 
@@ -26,9 +25,9 @@ namespace MapExporter.Generation
         public bool Failed { get; private set; } = false;
         public float Progress { get; private set; } = 0f;
 
-        private readonly int[,] progress = new int[8,2];
-        private MetadataStep metadataStep = MetadataStep.Tiles;
-        private readonly Dictionary<string, object> metadata = [];
+        private readonly Queue<GenProcessor> processes = [];
+        private readonly int numProcesses;
+        internal readonly Dictionary<string, object> metadata = [];
 
         private enum MetadataStep
         {
@@ -59,53 +58,29 @@ namespace MapExporter.Generation
                 room.devPos *= 10; // convert to pixel coordinates
             }
             skipExistingTiles = false;
+
+            // Enqueue processes
+            for (int i = 0; i < 8; i++)
+            {
+                processes.Enqueue(new TileProcessor(this, -i));
+            }
+            // Rooms
+            // Connections
+            // Geometry
+            // Spawns
+            // Misc
+
+            numProcesses = processes.Count;
         }
 
         public void Update()
         {
             if (Done) return;
-            switch (metadataStep)
+
+            /*switch (metadataStep)
             {
                 case MetadataStep.Tiles:
                     {
-                        if (tasks == null)
-                        {
-                            tasks = new IEnumerator[8];
-                            for (int i = 0; i < tasks.Length; i++)
-                            {
-                                tasks[i] = ProcessZoomLevel(-i);
-                                tasks[i].MoveNext();
-                            }
-                        }
-
-                        int tilesDone = 0;
-                        int totalTiles = MetadataStepCount;
-                        int tasksDone = 0;
-                        for (int i = 0; i < tasks.Length; i++)
-                        {
-                            tilesDone += progress[i, 0];
-                            totalTiles += progress[i, 1];
-                        }
-                        for (int i = 0; i < tasks.Length; i++)
-                        {
-                            if (tasks[i].MoveNext())
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                tasksDone++;
-                            }
-                        }
-
-                        Progress = (float)tilesDone / totalTiles;
-
-                        if (tasksDone == tasks.Length)
-                        {
-                            metadataStep = MetadataStep.Rooms;
-                            tasks = null;
-                        }
-                        break;
                     }
                 case MetadataStep.Rooms:
                     {
@@ -221,7 +196,7 @@ namespace MapExporter.Generation
                         var (bh, bs, bv) = (bvec.x, bvec.y, bvec.z);
                         var (fh, fs, fv) = (fvec.x, fvec.y, fvec.z);
                         float sh, ss, sv;
-                        
+
                         if (Mathf.Abs(bh - fh) < 0.5f)
                         {
                             if (bh < fh)
@@ -232,8 +207,8 @@ namespace MapExporter.Generation
                         sh = (bs == 0 && fs == 0) ? 0.5f : ((bh * fs + fh * bs) / (bs + fs));
                         sh = sh < 0 ? (1 + (sh % 1f)) : (sh % 1f);
 
-                        ss = Mathf.Sqrt((bs*bs + fs*fs) / 2.0f); // this does some circle math stuff
-                        sv = Mathf.Sqrt((bv*bv + fv*fv) / 2.0f); // ditto
+                        ss = Mathf.Sqrt((bs * bs + fs * fs) / 2.0f); // this does some circle math stuff
+                        sv = Mathf.Sqrt((bv * bv + fv * fv) / 2.0f); // ditto
 
                         metadata["geocolor"] = Color2Arr(HSV2HSL(sh, ss, sv).rgb);
 
@@ -246,138 +221,30 @@ namespace MapExporter.Generation
                         Done = true;
                         break;
                     }
-                default: break;
+                default:
+                    break;
+            }*/
+
+                    if (processes.Peek().MoveNext())
+            {
+                int completed = numProcesses - processes.Count;
+                float progAmount = 1f / numProcesses;
+                Progress = (completed + processes.Peek().Current) * progAmount;
+            }
+            else
+            {
+                processes.Dequeue();
+                Progress = (numProcesses - processes.Count) / numProcesses;
             }
 
-            if (tasks != null && metadataStep != MetadataStep.Tiles)
+            if (processes.Count == 0)
             {
-                int count = 0;
-                for (int i = 0; i < tasks.Length; i++)
-                {
-                    count += progress[i, 1];
-                }
-                Progress = (float)(count + (int)metadataStep) / (count + MetadataStepCount);
+                Done = true;
             }
         }
 
-        private string OutputPathForStep(int step) => Path.Combine(outputDir, step.ToString());
-        private static readonly IntVector2 tileSizeInt = new(256, 256);
-        private static readonly Vector2    tileSize = tileSizeInt.ToVector2();
-        private static readonly IntVector2 offscreenSizeInt = new(1200, 400);
-        private static readonly Vector2    offscreenSize = offscreenSizeInt.ToVector2();
-        private static readonly IntVector2 screenSizeInt = new(1400, 800);
-        private static readonly Vector2    screenSize = screenSizeInt.ToVector2();
-
         private IEnumerator ProcessZoomLevel(int zoom)
         {
-            string outputPath = Directory.CreateDirectory(OutputPathForStep(zoom)).FullName;
-            float multFac = Mathf.Pow(2, zoom);
-
-            // Find room boundaries
-            Vector2 mapMin = Vector2.zero;
-            Vector2 mapMax = Vector2.zero;
-            foreach (var room in regionInfo.rooms.Values)
-            {
-                if ((room.cameras?.Length ?? 0) == 0)
-                {
-                    mapMin = new(Mathf.Min(room.devPos.x, mapMin.x), Mathf.Min(room.devPos.y, mapMin.y));
-                    mapMax = new(Mathf.Max(room.devPos.x + offscreenSize.x, mapMax.x), Mathf.Max(room.devPos.y + offscreenSize.y, mapMax.y));
-                }
-                else
-                {
-                    foreach (var cam in room.cameras)
-                    {
-                        mapMin = new(Mathf.Min(room.devPos.x + cam.x, mapMin.x), Mathf.Min(room.devPos.y + cam.y, mapMin.y));
-                        mapMax = new(Mathf.Max(room.devPos.x + cam.x + screenSize.x, mapMax.x), Mathf.Max(room.devPos.y + cam.y + screenSize.y, mapMax.y));
-                    }
-                }
-            }
-
-            // Find tile boundaries (lower left inclusive, upper right non-inclusive)
-            IntVector2 llbTile = Vec2IntVecFloor(multFac * mapMin / tileSize);
-            IntVector2 urbTile = Vec2IntVecCeil(multFac * mapMax / tileSize);
-
-            // Make images
-            progress[-zoom, 0] = 0;
-            progress[-zoom, 1] = (urbTile.x - llbTile.x) * (urbTile.y - llbTile.y);
-            yield return null;
-
-            Texture2D camTexture = new(1, 1, TextureFormat.ARGB32, false, false);
-            for (int tileY = llbTile.y; tileY <= urbTile.y; tileY++)
-            {
-                for (int tileX = llbTile.x; tileX <= urbTile.x; tileX++)
-                {
-                    Texture2D tile = null;
-
-                    // Get file path and see if we can skip it
-                    string filePath = Path.Combine(outputPath, $"{tileX}_{-1-tileY}.png");
-                    if (skipExistingTiles && File.Exists(filePath))
-                    {
-                        continue;
-                    }
-
-                    // Build tile
-                    var camPoint = new Vector2(tileX, tileY) * multFac;
-                    var camRect = new Rect(camPoint, tileSize);
-                    var tileCoords = new Vector2(tileX, tileY) * tileSize;
-
-                    foreach (var room in regionInfo.rooms.Values)
-                    {
-                        // Skip rooms with no cameras
-                        if (room.cameras == null || room.cameras.Length == 0) continue;
-
-                        for (int camNo = 0; camNo < room.cameras.Length; camNo++)
-                        {
-                            var cam = room.cameras[camNo];
-                            // Determine if the camera can be seen
-                            if (camRect.CheckIntersect(new Rect((room.devPos + cam) * multFac - tileCoords, tileSize)))
-                            {
-                                string fileName = $"{room.roomName}_{camNo}.png";
-
-                                // Create the tile if necessary
-                                if (tile == null)
-                                {
-                                    tile = new Texture2D(tileSizeInt.x, tileSizeInt.y, TextureFormat.ARGB32, false, false);
-
-                                    // Fill with transparent color
-                                    var pixels = tile.GetPixels();
-                                    for (int i = 0; i < pixels.Length; i++)
-                                    {
-                                        pixels[i] = new Color(0f, 0f, 0f, 0f); // original implementation used fgcolor
-                                    }
-                                    tile.SetPixels(pixels);
-                                }
-
-                                // Open the camera so we can use it
-                                camTexture.LoadImage(File.ReadAllBytes(Path.Combine(inputDir, fileName)), false);
-
-                                if (zoom != 0) // No need to scale to the same resolution
-                                    ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
-
-                                // Copy pixels
-                                Vector2 copyOffsetVec = (room.devPos + cam) * multFac + Vector2.up * screenSize.y * multFac - tileCoords - Vector2.up * tileSize.y;
-                                copyOffsetVec.x *= -1; // this makes it the flipped version of pasteoffset from the original script, which we need for the copy offset
-                                IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
-
-                                CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0);
-                                yield return null;
-                            }
-                        }
-                    }
-
-                    // Update progress
-                    progress[-zoom, 0]++;
-
-                    // Write tile if we drew anything
-                    if (tile != null)
-                    {
-                        tile.Apply();
-                        File.WriteAllBytes(Path.Combine(outputPath, $"{tileX}_{-1 - tileY}.png"), tile.EncodeToPNG());
-                        Object.Destroy(tile);
-                        yield return null;
-                    }
-                }
-            }
         }
 
         private GeometryInfo ProcessRoomGeometry(RoomEntry room)
@@ -528,142 +395,5 @@ namespace MapExporter.Generation
             };
         }
 
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-
-        private struct RoomBoxInfo : IJsonObject
-        {
-            public string name;
-            public Rect box;
-            public Vector2 namePos;
-
-            public readonly Dictionary<string, object> ToJson()
-            {
-                return new Dictionary<string, object>()
-                {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Polygon" },
-                            { "coordinates", new float[][][] { Rect2Arr(box) } }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "name", name },
-                            { "popupcoords", Vec2arr(namePos) },
-                        }
-                    }
-                };
-            }
-        }
-
-        private struct ConnectionInfo : IJsonObject
-        {
-            public Vector2 pointA;
-            public int dirA;
-            public Vector2 pointB;
-            public int dirB;
-
-            private static readonly Vector2[] fourDirections = [Vector2.left, Vector2.down, Vector2.right, Vector2.up];
-            public readonly Dictionary<string, object> ToJson()
-            {
-                float dist = (pointB - pointA).magnitude;
-                Vector2 handleA = pointA + fourDirections[dirA] * dist;
-                Vector2 handleB = pointB + fourDirections[dirB] * dist;
-                return new Dictionary<string, object>()
-                {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "LineString" },
-                            { "coordinates", new float[][] { Vec2arr(pointA), Vec2arr(handleA), Vec2arr(handleB), Vec2arr(pointB) } }
-                        }
-                    },
-                    { "properties", new Dictionary<string, object> {} }
-                };
-            }
-        }
-
-        private struct GeometryInfo : IJsonObject
-        {
-            public string room;
-            public float[][][] lines;
-
-            public readonly Dictionary<string, object> ToJson()
-            {
-                return new Dictionary<string, object>()
-                {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "MultiLineString" },
-                            { "coordinates", lines }
-                        }
-                    },
-                    { "properties", new Dictionary<string, object> { { "room", room } } }
-                };
-            }
-        }
-
-        private struct SpawnInfo : IJsonObject
-        {
-            public Vector2 coords;
-            public string roomName;
-            public DenSpawnData[] spawnData;
-
-            public readonly Dictionary<string, object> ToJson()
-            {
-                // Put together part of the dictionary
-                bool isLineage = spawnData[0].chance >= 0f;
-                var spawnDict = new Dictionary<string, object>()
-                {
-                    { "is_lineage", isLineage },
-                    { "amount", spawnData[0].count },
-                    { "creature", spawnData[0].type },
-                    { "spawn_data", spawnData[0].data },
-                    { "pre_cycle", false }, // TODO: remove these
-                    { "night", spawnData[0].night }
-                };
-
-                // Lineage has extra data
-                if (isLineage)
-                {
-                    spawnDict["lineage"] = spawnData.Select(x => x.type).ToArray();
-                    spawnDict["lineage_probs"] = spawnData.Select(x => x.chance.ToString("0.0000")).ToArray();
-                    spawnDict["lineage_data"] = spawnData.Select(x => x.data).ToArray();
-                }
-
-                return new Dictionary<string, object>()
-                {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Point" },
-                            { "coordinates", Vec2arr(coords) }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "room", roomName },
-                            { "den", spawnData[0].den },
-                            { "spawns",  spawnDict }
-                        }
-                    }
-                };
-            }
-        }
     }
 }
