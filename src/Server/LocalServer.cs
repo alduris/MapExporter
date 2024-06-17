@@ -10,14 +10,15 @@ namespace MapExporter.Server
 {
     public class LocalServer : IDisposable
     {
+        public const string URL = "http://localhost:8000/";
         private HttpListener listener;
 
         public async void Initialize()
         {
             listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:8000/");
+            listener.Prefixes.Add(URL);
             listener.Start();
-            Message("Listening at http://localhost:8000/");
+            Message("Listening at " + URL);
 
             await Listen();
         }
@@ -45,7 +46,7 @@ namespace MapExporter.Server
             var res = ctx.Response;
             try
             {
-
+                Message(req);
                 string responseString = $"<HTML><BODY><P>{Resources.SafePath(req.Url.AbsolutePath)}</P><P>{File.Exists(Resources.SafePath(req.Url.AbsolutePath))}</P></BODY></HTML>";
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
 
@@ -81,6 +82,7 @@ namespace MapExporter.Server
             }
         }
 
+        private void Message(object message) => Message(message.ToString());
         private void Message(string message)
         {
             OnMessage?.Invoke(DateTime.Now.ToString() + ": " + message);
