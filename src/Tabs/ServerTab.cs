@@ -1,12 +1,28 @@
-﻿using MapExporter.Server;
+﻿using System.Collections.Generic;
+using MapExporter.Server;
+using Menu;
 using Menu.Remix.MixedUI;
 using UnityEngine;
 
 namespace MapExporter.Tabs
 {
-    internal class ServerTab(OptionInterface owner) : BaseTab(owner, "Server")
+    internal class ServerTab : BaseTab
     {
         private static LocalServer server;
+        private Queue<string> undisplayedMessages = [];
+
+        public ServerTab(OptionInterface owner) : base(owner, "Run")
+        {
+            OnPreDeactivate += ServerTab_OnPreDeactivate;
+        }
+
+        private void ServerTab_OnPreDeactivate()
+        {
+            if (server != null)
+            {
+                server.OnMessage -= Server_OnMessage;
+            }
+        }
 
         public override void Initialize()
         {
@@ -23,11 +39,14 @@ namespace MapExporter.Tabs
                 {
                     server = new LocalServer();
                     server.Initialize();
+                    server.OnMessage += Server_OnMessage;
                     button.text = "STOP";
                 }
             };
             AddItems(
-                button
+                new OpLabel(10f, 560f, "SERVER", true),
+                button,
+                new OpImage(new Vector2(10f, 299f), "pixel") { scale = new Vector2(580f, 2f), color = MenuColorEffect.rgbMediumGrey }
             );
 
             Resources.CopyFrontendFiles();
@@ -35,6 +54,11 @@ namespace MapExporter.Tabs
 
         public override void Update()
         {
+        }
+
+        private void Server_OnMessage(string message)
+        {
+            undisplayedMessages.Enqueue(message);
         }
     }
 }

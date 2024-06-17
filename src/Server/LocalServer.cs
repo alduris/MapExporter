@@ -17,6 +17,7 @@ namespace MapExporter.Server
             listener = new HttpListener();
             listener.Prefixes.Add("http://localhost:8000/");
             listener.Start();
+            Message("Listening at http://localhost:8000/");
 
             await Listen();
         }
@@ -40,10 +41,10 @@ namespace MapExporter.Server
 
         private void HandleRequest(HttpListenerContext ctx)
         {
+            var req = ctx.Request;
+            var res = ctx.Response;
             try
             {
-                var req = ctx.Request;
-                var res = ctx.Response;
 
                 string responseString = $"<HTML><BODY><P>{Resources.SafePath(req.Url.AbsolutePath)}</P><P>{File.Exists(Resources.SafePath(req.Url.AbsolutePath))}</P></BODY></HTML>";
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
@@ -58,6 +59,7 @@ namespace MapExporter.Server
             }
             catch (Exception ex)
             {
+                Message("Errored while handling request " + req?.ToString() + "");
                 Plugin.Logger.LogError(ex);
                 Dispose();
             }
@@ -68,6 +70,7 @@ namespace MapExporter.Server
             if (listener == null) return;
             try
             {
+                Message("Shutting down");
                 listener.Stop();
                 listener.Close();
                 listener = null;
@@ -77,5 +80,12 @@ namespace MapExporter.Server
                 Plugin.Logger.LogError(ex);
             }
         }
+
+        private void Message(string message)
+        {
+            OnMessage?.Invoke(DateTime.Now.ToString() + ": " + message);
+        }
+
+        public event Action<string> OnMessage;
     }
 }

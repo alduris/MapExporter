@@ -127,10 +127,10 @@ namespace MapExporter
             {
                 var oldRT = RenderTexture.active;
 
-                var rt = new RenderTexture(atlasTex.width, atlasTex.height, 0);
+                var rt = new RenderTexture(atlasTex.width, atlasTex.height, 32, RenderTextureFormat.ARGB32);
                 Graphics.Blit(atlasTex, rt);
                 RenderTexture.active = rt;
-                atlasTex = new Texture2D(atlasTex.width, atlasTex.height, rt.format == RenderTextureFormat.ARGB32 ? TextureFormat.ARGB32 : TextureFormat.RGBA32, false);
+                atlasTex = new Texture2D(atlasTex.width, atlasTex.height, TextureFormat.ARGB32, false);
                 atlasTex.ReadPixels(new Rect(0, 0, atlasTex.width, atlasTex.height), 0, 0);
 
                 RenderTexture.active = oldRT;
