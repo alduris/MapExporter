@@ -106,6 +106,7 @@ namespace MapExporter.Tabs.UI
 
                 // Set content size
                 SetContentSize(height, true);
+                ScrollToTop(true);
             }
         }
 
@@ -115,6 +116,7 @@ namespace MapExporter.Tabs.UI
             try
             {
                 CurrentDir = dir;
+                CurrentDir?.GetDirectories();
                 dirty = true;
             }
             catch (Exception e)
@@ -137,6 +139,7 @@ namespace MapExporter.Tabs.UI
                 try
                 {
                     CurrentDir = CurrentDir.Parent;
+                    CurrentDir?.GetDirectories();
                     dirty = true;
                 }
                 catch (Exception e)
@@ -151,6 +154,7 @@ namespace MapExporter.Tabs.UI
         private void RefreshButton_OnClick(UIfocusable trigger)
         {
             dirty = true;
+            CurrentDir.Refresh();
         }
 
         private void DoneButton_OnClick(OpTextBox textbox)
