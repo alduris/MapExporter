@@ -39,13 +39,6 @@ namespace MapExporter
             );
         public static void CopyFrontendFiles(bool replaceAll = false)
         {
-            // Copy over all frontend files
-            if (true)
-            {
-                string path = Path.Combine(Data.ModDirectory, "map-frontend");
-                Plugin.Logger.LogDebug(path);
-            }
-
             // Get slugcat icons
             foreach (var item in SlugcatStats.Name.values.entries)
             {
@@ -127,24 +120,19 @@ namespace MapExporter
 
         public static Texture2D GetSpriteFromAtlas(FSprite sprite)
         {
-            // We need to copy the atlas texture because the original isn't readable by GetPixels() and will throw an exception
             var atlasTex = sprite.element.atlas.texture;
-            var atlas = new Texture2D(atlasTex.width, atlasTex.height, (atlasTex as Texture2D).format, atlasTex.mipmapCount, false);
-            Graphics.CopyTexture(atlasTex, atlas);
 
             // Get sprite pos and size
             var pos = sprite.element.uvRect.position * sprite.element.atlas.textureSize; // sprite.element.sourceRect says the sprite is at (0, 0), it is not
-            var size = sprite.element.sourceSize;
+            var size = sprite.element.sourceRect.size;
 
             // Fix size issues
-            if (pos.x + size.x > atlas.width) size = new Vector2(atlas.width - pos.x, size.y);
-            if (pos.y + size.y > atlas.height) size = new Vector2(size.x, atlas.height - pos.y);
-            
-            // Get the pixels and create a texture out of them
-            Plugin.Logger.LogDebug($"{sprite.element.name}: {pos.x}, {pos.y}");
-            var pixels = atlas.GetPixels((int)pos.x, (int)pos.y, (int)size.x, (int)size.y);
+            if (pos.x + size.x > atlasTex.width) size = new Vector2(atlasTex.width - pos.x, size.y);
+            if (pos.y + size.y > atlasTex.height) size = new Vector2(size.x, atlasTex.height - pos.y);
+
+            // Get the texture
             var tex = new Texture2D((int)size.x, (int)size.y);
-            tex.SetPixels(pixels);
+            Graphics.CopyTexture(atlasTex, 0, 0, (int)pos.x, (int)pos.y, (int)size.x, (int)size.y, tex, 0, 0, 0, 0);
             return tex;
         }
 
