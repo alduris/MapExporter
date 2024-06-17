@@ -86,7 +86,9 @@ namespace MapExporter
                         var iconData = new IconSymbol.IconSymbolData {
                             critType = new CreatureTemplate.Type(item, false)
                         };
-                        var sprite = new FSprite(CreatureSymbol.SpriteNameOfCreature(iconData), true);
+                        var spriteName = CreatureSymbol.SpriteNameOfCreature(iconData);
+                        if (spriteName == "Futile_White") continue;
+                        var sprite = new FSprite(spriteName, true);
                         var color = CreatureSymbol.ColorOfCreature(iconData);
                         var tex = SpriteColor(sprite, color);
                         Iconify(tex);
@@ -120,7 +122,15 @@ namespace MapExporter
 
         public static Texture2D GetSpriteFromAtlas(FSprite sprite)
         {
-            var atlasTex = sprite.element.atlas.texture;
+            Texture2D atlasTex = sprite.element.atlas.texture as Texture2D;
+            if (sprite.element.atlas.texture.name == "uiSprites")
+            {
+                // FUCK YOU uiSprites
+                // WHY DON'T YOU LOAD NORMALLY AND INSTEAD RETURN AN IMAGE WITH THE SAME DIMENSIONS BUT FILLED WITH rgba(205, 205, 205, 205)
+                // I COULD FIND LITERALLY NOTHING ONLINE ABOUT THIS BEHAVIOR
+                atlasTex = new Texture2D(1, 1);
+                atlasTex.LoadImage(File.ReadAllBytes(Path.Combine(Data.ModDirectory, "map-assetcopies", "uiSprites.png")));
+            }
 
             // Get sprite pos and size
             var pos = sprite.element.uvRect.position * sprite.element.atlas.textureSize; // sprite.element.sourceRect says the sprite is at (0, 0), it is not
@@ -131,7 +141,7 @@ namespace MapExporter
             if (pos.y + size.y > atlasTex.height) size = new Vector2(size.x, atlasTex.height - pos.y);
 
             // Get the texture
-            var tex = new Texture2D((int)size.x, (int)size.y);
+            var tex = new Texture2D((int)size.x, (int)size.y, atlasTex.format, 1, false);
             Graphics.CopyTexture(atlasTex, 0, 0, (int)pos.x, (int)pos.y, (int)size.x, (int)size.y, tex, 0, 0, 0, 0);
             return tex;
         }
