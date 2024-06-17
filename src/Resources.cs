@@ -123,13 +123,17 @@ namespace MapExporter
         public static Texture2D GetSpriteFromAtlas(FSprite sprite)
         {
             Texture2D atlasTex = sprite.element.atlas.texture as Texture2D;
-            if (sprite.element.atlas.texture.name == "uiSprites")
+            if (sprite.element.atlas.texture.name != "")
             {
-                // FUCK YOU uiSprites
-                // WHY DON'T YOU LOAD NORMALLY AND INSTEAD RETURN AN IMAGE WITH THE SAME DIMENSIONS BUT FILLED WITH rgba(205, 205, 205, 205)
-                // I COULD FIND LITERALLY NOTHING ONLINE ABOUT THIS BEHAVIOR
-                atlasTex = new Texture2D(1, 1);
-                atlasTex.LoadImage(File.ReadAllBytes(Path.Combine(Data.ModDirectory, "map-assetcopies", "uiSprites.png")));
+                var oldRT = RenderTexture.active;
+
+                var rt = new RenderTexture(atlasTex.width, atlasTex.height, 0);
+                Graphics.Blit(atlasTex, rt);
+                RenderTexture.active = rt;
+                atlasTex = new Texture2D(atlasTex.width, atlasTex.height, rt.format == RenderTextureFormat.ARGB32 ? TextureFormat.ARGB32 : TextureFormat.RGBA32, false);
+                atlasTex.ReadPixels(new Rect(0, 0, atlasTex.width, atlasTex.height), 0, 0);
+
+                RenderTexture.active = oldRT;
             }
 
             // Get sprite pos and size
