@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,9 +44,8 @@ namespace MapExporter.Server
             {
                 var req = ctx.Request;
                 var res = ctx.Response;
-                Plugin.Logger.LogDebug(req.Url);
 
-                string responseString = "<HTML><BODY>Hello world!</BODY></HTML>";
+                string responseString = $"<HTML><BODY><P>{Resources.SafePath(req.Url.AbsolutePath)}</P><P>{File.Exists(Resources.SafePath(req.Url.AbsolutePath))}</P></BODY></HTML>";
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
 
                 // Get a response stream and write the response to it.

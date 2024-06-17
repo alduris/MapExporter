@@ -29,6 +29,8 @@ namespace MapExporter.Tabs
             AddItems(
                 button
             );
+
+            // Resources.CopyFrontendFiles();
         }
 
         public override void Update()

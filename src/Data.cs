@@ -10,7 +10,11 @@ namespace MapExporter
     {
         public static int Version { get; private set; } = 0;
 
-        public static string DataDirectory => Path.Combine(Custom.LegacyRootFolderDirectory(), "MapExport");
+        private static string _modDir = null;
+        public static string ModDirectory => _modDir ??= ModManager.ActiveMods.First(x => x.id == Plugin.MOD_ID).path;
+
+        private static string _dataDir = null;
+        public static string DataDirectory => _dataDir ??= Path.Combine(Custom.LegacyRootFolderDirectory(), "MapExport");
         public static string PathOf(string path) => Path.Combine(DataDirectory, path);
 
         public static string RenderDir => PathOf("Input");
