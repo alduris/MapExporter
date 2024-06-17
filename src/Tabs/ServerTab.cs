@@ -30,7 +30,7 @@ namespace MapExporter.Tabs
                 button
             );
 
-            // Resources.CopyFrontendFiles();
+            Resources.CopyFrontendFiles();
         }
 
         public override void Update()

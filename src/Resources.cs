@@ -50,6 +50,8 @@ namespace MapExporter
             foreach (var item in SlugcatStats.Name.values.entries)
             {
                 var scug = new SlugcatStats.Name(item, false);
+                if (SlugcatStats.HiddenOrUnplayableSlugcat(scug) && (!ModManager.MSC || item != MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel.value)) continue;
+
                 if (!File.Exists(SlugcatIconPath(item.ToLower())) || (replaceAll && !IsDefaultSlugcat(scug)))
                 {
                     var sprite = new FSprite("Kill_Slugcat", true);
@@ -125,13 +127,23 @@ namespace MapExporter
 
         public static Texture2D GetSpriteFromAtlas(FSprite sprite)
         {
+            // We need to copy the atlas texture because the original isn't readable by GetPixels() and will throw an exception
             var atlasTex = sprite.element.atlas.texture;
             var atlas = new Texture2D(atlasTex.width, atlasTex.height, (atlasTex as Texture2D).format, atlasTex.mipmapCount, false);
-            Plugin.Logger.LogDebug((atlasTex as Texture2D).format);
             Graphics.CopyTexture(atlasTex, atlas);
-            var rect = sprite.element.sourceRect;
-            var pixels = atlas.GetPixels((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height);
-            var tex = new Texture2D((int)rect.width, (int)rect.height);
+
+            // Get sprite pos and size
+            var pos = sprite.element.uvRect.position * sprite.element.atlas.textureSize; // sprite.element.sourceRect says the sprite is at (0, 0), it is not
+            var size = sprite.element.sourceSize;
+
+            // Fix size issues
+            if (pos.x + size.x > atlas.width) size = new Vector2(atlas.width - pos.x, size.y);
+            if (pos.y + size.y > atlas.height) size = new Vector2(size.x, atlas.height - pos.y);
+            
+            // Get the pixels and create a texture out of them
+            Plugin.Logger.LogDebug($"{sprite.element.name}: {pos.x}, {pos.y}");
+            var pixels = atlas.GetPixels((int)pos.x, (int)pos.y, (int)size.x, (int)size.y);
+            var tex = new Texture2D((int)size.x, (int)size.y);
             tex.SetPixels(pixels);
             return tex;
         }

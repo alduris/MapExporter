@@ -65,6 +65,7 @@ namespace MapExporter.Server
 
         public void Dispose()
         {
+            if (listener == null) return;
             try
             {
                 listener.Stop();

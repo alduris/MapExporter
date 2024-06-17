@@ -397,4 +397,9 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+# Don't keep plugins
 assets/plugins/*.*
+assets/newest/plugins/*.*
+
+# Don't keep creature icons since they get auto-generated
+assets/map-frontend/resources/creatures/*
