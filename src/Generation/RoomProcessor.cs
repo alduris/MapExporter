@@ -25,11 +25,11 @@ namespace MapExporter.Generation
                 }
                 else
                 {
-                    Vector2 blPos = room.cameras[0];
-                    Vector2 trPos = room.cameras[0] + screenSize;
+                    Vector2 blPos = room.devPos + room.cameras[0];
+                    Vector2 trPos = room.devPos + room.cameras[0] + screenSize;
                     for (int j = 1; j < room.cameras.Length; j++)
                     {
-                        var cam = room.cameras[j];
+                        var cam = room.devPos + room.cameras[j];
                         blPos = new Vector2(Mathf.Min(blPos.x, cam.x), Mathf.Min(blPos.y, cam.y));
                         trPos = new Vector2(Mathf.Max(trPos.x, cam.x + screenSize.x), Mathf.Max(trPos.y, cam.y + screenSize.y));
                     }

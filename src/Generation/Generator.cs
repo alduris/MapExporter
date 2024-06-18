@@ -33,7 +33,7 @@ namespace MapExporter.Generation
             regionInfo = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(Path.Combine(inputDir, "metadata.json"))));
             foreach (var room in regionInfo.rooms.Values)
             {
-                room.devPos *= 10; // convert to pixel coordinates
+                room.devPos *= 10; // convert to room pixel coordinates
             }
             skipExistingTiles = false;
 

@@ -1,5 +1,4 @@
 ﻿using RWCustom;
-using Unity.Collections;
 using UnityEngine;
 
 namespace MapExporter.Generation
@@ -9,7 +8,7 @@ namespace MapExporter.Generation
         public static IntVector2 Vec2IntVecFloor(Vector2 v) => new(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
         public static IntVector2 Vec2IntVecCeil(Vector2 v) => new(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
         public static float[] Vec2arr(Vector2 vec) => [vec.x, vec.y];
-        public static float[] Color2Arr(Color vec) => [vec.r, vec.g, vec.b];
+        public static int[] Color2Arr(Color vec) => [(int)(vec.r * 255), (int)(vec.g * 255), (int)(vec.b * 255)];
         public static float[][] Rect2Arr(Rect rect) => [
                 Vec2arr(new Vector2(rect.xMin, rect.yMin)),
                 Vec2arr(new Vector2(rect.xMin, rect.yMax)),

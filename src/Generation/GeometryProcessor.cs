@@ -107,8 +107,8 @@ namespace MapExporter.Generation
                     }
                 }
 
-                Progress = (processed + 0.5f) / regionInfo.rooms.Count;
-                yield return null;
+                // Progress = (processed + 0.5f) / regionInfo.rooms.Count;
+                // yield return null;
 
                 // Optimize the lines (combining)
                 List<LinkedList<Vector2>> optimized = [];

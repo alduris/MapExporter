@@ -183,7 +183,7 @@ namespace MapExporter
         static Color Arr2Color(List<object> arr) => new((float)(double)arr[0], (float)(double)arr[1], (float)(double)arr[2]);
         static IntVector2 Arr2IntVec2(List<object> arr) => new((int)(long)arr[0], (int)(long)arr[1]);
 
-        static int IntVec2Dir(IntVector2 vec) => vec.x != 0 ? (vec.x < 0 ? 0 : 2) : (vec.y < 0 ? 1 : 3);
+        static int IntVec2Dir(IntVector2 vec) => vec.x == 0 && vec.y == 0 ? -1 : (vec.x != 0 ? (vec.x < 0 ? 0 : 2) : (vec.y < 0 ? 1 : 3));
 
         public class RoomEntry : IJsonObject
         {

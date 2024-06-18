@@ -79,7 +79,7 @@ namespace MapExporter.Generation
                         {
                             var cam = room.cameras[camNo];
                             // Determine if the camera can be seen
-                            if (camRect.CheckIntersect(new Rect((room.devPos + cam) * multFac - tileCoords, tileSize)))
+                            if (camRect.CheckIntersect(new Rect((room.devPos + cam) * multFac, tileSize)))
                             {
                                 string fileName = $"{room.roomName}_{camNo}.png";
 
@@ -105,7 +105,7 @@ namespace MapExporter.Generation
 
                                 // Copy pixels
                                 Vector2 copyOffsetVec = (room.devPos + cam) * multFac + Vector2.up * screenSize.y * multFac - tileCoords - Vector2.up * tileSize.y;
-                                copyOffsetVec.x *= -1; // this makes it the flipped version of pasteoffset from the original script, which we need for the copy offset
+                                // copyOffsetVec.x *= -1; // this makes it the flipped version of pasteoffset from the original script, which we need for the copy offset
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
                                 CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0);

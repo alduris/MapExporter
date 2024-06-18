@@ -45,6 +45,7 @@ namespace MapExporter.Server
             var res = ctx.Response;
             try
             {
+                bool print = true;
                 string message = req.RemoteEndPoint + " requested " + req.RawUrl + " - ";
                 if (req.Url.AbsolutePath == "/")
                 {
@@ -62,6 +63,7 @@ namespace MapExporter.Server
                 {
                     res.ContentType = "image/png";
                     message += "tile. (200)";
+                    print = false;
                 }
                 else if (Resources.TryGetActualPath(req.Url.AbsolutePath, out string path))
                 {
@@ -85,9 +87,11 @@ namespace MapExporter.Server
                 Stream output = res.OutputStream;
                 output.Write(buffer, 0, buffer.Length);
                 output.Close(); // You must close the output stream.
+                res.Close();
 
                 // Message
-                Message(message);
+                if (print) // tile requests spam the console, we don't care about that
+                    Message(message);
             }
             catch (Exception ex)
             {
