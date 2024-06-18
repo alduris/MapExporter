@@ -2,16 +2,16 @@
 <html>
 
 <head>
-    <meta charset="ISO-8859-1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Rain World Map</title>
-    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 
-    <meta property="og:image" content="https://rain-world-map.github.io/embed.jpg" />
+    <meta property="og:image" content="https://alduris.github.io/rw-mod-map/embed.jpg" />
     <meta property="og:type" content="object" />
     <meta property="og:title" content="Rain World Map" />
-    <meta property="og:url" content="https://rain-world-map.github.io" />
-    <meta property="og:description"
-        content="An online interactive map that includes every region and every slugcat in Rain World: Downpour. - github.com/rain-world-map" />
+    <meta property="og:url" content="https://alduris.github.io/rw-mod-map/" />
+    <meta property="og:description" content="A custom, online interactive map for regions, vanilla or modded, in Rain World." />
     <link rel="stylesheet" href="./rw.css" />
     <link rel="stylesheet" href="./leaflet/leaflet.css" />
 
@@ -144,28 +144,6 @@
             left: 24px;
         }
 
-        #modded-ckb-group {
-            position: relative;
-            top: 6px;
-            padding-left: 6px;
-            margin-left: auto;
-        }
-
-        #modded-ckb {
-            position: relative;
-            width: 24px;
-            height: 24px;
-        }
-
-        #modded-ckb~label {
-            left: 4px;
-            top: -6px;
-        }
-
-        #modded-ckb::before {
-            font-size: 1rem;
-        }
-
         .region-btn {
             font-size: 0.8rem;
             width: 230px;
@@ -191,6 +169,10 @@
             padding-right: 24px !important;
             margin-right: -16px !important;
         }
+		
+		.hidden {
+			display: none !important;
+		}
 
     </style>
 
@@ -235,56 +217,32 @@
         'use strict';
         // misc iconography but mostly Spawns
 
-        var slugcats = {};
-        var region_order = [];
         var regions = {};
+        var slugcats = [];
 
+        getJsonObject("regions.json", function (json) { regions = json; }, false);
         getJsonObject("slugcats.json", function (json) { slugcats = json; }, false);
 
         var html = "";
         for (const slugcatName in slugcats) {
-            var icon = "72_unknown";
-            if (slugcatName in scug_icons) {
-                icon = scug_icons[slugcatName];
-            } else {
-                console.log("missing icon for " + slugcatName);
-            }
             html += `
-<label class="difficulty-btn">
+<label class="difficulty-btn" id="scug-${slugcatName}">
     <input type="radio" class="rw-ui" name="difficulties" onclick="selectDifficulty('${slugcatName}');" value="${slugcatName}" autocomplete="off">
-    <img src="./resources/icons/${icon}.png">
+    <img src="./resources/slugcats/${slugcatName}.png">
 </label>`;
             document.getElementById('scug-selector').innerHTML = html;
         }
 
-        function updateRegionList(difficulty, modded) {
-            regions = slugcats[difficulty].regions;
-            region_order = [];
-            for (const key in regions) {
-                region_order.push(key);
-            }
-
-            var html = "";
-            for (var r of region_order) {
-                html += `
-<label>
-    <div class="region-btn">
-        <input type="radio" class="rw-ui" name="regions" onclick="selectRegion(this.value);" value="${r}"${r == region ? ' checked="checked"' : ''} autocomplete = "off">
-        <span>${regions[r].toUpperCase()} (${r})</span>
-    </div>
-</label>`
-            }
-            document.getElementById('region-select').innerHTML = html;
-        }
-
         function selectRegion(value) {
-            let newmodded = false; // document.getElementById('modded-ckb').checked; // TODO modded slugcats and regions
             if (region != value) {
                 room = null;
-            }
-            if (region != value || modded != newmodded) {
                 region = value;
-                modded = newmodded;
+                if (regions[region]["slugcats"].indexOf(difficulty) == -1) {
+                    difficulty = regions[region]["slugcats"][0];
+                }
+                for (let i = 0; i < slugcats.length; i++) {
+                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(difficulty) == -1);
+                }
                 pushState();
             }
         }
@@ -297,8 +255,6 @@
             }
             if (difficulty != n) {
                 difficulty = n;
-                region = slugcats[difficulty].startingRegion;
-                room = slugcats[difficulty].startingRoom;
                 pushState();
             }
         }
@@ -376,29 +332,24 @@
         // Params, navigation, state
         var params = new URLSearchParams(document.location.search);
         var region;
-        var modded;
         var difficulty;
         var room;
         function pushState(noNavigation) {
             let changes = false;
-            let modded_param = params.get("modded") == 'on';
             let difficulty_param = params.get("slugcat");
             let region_param = params.get("region");
             let room_param = params.get("room");
 
-            params.delete("modded");
             params.delete("slugcat");
             params.delete("region");
             params.delete("room");
 
-            if (modded)
-                params.set("modded", "on");
             params.set("slugcat", difficulty);
             params.set("region", region);
             if (room)
                 params.set("room", room);
 
-            if (modded != modded_param || difficulty != difficulty_param || region != region_param || room != room_param) {
+            if (difficulty != difficulty_param || region != region_param || room != room_param) {
                 // actually changed anything
                 let newstr = params.toString();
                 if (dynamicNavigation) {
@@ -411,15 +362,13 @@
             //console.log("newState");
             params = new URLSearchParams(document.location.search);
             region = params.get("region");
-            difficulty = params.get("slugcat");
-            if (region == null || difficulty == null) {
+            difficulty = params.get("slugcat") ?? "white";
+            if (region == null) {
                 window.location.href = "index.html";
                 return;
             }
-            modded = params.get("modded") == 'on';
             room = params.get("room");
-            updateRegionList(difficulty, modded);
-            loadRegion(difficulty, region, modded);
+            loadRegion(difficulty, region);
             selectDifficulty(difficulty);
         }
 
@@ -548,9 +497,8 @@
         var densLayer;
         var loadedDifficulty = null;
         var loadedRegion = null;
-        var loadedModded = {};
-        function loadRegion(pdifficulty, pregion, pmodded) {
-            if (loadedDifficulty == pdifficulty && loadedRegion == pregion && loadedModded == pmodded) {
+        function loadRegion(pdifficulty, pregion) {
+            if (loadedDifficulty == pdifficulty && loadedRegion == pregion) {
                 // Region isn't changing, double-check focused room
                 let foundRoom = false;
                 if (room != null && roomsLayer != null) {
@@ -571,8 +519,7 @@
                 return;
             }
             region = pregion; // chaos
-            modded = pmodded;
-            console.log("Loading: region {" + region + "} on slugcat {" + pdifficulty + "}, modded {" + modded + "}");
+            console.log("Loading: region {" + region + "} on slugcat {" + pdifficulty + "}");
             var slugcat_url = {
                 "artificer": "./slugcats/artificer",
                 "gourmand": "./slugcats/gourmand",
@@ -772,7 +719,6 @@
 
                 loadedDifficulty = pdifficulty;
                 loadedRegion = pregion;
-                loadedModded = pmodded;
             }, true);
         }
 

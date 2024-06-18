@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.Security.Cryptography;
 using MapExporter.Server;
 using MapExporter.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
-using Menu.Remix.MixedUI.ValueTypes;
 using UnityEngine;
 
 namespace MapExporter.Tabs
@@ -46,6 +44,11 @@ namespace MapExporter.Tabs
                     server = null;
                     serverButton.text = "RUN";
                 }
+                else if (Data.FinishedRegions.Count == 0)
+                {
+                    serverButton.PlaySound(SoundID.MENU_Error_Ping);
+                    undisplayedMessages.Enqueue("No regions ready yet!");
+                }
                 else
                 {
                     server = new LocalServer();
@@ -84,7 +87,7 @@ namespace MapExporter.Tabs
 
             dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIVIDER - 2 * PADDING - MARGIN - BIG_LINE_HEIGHT - 24f));
             AddItems(
-                new OpLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "TEST", true),
+                new OpLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "TEST SERVER", true),
                 new OpLabel(PADDING, serverButton.pos.y + 2f, serverText, false),
                 serverButton,
                 new OpLabel(openButton.pos.x - MARGIN - openTextWidth, openButton.pos.y + 2f, openText, false),
@@ -113,7 +116,7 @@ namespace MapExporter.Tabs
                     new OpLabelLong(new Vector2(PADDING, messageBox.size.y - messageBoxTotalHeight), new Vector2(width, height), text, false, FLabelAlignment.Left)
                     );
                 messageBoxTotalHeight += MB_VERT_PAD;
-                messageBox.SetContentSize(messageBoxTotalHeight, false);
+                messageBox.SetContentSize(messageBoxTotalHeight, true);
             }
         }
 

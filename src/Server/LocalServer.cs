@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,12 +25,13 @@ namespace MapExporter.Server
         {
             try
             {
-                while (listener.IsListening)
+                while (listener != null && listener.IsListening)
                 {
                     var ctx = await listener.GetContextAsync();
                     HandleRequest(ctx);
                 }
             }
+            catch (ObjectDisposedException) { }
             catch (Exception ex)
             {
                 Plugin.Logger.LogError(ex);
@@ -46,17 +45,49 @@ namespace MapExporter.Server
             var res = ctx.Response;
             try
             {
-                Message(req.RemoteEndPoint + " requested " + req.RawUrl);
-                string responseString = $"<HTML><BODY><P>{Resources.SafePath(req.Url.AbsolutePath)}</P><P>{File.Exists(Resources.SafePath(req.Url.AbsolutePath))}</P></BODY></HTML>";
-                byte[] buffer = Encoding.UTF8.GetBytes(responseString);
+                string message = req.RemoteEndPoint + " requested " + req.RawUrl + " - ";
+                if (req.Url.AbsolutePath == "/")
+                {
+                    message += "route to index.html - ";
+                }
+
+                byte[] buffer = [];
+
+                if (Resources.TryGetJsonResource(req.Url.AbsolutePath, out buffer))
+                {
+                    res.ContentType = "application/json";
+                    message += "json resource. (200)";
+                }
+                else if (Resources.TryGetTile(req.Url.AbsolutePath, out buffer))
+                {
+                    res.ContentType = "image/png";
+                    message += "tile. (200)";
+                }
+                else if (Resources.TryGetActualPath(req.Url.AbsolutePath, out string path))
+                {
+                    // Get file contents
+                    buffer = File.ReadAllBytes(path);
+                    res.ContentType = GetMimeType(req.Url.AbsolutePath);
+
+                    message += "found. (200)";
+                }
+                else
+                {
+                    // Not found
+                    buffer = Encoding.UTF8.GetBytes("404 Not Found!");
+                    res.ContentType = "text/plain";
+                    res.StatusCode = 404;
+                    message += "not found! (404)";
+                }
 
                 // Get a response stream and write the response to it.
-                res.ContentType = "text/html";
                 res.ContentLength64 = buffer.Length;
                 Stream output = res.OutputStream;
                 output.Write(buffer, 0, buffer.Length);
-            
                 output.Close(); // You must close the output stream.
+
+                // Message
+                Message(message);
             }
             catch (Exception ex)
             {
@@ -64,6 +95,33 @@ namespace MapExporter.Server
                 Plugin.Logger.LogError(ex);
                 Dispose();
             }
+        }
+
+        private string GetMimeType(string file)
+        {
+            string type = null;
+            if (file == "/")
+            {
+                return "text/html";
+            }
+            else if (file.Substring(file.LastIndexOf('/')).LastIndexOf('.') > -1)
+            {
+                type = file.Substring(file.LastIndexOf('.'));
+            }
+            return type switch
+            {
+                ".html" or ".htm" => "text/html",
+                ".css" => "text/css",
+                ".js" => "text/javascript",
+                ".json" => "application/json",
+                ".txt" => "text/plain",
+                ".jpeg" or ".jpg" => "image/jpeg",
+                ".png" => "image/png",
+                ".ico" => "image/vnd.microsoft.icon",
+                ".otf" => "font/otf",
+                ".ttf" => "font/ttf",
+                _ => "text/plain"
+            };
         }
 
         public void Dispose()

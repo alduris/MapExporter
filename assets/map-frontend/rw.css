@@ -5,20 +5,20 @@
 }
 
 .rw-title {
-    font-family: "Rodondo";
+    font-family: "Rodondo", sans-serif;
     font-size: 6rem;
     text-align: center;
     line-height: 75%;
 }
 
 .rw-bigtext {
-    font-family: 'Segoe UI';
+    font-family: 'Segoe UI', sans-serif;
     font-size: 1.3125rem;
     font-weight: 600;
 }
 
 .rw-text {
-    font-family: 'Segoe UI';
+    font-family: 'Segoe UI', sans-serif;
     font-size: 1rem;
     font-weight: 600;
 }

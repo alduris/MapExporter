@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using MoreSlugcats;
 using UnityEngine;
 
@@ -12,13 +14,73 @@ namespace MapExporter
         /// Gets the front-end location path thingy of something
         /// </summary>
         public static string FEPathTo(params string[] path) => path.Aggregate(Path.Combine(Data.ModDirectory, "map-frontend"), Path.Combine);
+        public static string TilePathTo(params string[] path) => path.Aggregate(Data.FinalDir, Path.Combine);
         private static string CreatureIconPath(string item) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
         private static string SlugcatIconPath(string scug) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
 
-        public static string SafePath(string path)
+        public static bool TryGetActualPath(string req, out string path)
         {
-            path = path.Replace("/..", "").Substring(1);
-            return FEPathTo(path.Split('/'));
+            if (req.Length > 0)
+                req = req.Substring(1);
+
+            if (req.Length == 0) req = "index.html";
+
+            path = FEPathTo(req.Split('/'));
+            if (!File.Exists(path))
+            {
+                path = null;
+                return false;
+            }
+            return true;
+        }
+
+        public static bool TryGetTile(string req, out byte[] bytes)
+        {
+            bytes = null;
+            if (!req.StartsWith("/slugcats/")) return false;
+
+            string path = TilePathTo(req.Substring(10).Split('/')); // 10 = len("/slugcats/")
+            if (!File.Exists(path)) return false;
+
+            bytes = File.ReadAllBytes(path);
+            return true;
+        }
+
+        public static bool TryGetJsonResource(string req, out byte[] res)
+        {
+            res = null;
+
+            if (req == "/regions.json")
+            {
+                Dictionary<string, Dictionary<string, object>> finished = [];
+                foreach (var kv in Data.FinishedRegions)
+                {
+                    finished.Add(kv.Key, new() {
+                        {"slugcats", kv.Value.Select(x => x.value.ToLowerInvariant()).ToArray()},
+                        {"name", Region.GetRegionFullName(kv.Key, null)},
+                        {"specificNames", kv.Value.Select(x => Region.GetRegionFullName(kv.Key, x)).ToArray()}
+                    });
+                }
+                res = Encoding.UTF8.GetBytes(Json.Serialize(finished));
+                return true;
+            }
+            else if (req == "/slugcats.json")
+            {
+                HashSet<string> scugs = [];
+
+                foreach (var list in Data.FinishedRegions.Values)
+                {
+                    foreach (var scug in list)
+                    {
+                        scugs.Add(scug.value.ToLowerInvariant());
+                    }
+                }
+
+                res = Encoding.UTF8.GetBytes(Json.Serialize(scugs.ToList()));
+                return true;
+            }
+
+            return false;
         }
 
         private static bool IsDefaultSlugcat(SlugcatStats.Name scug) =>
