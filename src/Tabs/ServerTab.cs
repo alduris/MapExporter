@@ -12,10 +12,11 @@ namespace MapExporter.Tabs
 {
     internal class ServerTab(OptionInterface owner) : BaseTab(owner, "Test/Export")
     {
+        private const float MB_VERT_PAD = 8f;
         private static LocalServer server;
         private Queue<string> undisplayedMessages = [];
         private OpScrollBox messageBox;
-        private float messageBoxTotalHeight = 6f;
+        private float messageBoxTotalHeight = MB_VERT_PAD;
 
         private OpDirPicker dirPicker;
 
@@ -58,7 +59,7 @@ namespace MapExporter.Tabs
                     }
                     messageBox.items.Clear();
                     messageBox.SetContentSize(0f);
-                    messageBoxTotalHeight = 6f;
+                    messageBoxTotalHeight = MB_VERT_PAD;
                 }
             };
             openButton.OnClick += (self) =>
@@ -83,7 +84,7 @@ namespace MapExporter.Tabs
 
             dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIVIDER - 2 * PADDING - MARGIN - BIG_LINE_HEIGHT - 24f));
             AddItems(
-                new OpLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "SERVER", true),
+                new OpLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "TEST", true),
                 new OpLabel(PADDING, serverButton.pos.y + 2f, serverText, false),
                 serverButton,
                 new OpLabel(openButton.pos.x - MARGIN - openTextWidth, openButton.pos.y + 2f, openText, false),
@@ -99,19 +100,20 @@ namespace MapExporter.Tabs
 
         public override void Update()
         {
-            const float PADDING = 4f;
+            const float PADDING = 6f;
             while (undisplayedMessages.Count > 0) {
                 float width = messageBox.size.x - 2 * PADDING - SCROLLBAR_WIDTH;
                 string text = undisplayedMessages.Dequeue();
                 text = LabelTest.WrapText(text, false, width, true);
                 int lines = text.Split('\n').Length;
                 float height = LabelTest._lineHeight * lines;
-                messageBoxTotalHeight -= height;
+                messageBoxTotalHeight += height;
 
                 messageBox.AddItems(
                     new OpLabelLong(new Vector2(PADDING, messageBox.size.y - messageBoxTotalHeight), new Vector2(width, height), text, false, FLabelAlignment.Left)
                     );
-                messageBox.SetContentSize(messageBoxTotalHeight + PADDING);
+                messageBoxTotalHeight += MB_VERT_PAD;
+                messageBox.SetContentSize(messageBoxTotalHeight, false);
             }
         }
 

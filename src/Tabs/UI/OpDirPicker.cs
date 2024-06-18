@@ -54,7 +54,7 @@ namespace MapExporter.Tabs.UI
                 var refreshButton = new OpSimpleImageButton(new Vector2(GAP * 2 + 24f, y), new Vector2(24f, 24f), "Menu_Symbol_Repeats");
                 var doneButton = new OpSimpleImageButton(new Vector2(size.x - GAP - 25f - BaseTab.SCROLLBAR_WIDTH, y), new Vector2(24f, 24f), "Menu_Symbol_CheckBox");
                 var pathInput = new OpTextBox(
-                    OIUtil.CosmeticBind<string>(CurrentDir?.FullName ?? "/"),
+                    OIUtil.CosmeticBind<string>(CurrentDir?.FullName ?? "\\"),
                     new Vector2(GAP * 3 + 24f * 2, y),
                     size.x - GAP * 5 - 24f * 3 - BaseTab.SCROLLBAR_WIDTH)
                     { maxLength = 65535 };

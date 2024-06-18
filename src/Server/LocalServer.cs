@@ -46,7 +46,7 @@ namespace MapExporter.Server
             var res = ctx.Response;
             try
             {
-                Message(req);
+                Message(req.RemoteEndPoint + " requested " + req.RawUrl);
                 string responseString = $"<HTML><BODY><P>{Resources.SafePath(req.Url.AbsolutePath)}</P><P>{File.Exists(Resources.SafePath(req.Url.AbsolutePath))}</P></BODY></HTML>";
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
 
