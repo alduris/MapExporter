@@ -1,10 +1,10 @@
 ﻿using System.IO;
+using Unity.Collections;
 using RWCustom;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
 using Object = UnityEngine.Object;
 using IEnumerator = System.Collections.IEnumerator;
-using Unity.Collections;
 
 namespace MapExporter.Generation
 {
@@ -66,9 +66,8 @@ namespace MapExporter.Generation
                     }
 
                     // Build tile
-                    var camPoint = new Vector2(tileX, tileY) * multFac;
-                    var camRect = new Rect(camPoint, tileSize);
                     var tileCoords = new Vector2(tileX, tileY) * tileSize;
+                    var tileRect = new Rect(tileCoords, tileSize);
 
                     foreach (var room in regionInfo.rooms.Values)
                     {
@@ -79,7 +78,7 @@ namespace MapExporter.Generation
                         {
                             var cam = room.cameras[camNo];
                             // Determine if the camera can be seen
-                            if (camRect.CheckIntersect(new Rect((room.devPos + cam) * multFac, tileSize)))
+                            if (tileRect.CheckIntersect(new Rect((room.devPos + cam) * multFac, screenSize * multFac)))
                             {
                                 string fileName = $"{room.roomName}_{camNo}.png";
 
@@ -101,11 +100,10 @@ namespace MapExporter.Generation
                                 camTexture.LoadImage(File.ReadAllBytes(Path.Combine(owner.inputDir, fileName)), false);
 
                                 if (zoom != 0) // No need to scale to the same resolution
-                                    ScaleTexture(camTexture, (int)(screenSizeInt.x * multFac), (int)(screenSizeInt.y * multFac));
+                                    ScaleTexture(camTexture, screenSizeInt.x >> (-zoom), screenSizeInt.y >> (-zoom));
 
                                 // Copy pixels
-                                Vector2 copyOffsetVec = (room.devPos + cam) * multFac + Vector2.up * screenSize.y * multFac - tileCoords - Vector2.up * tileSize.y;
-                                // copyOffsetVec.x *= -1; // this makes it the flipped version of pasteoffset from the original script, which we need for the copy offset
+                                Vector2 copyOffsetVec = ((room.devPos + cam) * multFac - tileCoords) * -1;
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
                                 CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0);
@@ -141,25 +139,37 @@ namespace MapExporter.Generation
             texture.Resize(width, height);
             var pixels = new NativeArray<Color32>(width * height, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-            // Use bilinear filtering
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    float u = Custom.LerpMap(x, 0, width - 1, 0, oldW - 1);
-                    float v = Custom.LerpMap(y, 0, height - 1, 0, oldH - 1);
-
-                    Color tl = oldPixels[Mathf.FloorToInt(u) + Mathf.FloorToInt(v) * oldW];
-                    Color tr = oldPixels[Mathf.CeilToInt(u) + Mathf.FloorToInt(v) * oldW];
-                    Color bl = oldPixels[Mathf.FloorToInt(u) + Mathf.CeilToInt(v) * oldW];
-                    Color br = oldPixels[Mathf.CeilToInt(u) + Mathf.CeilToInt(v) * oldW];
-                    pixels[x + y * width] = Color32.LerpUnclamped(Color32.LerpUnclamped(tl, tr, u % 1f), Color32.LerpUnclamped(bl, br, u % 1f), v % 1f);
-                }
-            }
-
             // Set the new texture's content
-            texture.SetPixelData(pixels, 0);
-            pixels.Dispose();
+            try
+            {
+                // Use bilinear filtering because it's quick n' easy (probably could do better with something like bicubic or even Lanczos)
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        float u = Custom.LerpMap(x, 0, width - 1, 0, oldW - 1);
+                        float v = Custom.LerpMap(y, 0, height - 1, 0, oldH - 1);
+
+                        Color tl = oldPixels[Mathf.FloorToInt(u) + Mathf.FloorToInt(v) * oldW];
+                        Color tr = oldPixels[Mathf.CeilToInt(u) + Mathf.FloorToInt(v) * oldW];
+                        Color bl = oldPixels[Mathf.FloorToInt(u) + Mathf.CeilToInt(v) * oldW];
+                        Color br = oldPixels[Mathf.CeilToInt(u) + Mathf.CeilToInt(v) * oldW];
+                        pixels[x + y * width] = Color32.LerpUnclamped(Color32.LerpUnclamped(tl, tr, u % 1f), Color32.LerpUnclamped(bl, br, u % 1f), v % 1f);
+                    }
+                }
+
+                texture.SetPixelData(pixels, 0);
+            }
+            catch
+            {
+                throw; // rethrow error so we know something went wrong
+            }
+            finally
+            {
+                // No memory leaks today!
+                oldPixels.Dispose();
+                pixels.Dispose();
+            }
         }
 
         public static void CopyTextureSegment(Texture2D source, Texture2D destination, int sx, int sy, int sw, int sh, int dx, int dy)
@@ -167,19 +177,30 @@ namespace MapExporter.Generation
             var sp = source.GetRawTextureData<Color32>();
             var dp = destination.GetRawTextureData<Color32>();
 
-            for (int i = 0; i < sw; i++)
+            try
             {
-                if (sx + i < 0 || sx + i >= source.width || dx + i < 0 || dx + i >= destination.width) continue;
-                for (int j = 0; j < sh; j++)
+                for (int i = 0; i < sw; i++)
                 {
-                    if (sy + j < 0 || sy + j >= source.height || dy + j < 0 || dy + j >= destination.height) continue;
-                    dp[(i + dx) + (j + dy) * destination.width] = sp[(i + sx) + (j + sy) * source.width];
+                    if (sx + i < 0 || sx + i >= source.width || dx + i < 0 || dx + i >= destination.width) continue;
+                    for (int j = 0; j < sh; j++)
+                    {
+                        if (sy + j < 0 || sy + j >= source.height || dy + j < 0 || dy + j >= destination.height) continue;
+                        dp[(i + dx) + (j + dy) * destination.width] = sp[(i + sx) + (j + sy) * source.width];
+                    }
                 }
-            }
 
-            destination.SetPixelData(dp, 0);
-            sp.Dispose();
-            dp.Dispose();
+                destination.SetPixelData(dp, 0);
+            }
+            catch
+            {
+                throw; // rethrow error so we know something went wrong
+            }
+            finally
+            {
+                // No leaking memory for you! :3
+                sp.Dispose();
+                dp.Dispose();
+            }
         }
     }
 }
