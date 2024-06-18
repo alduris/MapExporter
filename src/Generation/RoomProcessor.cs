@@ -1,19 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using RWCustom;
 using UnityEngine;
-using static MapExporter.Generation.GenStructures;
+using static MapExporter.Generation.GenUtil;
 
 namespace MapExporter.Generation
 {
     internal class RoomProcessor(Generator owner) : Processor(owner)
     {
         public override string ProcessName => "Room outlines";
-
-        private static readonly IntVector2 offscreenSizeInt = new(1200, 400);
-        private static readonly Vector2 offscreenSize = offscreenSizeInt.ToVector2();
-        private static readonly IntVector2 screenSizeInt = new(1400, 800);
-        private static readonly Vector2 screenSize = screenSizeInt.ToVector2();
 
         protected override IEnumerator Process()
         {
@@ -57,6 +51,37 @@ namespace MapExporter.Generation
             Progress = 1f;
             yield return null;
             Done = true;
+        }
+
+        private struct RoomBoxInfo : IJsonObject
+        {
+            public string name;
+            public Rect box;
+            public Vector2 namePos;
+
+            public readonly Dictionary<string, object> ToJson()
+            {
+                return new Dictionary<string, object>()
+                {
+                    { "type", "Feature" },
+                    {
+                        "geometry",
+                        new Dictionary<string, object>
+                        {
+                            { "type", "Polygon" },
+                            { "coordinates", new float[][][] { Rect2Arr(box) } }
+                        }
+                    },
+                    {
+                        "properties",
+                        new Dictionary<string, object>
+                        {
+                            { "name", name },
+                            { "popupcoords", Vec2arr(namePos) },
+                        }
+                    }
+                };
+            }
         }
     }
 }

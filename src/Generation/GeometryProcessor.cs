@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static MapExporter.Generation.GenStructures;
 using static MapExporter.Generation.GenUtil;
 
 namespace MapExporter.Generation
@@ -183,6 +182,29 @@ namespace MapExporter.Generation
             Progress = 1f;
             yield return null;
             Done = true;
+        }
+
+        private struct GeometryInfo : IJsonObject
+        {
+            public string room;
+            public float[][][] lines;
+
+            public readonly Dictionary<string, object> ToJson()
+            {
+                return new Dictionary<string, object>()
+                {
+                    { "type", "Feature" },
+                    {
+                        "geometry",
+                        new Dictionary<string, object>
+                        {
+                            { "type", "MultiLineString" },
+                            { "coordinates", lines }
+                        }
+                    },
+                    { "properties", new Dictionary<string, object> { { "room", room } } }
+                };
+            }
         }
     }
 }
