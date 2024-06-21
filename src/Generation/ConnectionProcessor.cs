@@ -43,8 +43,9 @@ namespace MapExporter.Generation
             public readonly Dictionary<string, object> ToJson()
             {
                 float dist = (pointB - pointA).magnitude;
-                Vector2 handleA = pointA + fourDirections[dirA] * dist;
-                Vector2 handleB = pointB + fourDirections[dirB] * dist;
+                Vector2 basicDir = (pointB - pointA).normalized;
+                Vector2 handleA = pointA + (dirA == -1 ? basicDir : fourDirections[dirA]) * dist;
+                Vector2 handleB = pointB + (dirB == -1 ? -basicDir : fourDirections[dirB]) * dist;
                 return new Dictionary<string, object>()
                 {
                     { "type", "Feature" },

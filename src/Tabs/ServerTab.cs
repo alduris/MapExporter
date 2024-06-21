@@ -106,7 +106,7 @@ namespace MapExporter.Tabs
             const float PADDING = 6f;
             while (undisplayedMessages.Count > 0) {
                 float width = messageBox.size.x - 2 * PADDING - SCROLLBAR_WIDTH;
-                string text = undisplayedMessages.Dequeue();
+                string text = undisplayedMessages.Dequeue().Trim();
                 text = LabelTest.WrapText(text, false, width, true);
                 int lines = text.Split('\n').Length;
                 float height = LabelTest._lineHeight * lines;

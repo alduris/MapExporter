@@ -80,6 +80,7 @@ namespace MapExporter
                 var json = (Dictionary<string, object>)Json.Deserialize(File.ReadAllText(DataFileDir));
 
                 // Queue data
+                QueuedRegions.Clear();
                 if (json.ContainsKey("queue"))
                 {
                     var regions = ((List<object>)json["queue"]).Cast<Dictionary<string, object>>();
@@ -96,6 +97,7 @@ namespace MapExporter
                 }
 
                 // Saved progress
+                RenderedRegions.Clear();
                 if (json.ContainsKey("rendered"))
                 {
                     var regions = (Dictionary<string, object>)json["rendered"];
@@ -122,19 +124,20 @@ namespace MapExporter
                     }
                 }
 
+                FinishedRegions.Clear();
                 if (json.ContainsKey("finished"))
                 {
                     var regions = (Dictionary<string, object>)json["finished"];
-                    foreach (var finishedRegions in regions)
+                    foreach (var finishedRegion in regions)
                     {
-                        var region = finishedRegions.Key;
-                        var savedList = ((List<object>)finishedRegions.Value).Select(x => new SlugcatStats.Name((string)x)).ToList();
+                        var region = finishedRegion.Key;
+                        var savedList = ((List<object>)finishedRegion.Value).Select(x => new SlugcatStats.Name((string)x)).ToList();
 
                         // Make sure the regions still exist in our file system
                         var scugList = new List<SlugcatStats.Name>();
                         foreach (var scug in savedList)
                         {
-                            if (Directory.Exists(FinalOutputDir(finishedRegions.Key, region)))
+                            if (Directory.Exists(FinalOutputDir(scug.value, region)))
                             {
                                 scugList.Add(scug);
                             }
@@ -147,12 +150,6 @@ namespace MapExporter
                         }
                     }
                 }
-            }
-
-            // Regions
-            foreach (var scug in Directory.EnumerateDirectories(RenderDir))
-            {
-                List<string> regions = [];
             }
 
             Version++;

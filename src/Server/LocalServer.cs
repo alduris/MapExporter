@@ -43,6 +43,7 @@ namespace MapExporter.Server
         {
             var req = ctx.Request;
             var res = ctx.Response;
+            Stream output = null;
             try
             {
                 bool print = !(req.Url.AbsolutePath.StartsWith("/slugcats/") && req.Url.AbsolutePath.EndsWith(".png")); // don't spam the print thingy with tile requests
@@ -83,20 +84,30 @@ namespace MapExporter.Server
 
                 // Get a response stream and write the response to it.
                 res.ContentLength64 = buffer.Length;
-                Stream output = res.OutputStream;
+                output = res.OutputStream;
                 output.Write(buffer, 0, buffer.Length);
                 output.Close(); // You must close the output stream.
-                res.Close();
+                output = null;
 
                 // Message
                 if (print) // tile requests spam the console, we don't care about that
                     Message(message);
             }
+            catch (IOException ex)
+            {
+                Message("IO error while handling request " + req.RawUrl + " (requested by " + req.RemoteEndPoint + "); likely connection interrupted. Ignored.");
+                Plugin.Logger.LogError(ex);
+            }
             catch (Exception ex)
             {
-                Message("Errored while handling request " + req?.ToString() + "");
+                Message("Fatal error while handling request " + req?.ToString() + "");
                 Plugin.Logger.LogError(ex);
                 Dispose();
+            }
+            finally
+            {
+                res.Close();
+                output?.Close();
             }
         }
 

@@ -19,6 +19,7 @@ namespace MapExporter.Generation
 
         protected override IEnumerator Process()
         {
+            Directory.Delete(OutputPathForStep(zoom), true);
             string outputPath = Directory.CreateDirectory(OutputPathForStep(zoom)).FullName;
             float multFac = Mathf.Pow(2, zoom);
             var regionInfo = owner.regionInfo;
