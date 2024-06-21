@@ -303,15 +303,15 @@ namespace MapExporter
                         {
                             roomA = aRoom.name,
                             roomB = other.name,
-                            posA = nodes[aRoom.ExitIndex(other.index)],
+                            posA = room.ShortcutLeadingToNode(other.index).startCoord.Tile,
                         };
                         conn.dirA = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posA));
                         regionInfo.connections.Add(conn);
-                        // posB side of things will be initialized later when we load the room
+                        // posB side of things will be initialized later when we load the other room
                     }
                     else
                     {
-                        conn.posB = nodes[aRoom.ExitIndex(other.index)];
+                        conn.posB = room.ShortcutLeadingToNode(other.index).startCoord.Tile;
                         conn.dirB = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posB));
                     }
                 }

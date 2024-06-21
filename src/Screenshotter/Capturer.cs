@@ -153,6 +153,7 @@ namespace MapExporter.Screenshotter
             game.overWorld.activeWorld.loadingRooms.Clear();
             Random.InitState(0);
             game.overWorld.activeWorld.ActivateRoom(room);
+
             // load room until it is loaded
             if (game.overWorld.activeWorld.loadingRooms.Count > 0 && game.overWorld.activeWorld.loadingRooms[0].room == room.realizedRoom)
             {
@@ -162,11 +163,12 @@ namespace MapExporter.Screenshotter
                     loading.Update();
                 }
             }
-            while (!(room.realizedRoom.loadingProgress >= 3 && room.realizedRoom.waitToEnterAfterFullyLoaded < 1))
+            while (room.realizedRoom.loadingProgress < 3 || room.realizedRoom.waitToEnterAfterFullyLoaded >= 1)
             {
                 room.realizedRoom.Update();
             }
 
+            // Die, evil cameras!
             if (blacklistedCams.TryGetValue(room.name, out int[] cams))
             {
                 var newpos = room.realizedRoom.cameraPositions.ToList();
