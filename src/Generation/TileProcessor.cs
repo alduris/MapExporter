@@ -1,10 +1,10 @@
 ﻿using System.IO;
-using Unity.Collections;
 using RWCustom;
+using Unity.Collections;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
-using Object = UnityEngine.Object;
 using IEnumerator = System.Collections.IEnumerator;
+using Object = UnityEngine.Object;
 
 namespace MapExporter.Generation
 {
@@ -106,7 +106,7 @@ namespace MapExporter.Generation
                                 Vector2 copyOffsetVec = ((room.devPos + cam) * multFac - tileCoords) * -1;
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
-                                CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, copyOffset.x < 0 ? -copyOffset.x : 0, copyOffset.y < 0 ? -copyOffset.y : 0);
+                                CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, 0, 0);
                                 yield return null;
                             }
                         }

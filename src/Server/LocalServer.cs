@@ -45,7 +45,7 @@ namespace MapExporter.Server
             var res = ctx.Response;
             try
             {
-                bool print = true;
+                bool print = !(req.Url.AbsolutePath.StartsWith("/slugcats/") && req.Url.AbsolutePath.EndsWith(".png")); // don't spam the print thingy with tile requests
                 string message = req.RemoteEndPoint + " requested " + req.RawUrl + " - ";
                 if (req.Url.AbsolutePath == "/")
                 {
@@ -63,7 +63,6 @@ namespace MapExporter.Server
                 {
                     res.ContentType = "image/png";
                     message += "tile. (200)";
-                    print = false;
                 }
                 else if (Resources.TryGetActualPath(req.Url.AbsolutePath, out string path))
                 {
