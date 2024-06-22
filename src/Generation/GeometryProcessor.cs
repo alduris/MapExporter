@@ -177,7 +177,7 @@ namespace MapExporter.Generation
                 yield return null;
             }
 
-            owner.metadata["geometry_features"] = geo;
+            owner.metadata["geo_features"] = geo;
             
             Progress = 1f;
             yield return null;

@@ -103,7 +103,7 @@
                 regions = json;
                 var html = "";
                 for(const r in regions) {
-                    html += '<button class="region-button rw-ui rw-text" name="region" value="' + r + '">' + regions[r]["name"].toUpperCase() + '</button><br/>';
+                    html += '<button class="region-button rw-ui rw-text" name="region" value="' + r + '">' + regions[r]["name"].toUpperCase() + '</button>';
                 }
                 document.getElementById('regionlist').innerHTML = html;
             }, true);
