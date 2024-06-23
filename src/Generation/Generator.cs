@@ -9,7 +9,8 @@ namespace MapExporter.Generation
         internal readonly string inputDir;
         internal readonly string outputDir;
         internal readonly RegionInfo regionInfo;
-        internal readonly bool skipExistingTiles;
+        public readonly bool skipExistingTiles = false;
+        public readonly bool lessResourceIntensive = false;
 
         public bool Done { get; private set; } = false;
         public bool Failed { get; private set; } = false;
@@ -35,14 +36,13 @@ namespace MapExporter.Generation
             {
                 room.devPos *= 20; // convert to room pixel coordinates
             }
-            skipExistingTiles = false;
 
             // Enqueue processes
-#warning NEED TO UNCOMMENT THIS
-            /*for (int i = 0; i < 8; i++)
+            processes.Enqueue(new Cleaner(this));
+            for (int i = 0; i < 8; i++)
             {
                 processes.Enqueue(new TileProcessor(this, -i));
-            }*/
+            }
             processes.Enqueue(new RoomProcessor(this));
             processes.Enqueue(new ConnectionProcessor(this));
             processes.Enqueue(new GeometryProcessor(this));

@@ -26,13 +26,13 @@ namespace MapExporter.Generation
                 // Create the lines
                 for (int j = 0; j < room.size.y; j++)
                 {
-                    float y = room.devPos.y + j * 20f;
+                    float y = room.devPos.y + j * 20f - 10f;
                     for (int i = 0; i < room.size.x; i++)
                     {
-                        float x = room.devPos.x + i * 20f;
+                        float x = room.devPos.x + i * 20f - 10f;
                         int[] tile = room.tiles[i, j];
                         int type = tile[0];
-                        bool hpole = ((tile[1] & 1) == 1), vpole = ((tile[1] & 2) == 1);
+                        bool hpole = ((tile[1] & 1) != 0), vpole = ((tile[1] & 2) != 0);
 
                         // Tile type
                         switch (type)
@@ -69,7 +69,7 @@ namespace MapExporter.Generation
                                 }
                                 else if (up == right && down == left)
                                 {
-                                    lines.AddLast((new(x, y + 20f), new(x, y + 20f)));
+                                    lines.AddLast((new(x, y + 20f), new(x + 20f, y)));
                                 }
                                 break;
                             case 3: // half floors

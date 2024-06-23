@@ -21,8 +21,7 @@ namespace MapExporter.Generation
         public static readonly Vector2 tileSize = tileSizeInt.ToVector2();
         public static readonly IntVector2 offscreenSizeInt = new(1200, 400);
         public static readonly Vector2 offscreenSize = offscreenSizeInt.ToVector2();
-        public static readonly IntVector2 screenSizeInt = new(1400, 800);
+        public static readonly IntVector2 screenSizeInt = new(1366, 768);
         public static readonly Vector2 screenSize = screenSizeInt.ToVector2();
-
     }
 }

@@ -19,7 +19,6 @@ namespace MapExporter.Generation
 
         protected override IEnumerator Process()
         {
-            Directory.Delete(OutputPathForStep(zoom), true);
             string outputPath = Directory.CreateDirectory(OutputPathForStep(zoom)).FullName;
             float multFac = Mathf.Pow(2, zoom);
             var regionInfo = owner.regionInfo;
@@ -101,14 +100,17 @@ namespace MapExporter.Generation
                                 camTexture.LoadImage(File.ReadAllBytes(Path.Combine(owner.inputDir, fileName)), false);
 
                                 if (zoom != 0) // No need to scale to the same resolution
-                                    ScaleTexture(camTexture, screenSizeInt.x >> (-zoom), screenSizeInt.y >> (-zoom));
+                                    ScaleTexture(camTexture, (int)(screenSize.x * multFac), (int)(screenSize.y * multFac));
 
                                 // Copy pixels
-                                Vector2 copyOffsetVec = ((room.devPos + cam) * multFac - tileCoords) * -1;
+                                Vector2 copyOffsetVec = tileCoords - (room.devPos + cam) * multFac;
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
                                 CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, 0, 0);
-                                yield return null;
+                                if (owner.lessResourceIntensive)
+                                {
+                                    yield return null;
+                                }
                             }
                         }
                     }
