@@ -265,6 +265,8 @@ namespace MapExporter
 
             public void UpdateEntry(Room room)
             {
+                var aRoom = room.abstractRoom;
+
                 cameras = room.cameraPositions;
                 size = new IntVector2(room.Width, room.Height);
                 tiles = new int[room.Width, room.Height][];
@@ -278,10 +280,10 @@ namespace MapExporter
                         //terain, vb+hb, sc
                     }
                 }
-                nodes = room.exitAndDenIndex;
+                // nodes = room.exitAndDenIndex;
+                nodes = [.. aRoom.nodes.Select((_, i) => room.LocalCoordinateOfNode(i).Tile)];
 
                 // Initialize connections
-                var aRoom = room.abstractRoom;
                 for (int i = 0; i < aRoom.connections.Length; i++)
                 {
                     var other = aRoom.world.GetAbstractRoom(aRoom.connections[i]);
