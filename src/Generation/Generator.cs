@@ -38,11 +38,12 @@ namespace MapExporter.Generation
             }
 
             // Enqueue processes
-            processes.Enqueue(new Cleaner(this));
+#warning UNCOMMENT ME
+            /*processes.Enqueue(new Cleaner(this));
             for (int i = 0; i < 8; i++)
             {
                 processes.Enqueue(new TileProcessor(this, -i));
-            }
+            }*/
             processes.Enqueue(new RoomProcessor(this));
             processes.Enqueue(new ConnectionProcessor(this));
             processes.Enqueue(new GeometryProcessor(this));

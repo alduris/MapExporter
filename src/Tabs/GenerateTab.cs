@@ -60,13 +60,16 @@ namespace MapExporter.Tabs
         public override void Update()
         {
             // Update queue
-            if (current == null && generator == null && queue.Count > 0)
+            if (generator == null && (queue.Count > 0 || current != null))
             {
-                current = queue.Dequeue();
+                if (current == null)
+                {
+                    current = queue.Dequeue();
 
-                var scugs = Data.RenderedRegions.Select(x => x.Value.Any(x => x == current) ? x.Key : null).Where(x => x != null);
-                slugQueue.Clear(); // there should be nothing in it but just as a safety
-                foreach (var scug in scugs) slugQueue.Enqueue(scug);
+                    var scugs = Data.RenderedRegions.Select(x => x.Value.Any(x => x == current) ? x.Key : null).Where(x => x != null);
+                    slugQueue.Clear(); // there should be nothing in it but just as a safety
+                    foreach (var scug in scugs) slugQueue.Enqueue(scug);
+                }
                 generator = new Generator(slugQueue.Peek(), current);
 
                 queueDirty = true;
@@ -130,7 +133,7 @@ namespace MapExporter.Tabs
                 if (current != null)
                 {
                     progressBar = new OpProgressBar(new Vector2(C_SPACING, C_SPACING), currentBox.size.x - C_SPACING * 2);
-                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, "Processing...", false);
+                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, generator != null ? "Processing..." : "Generator missing!", false);
                     var displayText = slugQueue.Peek().value + " - " + Region.GetRegionFullName(current, slugQueue.Peek());
 
                     currentBox.AddItems(
