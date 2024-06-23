@@ -18,16 +18,10 @@ namespace MapExporter.Generation
             foreach (var room in owner.regionInfo.rooms.Values)
             {
                 if (room.nodes == null) continue;
-                Plugin.Logger.LogDebug(room.roomName);
 
                 var dens = room.spawns.GroupBy(x => x[0].den);
                 foreach (var data in dens)
                 {
-                    Plugin.Logger.LogDebug("  " + data.Key + "," + room.nodes.Length);
-                    foreach (var d in data.ToList())
-                    {
-                        Plugin.Logger.LogDebug("    " + string.Join(",", d.Select(x => x.type)));
-                    }
                     spawns.Add(new SpawnInfo
                     {
                         roomName = room.roomName,
