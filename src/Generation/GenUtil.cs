@@ -23,5 +23,6 @@ namespace MapExporter.Generation
         public static readonly Vector2 offscreenSize = offscreenSizeInt.ToVector2();
         public static readonly IntVector2 screenSizeInt = new(1366, 768);
         public static readonly Vector2 screenSize = screenSizeInt.ToVector2();
+        public static readonly Vector2 camOffset = new(17, 18); // don't ask, this was in the original
     }
 }

@@ -25,8 +25,8 @@ namespace MapExporter.Generation
                 }
                 else
                 {
-                    Vector2 blPos = room.devPos + room.cameras[0];
-                    Vector2 trPos = room.devPos + room.cameras[0] + screenSize;
+                    Vector2 blPos = room.devPos + room.cameras[0] + camOffset;
+                    Vector2 trPos = room.devPos + room.cameras[0] + camOffset + screenSize;
                     for (int j = 1; j < room.cameras.Length; j++)
                     {
                         var cam = room.devPos + room.cameras[j];

@@ -26,10 +26,10 @@ namespace MapExporter.Generation
                 // Create the lines
                 for (int j = 0; j < room.size.y; j++)
                 {
-                    float y = room.devPos.y + j * 20f - 10f;
+                    float y = room.devPos.y + j * 20f;
                     for (int i = 0; i < room.size.x; i++)
                     {
-                        float x = room.devPos.x + i * 20f - 10f;
+                        float x = room.devPos.x + i * 20f;
                         int[] tile = room.tiles[i, j];
                         int type = tile[0];
                         bool hpole = ((tile[1] & 1) != 0), vpole = ((tile[1] & 2) != 0);

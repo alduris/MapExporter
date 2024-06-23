@@ -103,7 +103,7 @@ namespace MapExporter.Generation
                                     ScaleTexture(camTexture, (int)(screenSize.x * multFac), (int)(screenSize.y * multFac));
 
                                 // Copy pixels
-                                Vector2 copyOffsetVec = tileCoords - (room.devPos + cam) * multFac;
+                                Vector2 copyOffsetVec = tileCoords - (room.devPos + cam + camOffset) * multFac;
                                 IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
                                 CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, 0, 0);
