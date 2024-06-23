@@ -15,7 +15,15 @@ namespace MapExporter.Tabs.UI
                 colorFill = colorEdge,
                 colorEdge = colorEdge,
             };
-            tab.AddItems(inner);
+
+            if (InScrollBox)
+            {
+                scrollBox.AddItems(inner);
+            }
+            else
+            {
+                tab.AddItems(inner);
+            }
         }
 
         public void Update(float progress)
