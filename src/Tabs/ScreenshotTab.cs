@@ -471,8 +471,15 @@ namespace MapExporter.Tabs
 
         private void AbortButton_OnClick(UIfocusable trigger)
         {
+            if (Data.QueuedRegions.Count == 0)
+            {
+                trigger.PlaySound(SoundID.MENU_Error_Ping);
+                return;
+            }
+
             if (ScreenshotProcess != null)
             {
+                ScreenshotProcess.Kill();
                 ScreenshotProcess.Close();
                 ScreenshotProcess.Dispose();
                 ScreenshotProcess = null;
@@ -485,14 +492,22 @@ namespace MapExporter.Tabs
 
         private void SkipButton_OnClick(UIfocusable trigger)
         {
+            if (Data.QueuedRegions.Count == 0)
+            {
+                trigger.PlaySound(SoundID.MENU_Error_Ping);
+                return;
+            }
+
             if (ScreenshotProcess != null)
             {
+                ScreenshotProcess.Kill();
                 ScreenshotProcess.Close();
                 ScreenshotProcess.Dispose();
                 ScreenshotProcess = null;
             }
             RetryAttempts = 0;
             Data.QueuedRegions.Dequeue();
+            QueueDirty = true;
             Data.ScreenshotterStatus = SSStatus.Inactive;
             Data.SaveData();
         }

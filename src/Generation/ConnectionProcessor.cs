@@ -42,7 +42,7 @@ namespace MapExporter.Generation
             private static readonly Vector2[] fourDirections = [Vector2.right, Vector2.up, Vector2.left, Vector2.down];
             public readonly Dictionary<string, object> ToJson()
             {
-                float dist = (pointB - pointA).magnitude;
+                float dist = (pointB - pointA).magnitude / 4f;
                 Vector2 basicDir = (pointB - pointA).normalized;
                 Vector2 handleA = pointA + (dirA == -1 ? basicDir : fourDirections[dirA]) * dist;
                 Vector2 handleB = pointB + (dirB == -1 ? -basicDir : fourDirections[dirB]) * dist;
