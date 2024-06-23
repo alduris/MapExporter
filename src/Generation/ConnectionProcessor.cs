@@ -39,7 +39,7 @@ namespace MapExporter.Generation
             public Vector2 pointB;
             public int dirB;
 
-            private static readonly Vector2[] fourDirections = [Vector2.left, Vector2.down, Vector2.right, Vector2.up];
+            private static readonly Vector2[] fourDirections = [Vector2.right, Vector2.up, Vector2.left, Vector2.down];
             public readonly Dictionary<string, object> ToJson()
             {
                 float dist = (pointB - pointA).magnitude;

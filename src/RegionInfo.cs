@@ -297,13 +297,14 @@ namespace MapExporter
                         }
                     }
 
+                    int nodeIndex = Array.IndexOf(room.shortcuts.Select(x => x.destNode).ToArray(), i);
                     if (conn == null)
                     {
                         conn = new ConnectionEntry()
                         {
                             roomA = aRoom.name,
                             roomB = other.name,
-                            posA = room.ShortcutLeadingToNode(other.index).startCoord.Tile,
+                            posA = room.ShortcutLeadingToNode(nodeIndex).startCoord.Tile,
                         };
                         conn.dirA = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posA));
                         regionInfo.connections.Add(conn);
@@ -311,7 +312,7 @@ namespace MapExporter
                     }
                     else
                     {
-                        conn.posB = room.ShortcutLeadingToNode(other.index).startCoord.Tile;
+                        conn.posB = room.ShortcutLeadingToNode(nodeIndex).startCoord.Tile;
                         conn.dirB = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posB));
                     }
                 }

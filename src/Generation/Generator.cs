@@ -38,10 +38,11 @@ namespace MapExporter.Generation
             skipExistingTiles = false;
 
             // Enqueue processes
-            for (int i = 0; i < 8; i++)
+#warning NEED TO UNCOMMENT THIS
+            /*for (int i = 0; i < 8; i++)
             {
                 processes.Enqueue(new TileProcessor(this, -i));
-            }
+            }*/
             processes.Enqueue(new RoomProcessor(this));
             processes.Enqueue(new ConnectionProcessor(this));
             processes.Enqueue(new GeometryProcessor(this));

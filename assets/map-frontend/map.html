@@ -662,8 +662,10 @@
                                         tooltip += "🚿";
                                     }
 
+                                    var path = "./resources/creatures/" + spawn.lineage[i] + ".png";
+                                    if (spawn.lineage[i] == "") path = "./resources/none.png";
                                     divhtml += `<div class="lineage-entry">
-                                        <img class="icon-image" src="./resources/creatures/${spawn.lineage[i]}.png"/>
+                                        <img class="icon-image" src="${path}"/>
                                         <div class="icon-label">${Math.trunc(Number.parseFloat(spawn.lineage_probs[i]) * 100)}</div>
                                         <div class="icon-tooltip">${tooltip}</div>
                                         </div>`;

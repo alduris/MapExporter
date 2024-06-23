@@ -18,13 +18,16 @@ namespace MapExporter.Generation
             foreach (var room in owner.regionInfo.rooms.Values)
             {
                 if (room.nodes == null) continue;
-                foreach (var data in room.spawns)
+
+                var dens = room.spawns.GroupBy(x => x[0].den);
+                foreach (var data in dens)
                 {
                     spawns.Add(new SpawnInfo
                     {
                         roomName = room.roomName,
-                        spawnData = data,
-                        coords = room.devPos + room.nodes[data[0].den].ToVector2() * 20f + new Vector2(10f, 10f)
+                        den = data.Key,
+                        spawnData = [.. data],
+                        coords = room.devPos + room.nodes[data.Key].ToVector2() * 20f + new Vector2(10f, 10f)
                     });
                 }
             }
@@ -39,29 +42,36 @@ namespace MapExporter.Generation
         public struct SpawnInfo : IJsonObject
         {
             public Vector2 coords;
+            public int den;
             public string roomName;
-            public DenSpawnData[] spawnData;
+            public DenSpawnData[][] spawnData;
 
             public readonly Dictionary<string, object> ToJson()
             {
                 // Put together part of the dictionary
-                bool isLineage = spawnData[0].chance >= 0f;
-                var spawnDict = new Dictionary<string, object>()
+                List<Dictionary<string, object>> spawnDicts = [];
+                foreach (var data in spawnData)
                 {
-                    { "is_lineage", isLineage },
-                    { "amount", spawnData[0].count },
-                    { "creature", spawnData[0].type },
-                    { "spawn_data", spawnData[0].data },
-                    { "pre_cycle", false }, // TODO: remove these
-                    { "night", spawnData[0].night }
-                };
+                    bool isLineage = data[0].chance >= 0f;
+                    var spawnDict = new Dictionary<string, object>()
+                    {
+                        { "is_lineage", isLineage },
+                        { "amount", data[0].count },
+                        { "creature", data[0].type },
+                        { "spawn_data", data[0].data },
+                        { "pre_cycle", false }, // TODO: remove these
+                        { "night", data[0].night }
+                    };
 
-                // Lineage has extra data
-                if (isLineage)
-                {
-                    spawnDict["lineage"] = spawnData.Select(x => x.type).ToArray();
-                    spawnDict["lineage_probs"] = spawnData.Select(x => x.chance.ToString("0.0000")).ToArray();
-                    spawnDict["lineage_data"] = spawnData.Select(x => x.data).ToArray();
+                    // Lineage has extra data
+                    if (isLineage)
+                    {
+                        spawnDict["lineage"] = data.Select(x => x.type).ToArray();
+                        spawnDict["lineage_probs"] = data.Select(x => x.chance.ToString("0.0000")).ToArray();
+                        spawnDict["lineage_data"] = data.Select(x => x.data).ToArray();
+                    }
+
+                    spawnDicts.Add(spawnDict);
                 }
 
                 return new Dictionary<string, object>()
@@ -80,8 +90,8 @@ namespace MapExporter.Generation
                         new Dictionary<string, object>
                         {
                             { "room", roomName },
-                            { "den", spawnData[0].den },
-                            { "spawns",  spawnDict }
+                            { "den", den },
+                            { "spawns",  spawnDicts }
                         }
                     }
                 };

@@ -43,7 +43,7 @@ namespace MapExporter.Generation
                                     int neighbor = room.tiles[i + 1, j][0];
                                     if (type != neighbor && (neighbor & -2) == 0) // number & -2 will return 0 for either 0 or 1
                                     {
-                                        lines.AddLast((new(x, y), new(x, y + 20f)));
+                                        lines.AddLast((new(x + 20f, y), new(x + 20f, y + 20f)));
                                     }
                                 }
                                 if (j != room.size.y - 1)
@@ -51,13 +51,13 @@ namespace MapExporter.Generation
                                     int neighbor = room.tiles[i, j + 1][0];
                                     if (type != neighbor && (neighbor & -2) == 0)
                                     {
-                                        lines.AddLast((new(x, y), new(x + 20f, y)));
+                                        lines.AddLast((new(x, y + 20f), new(x + 20f, y + 20f)));
                                     }
                                 }
                                 break;
                             case 2: // slopes
-                                    // Need to check all four orientations, but there are only two cases of lines to draw.
-                                    // In this, we are considering any check outside of the bounds of the room geometry to be solid.
+                                // Need to check all four orientations, but there are only two cases of lines to draw.
+                                // In this, we are considering any check outside of the bounds of the room geometry to be solid.
                                 bool up = j == room.size.y - 1 || room.tiles[i, j + 1][0] == 1;
                                 bool down = j == 0 || room.tiles[i, j - 1][0] == 1;
                                 bool right = i == room.size.y - 1 || room.tiles[i + 1, j][0] == 1;
