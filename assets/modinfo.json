@@ -3,7 +3,7 @@
   "name": "Map Exporter",
   "version": "1.0",
   "authors": "Henpemaz, DualIron, Noblecat57, Alduris<LINE>Code help: Bro748, Vigaro, BensoneWhite, iwantbread",
-  "description": "Creates images for an online interactable map",
+  "description": "An interactive map maker",
   "tags": [],
   "requirements": ["bro.mergefix"],
   "requirements_names": ["Merge Fix"],

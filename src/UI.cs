@@ -22,12 +22,11 @@ internal class UI : OptionInterface
         base.Initialize();
 
         Tabs = [
-            // General settings tab
+            new MainMenuTab(this),
             new ScreenshotTab(this),
             new EditTab(this),
             new GenerateTab(this),
-            new ServerTab(this),
-            // Export tab
+            new ServerTab(this)
         ];
 
         foreach (var tab in Tabs)
