@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -22,13 +23,20 @@ namespace MapExporter.Generation
                 var dens = room.spawns.GroupBy(x => x[0].den);
                 foreach (var data in dens)
                 {
-                    spawns.Add(new SpawnInfo
+                    try
                     {
-                        roomName = room.roomName,
-                        den = data.Key,
-                        spawnData = [.. data],
-                        coords = room.devPos + room.nodes[data.Key].ToVector2() * 20f + new Vector2(10f, 10f)
-                    });
+                        spawns.Add(new SpawnInfo
+                        {
+                            roomName = room.roomName,
+                            den = data.Key,
+                            spawnData = [.. data],
+                            coords = room.devPos + room.nodes[data.Key].ToVector2() * 20f + new Vector2(10f, 10f)
+                        });
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        // ignore :3
+                    }
                 }
             }
 
