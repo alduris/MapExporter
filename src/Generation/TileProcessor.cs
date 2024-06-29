@@ -153,10 +153,10 @@ namespace MapExporter.Generation
                         float u = Custom.LerpMap(x, 0, width - 1, 0, oldW - 1);
                         float v = Custom.LerpMap(y, 0, height - 1, 0, oldH - 1);
 
-                        Color tl = oldPixels[Mathf.FloorToInt(u) + Mathf.FloorToInt(v) * oldW];
-                        Color tr = oldPixels[Mathf.CeilToInt(u) + Mathf.FloorToInt(v) * oldW];
-                        Color bl = oldPixels[Mathf.FloorToInt(u) + Mathf.CeilToInt(v) * oldW];
-                        Color br = oldPixels[Mathf.CeilToInt(u) + Mathf.CeilToInt(v) * oldW];
+                        Color32 tl = oldPixels[Mathf.FloorToInt(u) + Mathf.CeilToInt(v) * oldW];
+                        Color32 tr = oldPixels[Mathf.CeilToInt(u) + Mathf.CeilToInt(v) * oldW];
+                        Color32 bl = oldPixels[Mathf.FloorToInt(u) + Mathf.FloorToInt(v) * oldW];
+                        Color32 br = oldPixels[Mathf.CeilToInt(u) + Mathf.FloorToInt(v) * oldW];
                         pixels[x + y * width] = Color32.LerpUnclamped(Color32.LerpUnclamped(tl, tr, u % 1f), Color32.LerpUnclamped(bl, br, u % 1f), v % 1f);
                     }
                 }

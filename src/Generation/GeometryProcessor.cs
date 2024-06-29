@@ -60,7 +60,7 @@ namespace MapExporter.Generation
                                 // In this, we are considering any check outside of the bounds of the room geometry to be solid.
                                 bool up = j == room.size.y - 1 || room.tiles[i, j + 1][0] == 1;
                                 bool down = j == 0 || room.tiles[i, j - 1][0] == 1;
-                                bool right = i == room.size.y - 1 || room.tiles[i + 1, j][0] == 1;
+                                bool right = i == room.size.x - 1 || room.tiles[i + 1, j][0] == 1;
                                 bool left = i == 0 || room.tiles[i - 1, j][0] == 1;
 
                                 if (up == left && down == right)

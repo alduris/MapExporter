@@ -18,7 +18,6 @@ namespace MapExporter.Generation
 
             foreach (var room in owner.regionInfo.rooms.Values)
             {
-                if (room.nodes == null) continue;
 
                 var dens = room.spawns.GroupBy(x => x[0].den);
                 foreach (var data in dens)
@@ -30,7 +29,7 @@ namespace MapExporter.Generation
                             roomName = room.roomName,
                             den = data.Key,
                             spawnData = [.. data],
-                            coords = room.devPos + room.nodes[data.Key].ToVector2() * 20f + new Vector2(10f, 10f)
+                            coords = room.devPos + (room.nodes == null ? Vector2.zero : room.nodes[data.Key].ToVector2() * 20f + new Vector2(10f, 10f))
                         });
                     }
                     catch (IndexOutOfRangeException)

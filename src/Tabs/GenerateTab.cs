@@ -133,7 +133,9 @@ namespace MapExporter.Tabs
                 if (current != null)
                 {
                     progressBar = new OpProgressBar(new Vector2(C_SPACING, C_SPACING), currentBox.size.x - C_SPACING * 2);
-                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, generator != null ? "Processing..." : "Generator missing!", false);
+                    string text = generator != null ? "Processing..." : "Generator missing!";
+                    if (generator?.Failed ?? false) text = "Error detected!";
+                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, text, false);
                     var displayText = slugQueue.Peek().value + " - " + Region.GetRegionFullName(current, slugQueue.Peek());
 
                     currentBox.AddItems(
