@@ -109,10 +109,15 @@ namespace MapExporter
 
                 if (!File.Exists(SlugcatIconPath(item.ToLower())) || (replaceAll && !IsDefaultSlugcat(scug)))
                 {
-                    var sprite = new FSprite("Kill_Slugcat", true);
                     var color = PlayerGraphics.DefaultSlugcatColor(scug);
-                    var tex = SpriteColor(sprite, color);
-                    Iconify(tex);
+                    var tex = new Texture2D(1, 1);
+                    tex.LoadImage(File.ReadAllBytes(Path.Combine(SlugcatIconPath("default"))));
+                    var pixels = tex.GetPixels();
+                    for (int i = 0; i < pixels.Length; i++)
+                    {
+                        pixels[i] *= color;
+                    }
+                    tex.SetPixels(pixels);
                     tex.Apply();
                     File.WriteAllBytes(SlugcatIconPath(item.ToLower()), tex.EncodeToPNG());
                     UnityEngine.Object.Destroy(tex);
@@ -252,7 +257,7 @@ namespace MapExporter
 
             // Add outline
             Color[] pixels = texture.GetPixels();
-            bool[] colored = pixels.Select(x => x.a > 0f).ToArray();
+            bool[] colored = pixels.Select(x => x.a == 1f).ToArray();
 
             for (int i = 0; i < 50; i++)
             {

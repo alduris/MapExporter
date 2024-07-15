@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MapExporter.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
 using MoreSlugcats;
@@ -86,7 +87,7 @@ namespace MapExporter.Tabs
             // Add UI to UI
             AddItems([
                 // Left side
-                new OpLabel(10f, 560f, "PREPARE", true),
+                new OpShinyLabel(10f, 560f, "PREPARE", true),
                 addButton,
                 addAllButton,
                 startButton,
@@ -97,7 +98,7 @@ namespace MapExporter.Tabs
                 new OpImage(new(299f, 10f), "pixel") { scale = new Vector2(2f, 580f), color = MenuColorEffect.rgbMediumGrey },
 
                 // Right side
-                new OpLabel(315f, 560f, "SCREENSHOTTING", true),
+                new OpShinyLabel(315f, 560f, "SCREENSHOTTING", true),
                 abortButton,
                 skipButton,
                 queueBox,

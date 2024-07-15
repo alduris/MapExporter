@@ -212,7 +212,7 @@ namespace MapExporter
 
                 roomName = room.name;
                 subregion = room.subregionName;
-                devPos = owner.devPos[room.name];
+                devPos = owner.devPos[room.name] / 2f; // I do not want to write a paragraph explaining the dividing by 2
 
                 if (spawnerCWT.TryGetValue(world, out var spawners))
                 {

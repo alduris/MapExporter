@@ -87,15 +87,16 @@ namespace MapExporter.Tabs
 
             dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIVIDER - 2 * PADDING - MARGIN - BIG_LINE_HEIGHT - 24f));
             AddItems(
-                new OpLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "TEST SERVER", true),
+                new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "TEST SERVER", true),
                 new OpLabel(PADDING, serverButton.pos.y + 2f, serverText, false),
                 serverButton,
                 new OpLabel(openButton.pos.x - MARGIN - openTextWidth, openButton.pos.y + 2f, openText, false),
                 openButton,
                 messageBox,
                 new OpImage(new Vector2(PADDING, DIVIDER - 1), "pixel") { scale = new Vector2(MENU_SIZE - PADDING * 2, 2f), color = MenuColorEffect.rgbMediumGrey },
-                new OpLabel(PADDING, DIVIDER - PADDING - BIG_LINE_HEIGHT, "EXPORT", true),
-                dirPicker
+                new OpShinyLabel(PADDING, DIVIDER - PADDING - BIG_LINE_HEIGHT, "EXPORT", true),
+                dirPicker,
+                new OpLabel(new(MENU_SIZE / 2f, dirPicker.pos.y + dirPicker.size.y + MARGIN), new(), "UNFINISHED - COMING SOON", FLabelAlignment.Center) // temporary
             );
 
             Resources.CopyFrontendFiles();
