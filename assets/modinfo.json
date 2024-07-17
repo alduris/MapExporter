@@ -2,7 +2,7 @@
   "id": "mapexporter",
   "name": "Map Exporter",
   "version": "1.0",
-  "authors": "Henpemaz, DualIron, Noblecat57, Alduris<LINE>Code help: Bro748, Vigaro, BensoneWhite, iwantbread",
+  "authors": "Henpemaz, Dual-Iron, Noblecat57, Alduris<LINE>Code help: Bro748, Vigaro, BensoneWhite, iwantbread",
   "description": "An interactive map maker",
   "tags": [],
   "requirements": ["bro.mergefix"],

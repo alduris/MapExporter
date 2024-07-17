@@ -89,6 +89,9 @@ sealed class Plugin : BaseUnityPlugin
                 On.AbstractRoom.AddTag += AbstractRoom_AddTag;
                 IL.WorldLoader.NextActivity += WorldLoader_NextActivity;
                 On.WorldLoader.FindingCreaturesThread += WorldLoader_FindingCreaturesThread;
+                On.Lightning.LightningSource.Update += LightningSource_Update;
+                On.Oracle.Update += Oracle_Update;
+                On.TempleGuard.Update += TempleGuard_Update;
 
                 Logger.LogDebug("Finished start thingy");
             }
@@ -214,10 +217,62 @@ sealed class Plugin : BaseUnityPlugin
 
     #region fixes
 
+    // Only show guardians if user wants to
+    private void TempleGuard_Update(On.TempleGuard.orig_Update orig, TempleGuard self, bool eu)
+    {
+        // Only call orig if user wants to spawn iteratosr
+        orig(self, eu);
+        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_GUARDIANS, out bool value))
+        {
+            value = true;
+        }
+        if (!value)
+        {
+            self.Destroy();
+            self.RemoveGraphicsModule();
+            self.RemoveFromRoom();
+        }
+    }
+
+    // no you don't
+    private void LightningSource_Update(On.Lightning.LightningSource.orig_Update orig, Lightning.LightningSource self)
+    {
+        // you're code also bad
+        self.wait = int.MaxValue;
+        self.intensity = 0;
+        self.lastIntensity = 0;
+        orig(self);
+    }
+
+    // Only show iterators if the user wants to
+    private void Oracle_Update(On.Oracle.orig_Update orig, Oracle self, bool eu)
+    {
+        // Only call orig if user wants to spawn iteratosr
+        orig(self, eu);
+        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_ORACLES, out bool value))
+        {
+            value = true;
+        }
+        if (!value)
+        {
+            self.Destroy();
+            self.RemoveFromRoom();
+        }
+    }
+
     // Disable insects from spawning (including custom ones; was in original henpe code but didn't account for custom ones)
     private void InsectCoordinator_CreateInsect(On.InsectCoordinator.orig_CreateInsect orig, InsectCoordinator self, CosmeticInsect.Type type, Vector2 pos, InsectCoordinator.Swarm swarm)
     {
-        // don't call orig lol
+        // Only call orig if user wants to spawn insects
+        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_INSECTS, out bool value))
+        {
+            value = false;
+        }
+
+        if (value)
+        {
+            orig(self, type, pos, swarm);
+        }
     }
 
 
@@ -393,24 +448,32 @@ sealed class Plugin : BaseUnityPlugin
             }
         }
     }
+
     // zeroes some annoying fades
     public delegate float orig_PropertyToZero(RainWorldGame self);
     public float RainWorldGame_ZeroProperty(orig_PropertyToZero _, RainWorldGame _1)
     {
         return 0f;
     }
-    // spawn ghost always
+
+    // spawn ghost always (actually use player preference)
     private void World_SpawnGhost(On.World.orig_SpawnGhost orig, World self)
     {
-        self.game.rainWorld.safariMode = false;
-        orig(self);
-        self.game.rainWorld.safariMode = true;
+        // true by default
+        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_GHOSTS, out bool value) || value)
+        {
+            self.game.rainWorld.safariMode = false;
+            orig(self);
+            self.game.rainWorld.safariMode = true;
+        }
     }
-    // spawn ghosts always, to show them on the map
+
+    // spawn ghosts always, to show them on the map (actually again, use player preference)
     private bool GhostWorldPresence_SpawnGhost(On.GhostWorldPresence.orig_SpawnGhost orig, GhostWorldPresence.GhostID ghostID, int karma, int karmaCap, int ghostPreviouslyEncountered, bool playingAsRed)
     {
-        return true;
+        return !Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_GHOSTS, out bool value) || value;
     }
+
     // don't let them affect nearby rooms
     private float GhostWorldPresence_GhostMode_AbstractRoom_Vector2(On.GhostWorldPresence.orig_GhostMode_AbstractRoom_Vector2 orig, GhostWorldPresence self, AbstractRoom testRoom, Vector2 worldPos)
     {
@@ -420,12 +483,14 @@ sealed class Plugin : BaseUnityPlugin
         }
         return orig(self, testRoom, worldPos);
     }
+
     // don't let them hurl us back to the karma screen
     private void Ghost_Update(On.Ghost.orig_Update orig, Ghost self, bool eu)
     {
         orig(self, eu);
         self.fadeOut = self.lastFadeOut = 0f;
     }
+
     // setup == useful
     private RainWorldGame.SetupValues RainWorld_LoadSetupValues(On.RainWorld.orig_LoadSetupValues orig, bool distributionBuild)
     {
@@ -444,7 +509,7 @@ sealed class Plugin : BaseUnityPlugin
         setup.cycleStartUp = false;
 
         setup.player1 = false;
-        setup.worldCreaturesSpawn = false;
+        setup.worldCreaturesSpawn = Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_CREATURES, out bool value) && value;
         setup.singlePlayerChar = 0;
 
         return setup;

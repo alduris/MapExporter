@@ -1,7 +1,9 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MonoMod.Utils;
 using RWCustom;
 
 namespace MapExporter
@@ -150,6 +152,13 @@ namespace MapExporter
                         }
                     }
                 }
+
+                // User preferences
+                Preferences.Clear();
+                if (json.ContainsKey("preferences"))
+                {
+                    Preferences.AddRange(((Dictionary<string, object>)json["preferences"]).ToDictionary(x => new KeyValuePair<string, bool>(x.Key, (bool)x.Value)));
+                }
             }
 
             Version++;
@@ -191,8 +200,20 @@ namespace MapExporter
                 { "ssstatus", ScreenshotterStatus.ToString() },
                 { "rendered", rendered },
                 { "finished", finished },
+                { "preferences", Preferences },
             };
             File.WriteAllText(DataFileDir, Json.Serialize(dict));
         }
+
+        public static Dictionary<string, bool> Preferences = [];
+        public static class PreferenceKeys
+        {
+            public const string SHOW_CREATURES = "show/creatures";
+            public const string SHOW_INSECTS = "show/insects";
+            public const string SHOW_GHOSTS = "show/ghosts";
+            public const string SHOW_GUARDIANS = "show/guadians";
+            public const string SHOW_ORACLES = "show/oracles";
+        }
     }
+
 }

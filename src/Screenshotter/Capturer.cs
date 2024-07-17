@@ -190,6 +190,12 @@ namespace MapExporter.Screenshotter
 
             regionContent.UpdateRoom(room.realizedRoom);
 
+            if (Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_CREATURES, out bool showCreatures) && showCreatures)
+            {
+                // wait a bit so creatures can more interesting stuff
+                for (int i = 0; i < 6; i++) yield return null;
+            }
+
             for (int i = 0; i < room.realizedRoom.cameraPositions.Length; i++)
             {
                 // load screen
