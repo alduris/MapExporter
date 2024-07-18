@@ -36,6 +36,10 @@ namespace MapExporter.Tabs
             var allRegions = new HashSet<string>(Data.RenderedRegions.Values.SelectMany(x => x))
                 .Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i))
                 .ToList();
+            if (allRegions.Count == 0)
+            {
+                allRegions.Add(new ListItem("", ""));
+            }
 
             regionSelector = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT - MARGIN - 24f), 200f, allRegions);
             regionAdd = new OpSimpleButton(new Vector2(regionSelector.pos.x + regionSelector.size.x + MARGIN, regionSelector.pos.y), new Vector2(60f, 24f), "ADD");
