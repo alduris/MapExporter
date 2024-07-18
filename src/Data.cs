@@ -225,6 +225,12 @@ namespace MapExporter
         public static readonly Preference ShowInsects = new("show/insects", false);
         public static readonly Preference ShowOracles = new("show/oracles", true);
 
+        public static readonly Preference ScreenshotterAutoFill = new("screenshotter/autofill", true);
+        public static readonly Preference ScreenshotterSkipExisting = new("screenshotter/skipexisting", false);
+
+        public static readonly Preference GeneratorLessInsense = new("generator/lessintensive", false);
+        public static readonly Preference GeneratorSkipTiles = new("generator/skipexisting", false);
+
         public readonly struct Preference(string key, bool defaultValue)
         {
             public readonly string key = key;

@@ -416,11 +416,14 @@ namespace MapExporter.Tabs
             // Add values
             var acronym = comboRegions.value;
             WaitingRegions[acronym] = [];
-            foreach (var scug in Slugcats)
+            if (Data.GetPreference(Preferences.ScreenshotterAutoFill))
             {
-                if (SlugcatStats.SlugcatStoryRegions(scug).Contains(acronym) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(acronym))
+                foreach (var scug in Slugcats)
                 {
-                    WaitingRegions[acronym].Add(scug);
+                    if (SlugcatStats.SlugcatStoryRegions(scug).Contains(acronym) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(acronym))
+                    {
+                        WaitingRegions[acronym].Add(scug);
+                    }
                 }
             }
             comboRegions.value = null;
@@ -435,11 +438,14 @@ namespace MapExporter.Tabs
                 {
                     HashSet<SlugcatStats.Name> scugs = [];
                     WaitingRegions.Add(region.Key, scugs);
-                    foreach (var scug in Slugcats)
+                    if (Data.GetPreference(Preferences.ScreenshotterAutoFill))
                     {
-                        if (SlugcatStats.SlugcatStoryRegions(scug).Contains(region.Value) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(region.Value))
+                        foreach (var scug in Slugcats)
                         {
-                            scugs.Add(scug);
+                            if (SlugcatStats.SlugcatStoryRegions(scug).Contains(region.Value) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(region.Value))
+                            {
+                                scugs.Add(scug);
+                            }
                         }
                     }
                 }

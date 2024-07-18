@@ -207,7 +207,10 @@ namespace MapExporter.Screenshotter
                 yield return null;
 
                 string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
-                ScreenCapture.CaptureScreenshot(filename); // Overwrite it anyway because that's probably what the user wants
+                if (!Data.GetPreference(Preferences.ScreenshotterSkipExisting) || !File.Exists(filename)) // does the user want to skip existing tiles
+                {
+                    ScreenCapture.CaptureScreenshot(filename);
+                }
 
                 // palette and colors
                 regionContent.LogPalette(game.cameras[0].currentPalette);

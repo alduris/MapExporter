@@ -107,9 +107,6 @@ namespace MapExporter.Generation
                     }
                 }
 
-                // Progress = (processed + 0.5f) / regionInfo.rooms.Count;
-                // yield return null;
-
                 // Optimize the lines (combining)
                 List<LinkedList<Vector2>> optimized = [];
                 HashSet<(Vector2, Vector2)> seen = [];
@@ -173,8 +170,11 @@ namespace MapExporter.Generation
                 });
 
                 processed++;
-                Progress = (float)processed / regionInfo.rooms.Count;
-                yield return null;
+                if (owner.lessResourceIntensive || processed % 20 == 0)
+                {
+                    Progress = (float)processed / regionInfo.rooms.Count;
+                    yield return null;
+                }
             }
 
             owner.metadata["geo_features"] = geo;

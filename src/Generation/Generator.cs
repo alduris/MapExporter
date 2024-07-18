@@ -48,6 +48,10 @@ namespace MapExporter.Generation
             processes.Enqueue(new GeometryProcessor(this));
             processes.Enqueue(new SpawnProcessor(this));
             processes.Enqueue(new MiscProcessor(this));
+
+            // Preferences
+            skipExistingTiles = Data.GetPreference(Preferences.GeneratorSkipTiles);
+            lessResourceIntensive = Data.GetPreference(Preferences.GeneratorLessInsense);
         }
 
         public void Update()
