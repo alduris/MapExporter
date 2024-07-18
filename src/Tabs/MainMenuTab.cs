@@ -40,15 +40,15 @@ namespace MapExporter.Tabs
                 new OpLabel(new Vector2(0f, 385f), new Vector2(600f, 30f), "OPTIONS", FLabelAlignment.Center, true),
                 // Showing things: insects, echoes, iterators, guardians, creatures in screenshots
 
-                MapToPreference(Data.PreferenceKeys.SHOW_CREATURES, false, new Vector2(10f, 355f), "Show creatures in the rooms of screenshots. Makes the screenshotting process slower so they can move out of their dens."),
+                MapToPreference(Preferences.ShowCreatures, new Vector2(10f, 355f), "Show creatures in the rooms of screenshots. Makes the screenshotting process slower so they can move out of their dens."),
                 new OpLabel(40f, 355f, "Show creatures"),
-                MapToPreference(Data.PreferenceKeys.SHOW_GHOSTS, true, new Vector2(10f, 325f), "Show echoes in rooms. Echo effect only appears in the room they spawn in."),
+                MapToPreference(Preferences.ShowGhosts, new Vector2(10f, 325f), "Show echoes in rooms. Echo effect only appears in the room they spawn in."),
                 new OpLabel(40f, 325f, "Show echoes"),
-                MapToPreference(Data.PreferenceKeys.SHOW_GUARDIANS, true, new Vector2(10f, 295f), "Show guardians where they spawn (e.g. Depths, Rubicon, Far Shore, etc)."),
+                MapToPreference(Preferences.ShowGuardians, new Vector2(10f, 295f), "Show guardians where they spawn (e.g. Depths, Rubicon, Far Shore, etc)."),
                 new OpLabel(40f, 295f, "Show guardians"),
-                MapToPreference(Data.PreferenceKeys.SHOW_INSECTS, false, new Vector2(10f, 265f), "Show bugs spawned from insect groups or room effects in rooms."),
+                MapToPreference(Preferences.ShowInsects, new Vector2(10f, 265f), "Show bugs spawned from insect groups or room effects in rooms."),
                 new OpLabel(40f, 265f, "Show insects"),
-                MapToPreference(Data.PreferenceKeys.SHOW_ORACLES, true, new Vector2(10f, 235f), "Show iterators where they spawn."),
+                MapToPreference(Preferences.ShowOracles, new Vector2(10f, 235f), "Show iterators where they spawn."),
                 new OpLabel(40f, 235f, "Show iterators"),
 
                 // Code things: re-screenshotted rooms, skip existing tiles (generator), less resource intensive (generator), auto-fill slugcats styles
@@ -63,41 +63,34 @@ namespace MapExporter.Tabs
             deleteAll.OnPressDone += DeleteAll_OnPressDone;
 
             // todo: get rid of this code, we only need checkboxes
-            static OpCheckBox MapToPreference(string preference, bool defaultValue, Vector2 pos, string description = null)
+            static OpCheckBox MapToPreference(Preferences.Preference preference, Vector2 pos, string description = null)
             {
-                if (!string.IsNullOrEmpty(preference))
+                // Create the OpCheckBox
+                if (!Data.UserPreferences.TryGetValue(preference.key, out bool val))
                 {
-                    // Create the OpCheckBox
-                    if (!Data.Preferences.TryGetValue(preference, out bool val))
+                    val = preference.defaultValue;
+                    Data.UserPreferences.Add(preference.key, preference.defaultValue);
+                }
+
+                var checkbox = new OpCheckBox(OIUtil.CosmeticBind(val), pos)
+                {
+                    description = ((description ?? "") + " (default: " + (preference.defaultValue ? "yes" : "no") + ")").TrimStart(' '),
+                    colorEdge = val ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey
+                };
+
+                // Change when element changes
+                checkbox.OnValueChanged += (_, v, ov) =>
+                {
+                    if (v != ov)
                     {
-                        val = defaultValue;
-                        Data.Preferences.Add(preference, defaultValue);
+                        bool b = ValueConverter.ConvertToValue<bool>(v);
+                        Data.UserPreferences[preference.key] = b;
+                        Data.SaveData();
+                        checkbox.colorEdge = b ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey;
                     }
+                };
 
-                    var checkbox = new OpCheckBox(OIUtil.CosmeticBind(val), pos)
-                    {
-                        description = ((description ?? "") + " (default: " + defaultValue + ")").TrimStart(' '),
-                        colorEdge = val ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey
-                    };
-
-                    // Change when element changes
-                    checkbox.OnValueChanged += (_, v, ov) =>
-                    {
-                        if (v != ov)
-                        {
-                            bool b = ValueConverter.ConvertToValue<bool>(v);
-                            Data.Preferences[preference] = b;
-                            Data.SaveData();
-                            checkbox.colorEdge = b ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey;
-                        }
-                    };
-
-                    return checkbox;
-                }
-                else
-                {
-                    throw new ArgumentException("Cannot use empty or null preference name!");
-                }
+                return checkbox;
             }
         }
 

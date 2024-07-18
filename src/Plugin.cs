@@ -222,10 +222,7 @@ sealed class Plugin : BaseUnityPlugin
     {
         // Only call orig if user wants to spawn iteratosr
         orig(self, eu);
-        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_GUARDIANS, out bool value))
-        {
-            value = true;
-        }
+        bool value = Data.GetPreference(Preferences.ShowGuardians);
         if (!value)
         {
             self.Destroy();
@@ -249,10 +246,7 @@ sealed class Plugin : BaseUnityPlugin
     {
         // Only call orig if user wants to spawn iteratosr
         orig(self, eu);
-        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_ORACLES, out bool value))
-        {
-            value = true;
-        }
+        bool value = Data.GetPreference(Preferences.ShowOracles);
         if (!value)
         {
             self.Destroy();
@@ -264,10 +258,7 @@ sealed class Plugin : BaseUnityPlugin
     private void InsectCoordinator_CreateInsect(On.InsectCoordinator.orig_CreateInsect orig, InsectCoordinator self, CosmeticInsect.Type type, Vector2 pos, InsectCoordinator.Swarm swarm)
     {
         // Only call orig if user wants to spawn insects
-        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_INSECTS, out bool value))
-        {
-            value = false;
-        }
+        bool value = Data.GetPreference(Preferences.ShowInsects);
 
         if (value)
         {
@@ -460,7 +451,7 @@ sealed class Plugin : BaseUnityPlugin
     private void World_SpawnGhost(On.World.orig_SpawnGhost orig, World self)
     {
         // true by default
-        if (!Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_GHOSTS, out bool value) || value)
+        if (Data.GetPreference(Preferences.ShowGhosts))
         {
             self.game.rainWorld.safariMode = false;
             orig(self);
@@ -471,7 +462,7 @@ sealed class Plugin : BaseUnityPlugin
     // spawn ghosts always, to show them on the map (actually again, use player preference)
     private bool GhostWorldPresence_SpawnGhost(On.GhostWorldPresence.orig_SpawnGhost orig, GhostWorldPresence.GhostID ghostID, int karma, int karmaCap, int ghostPreviouslyEncountered, bool playingAsRed)
     {
-        return !Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_GHOSTS, out bool value) || value;
+        return Data.GetPreference(Preferences.ShowGhosts);
     }
 
     // don't let them affect nearby rooms
@@ -509,7 +500,7 @@ sealed class Plugin : BaseUnityPlugin
         setup.cycleStartUp = false;
 
         setup.player1 = false;
-        setup.worldCreaturesSpawn = Data.Preferences.TryGetValue(Data.PreferenceKeys.SHOW_CREATURES, out bool value) && value;
+        setup.worldCreaturesSpawn = Data.GetPreference(Preferences.ShowCreatures);
         setup.singlePlayerChar = 0;
 
         return setup;

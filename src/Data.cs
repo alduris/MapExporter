@@ -154,10 +154,10 @@ namespace MapExporter
                 }
 
                 // User preferences
-                Preferences.Clear();
+                UserPreferences.Clear();
                 if (json.ContainsKey("preferences"))
                 {
-                    Preferences.AddRange(((Dictionary<string, object>)json["preferences"]).ToDictionary(x => new KeyValuePair<string, bool>(x.Key, (bool)x.Value)));
+                    UserPreferences.AddRange(((Dictionary<string, object>)json["preferences"]).ToDictionary(x => new KeyValuePair<string, bool>(x.Key, (bool)x.Value)));
                 }
             }
 
@@ -200,19 +200,35 @@ namespace MapExporter
                 { "ssstatus", ScreenshotterStatus.ToString() },
                 { "rendered", rendered },
                 { "finished", finished },
-                { "preferences", Preferences },
+                { "preferences", UserPreferences },
             };
             File.WriteAllText(DataFileDir, Json.Serialize(dict));
         }
 
-        public static Dictionary<string, bool> Preferences = [];
-        public static class PreferenceKeys
+        public static Dictionary<string, bool> UserPreferences = [];
+
+        public static bool GetPreference(Preferences.Preference pref)
         {
-            public const string SHOW_CREATURES = "show/creatures";
-            public const string SHOW_INSECTS = "show/insects";
-            public const string SHOW_GHOSTS = "show/ghosts";
-            public const string SHOW_GUARDIANS = "show/guadians";
-            public const string SHOW_ORACLES = "show/oracles";
+            if (UserPreferences.TryGetValue(pref.key, out var value))
+            {
+                return value;
+            }
+            return pref.defaultValue;
+        }
+    }
+
+    public static class Preferences
+    {
+        public static readonly Preference ShowCreatures = new("show/creatures", false);
+        public static readonly Preference ShowGhosts = new("show/ghosts", true);
+        public static readonly Preference ShowGuardians = new("show/guadians", true);
+        public static readonly Preference ShowInsects = new("show/insects", false);
+        public static readonly Preference ShowOracles = new("show/oracles", true);
+
+        public readonly struct Preference(string key, bool defaultValue)
+        {
+            public readonly string key = key;
+            public readonly bool defaultValue = defaultValue;
         }
     }
 
