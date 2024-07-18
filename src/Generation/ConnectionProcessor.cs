@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
 
@@ -10,7 +8,7 @@ namespace MapExporter.Generation
     {
         public override string ProcessName => "Connections";
 
-        protected override IEnumerator Process()
+        protected override IEnumerator<float> Process()
         {
             // Find room connections
             var regionInfo = owner.regionInfo;
@@ -27,9 +25,8 @@ namespace MapExporter.Generation
             }
 
             owner.metadata["connection_features"] = connections;
-            Progress = 1f;
-            yield return null;
-            Done = true;
+            yield return 1f;
+            yield break;
         }
 
         private struct ConnectionInfo : IJsonObject

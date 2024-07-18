@@ -29,7 +29,6 @@ namespace MapExporter.Generation
             catch (Exception ex)
             {
                 Plugin.Logger.LogError(ex);
-                Done = true;
                 Failed = true;
                 return false;
             }
@@ -45,11 +44,11 @@ namespace MapExporter.Generation
 
         // For implementation
         public Generator owner = owner;
-        protected abstract IEnumerator Process();
-        public float Progress { get; protected set; }
-        public bool Done { get; protected set; }
+        protected abstract IEnumerator<float> Process();
+        public float Progress => process.Current;
+        public bool Done => Progress >= 1 || Failed;
         public bool Failed { get; private set; }
         public abstract string ProcessName { get; }
-        private IEnumerator process = null;
+        private IEnumerator<float> process = null;
     }
 }

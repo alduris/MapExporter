@@ -1,9 +1,9 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using RWCustom;
 using Unity.Collections;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
-using IEnumerator = System.Collections.IEnumerator;
 using Object = UnityEngine.Object;
 
 namespace MapExporter.Generation
@@ -17,7 +17,7 @@ namespace MapExporter.Generation
 
         public override string ProcessName => "Zoom level " + zoom;
 
-        protected override IEnumerator Process()
+        protected override IEnumerator<float> Process()
         {
             string outputPath = Directory.CreateDirectory(OutputPathForStep(zoom)).FullName;
             float multFac = Mathf.Pow(2, zoom);
@@ -109,7 +109,7 @@ namespace MapExporter.Generation
                                 CopyTextureSegment(camTexture, tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, 0, 0);
                                 if (owner.lessResourceIntensive)
                                 {
-                                    yield return null;
+                                    yield return (processed + 0.5f) / totalTiles;
                                 }
                             }
                         }
@@ -117,7 +117,6 @@ namespace MapExporter.Generation
 
                     // Update progress
                     processed++;
-                    Progress = (float)processed / totalTiles;
 
                     // Write tile if we drew anything
                     if (tile != null)
@@ -125,12 +124,12 @@ namespace MapExporter.Generation
                         tile.Apply();
                         File.WriteAllBytes(Path.Combine(outputPath, $"{tileX}_{-1 - tileY}.png"), tile.EncodeToPNG());
                         Object.Destroy(tile);
-                        yield return null;
+                        yield return (float)processed / totalTiles;
                     }
                 }
             }
 
-            Done = true;
+            yield break;
         }
 
         public static void ScaleTexture(Texture2D texture, int width, int height)

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
@@ -11,7 +9,7 @@ namespace MapExporter.Generation
     {
         public override string ProcessName => "Room geometry";
 
-        protected override IEnumerator Process()
+        protected override IEnumerator<float> Process()
         {
             var regionInfo = owner.regionInfo;
             List<GeometryInfo> geo = [];
@@ -172,16 +170,13 @@ namespace MapExporter.Generation
                 processed++;
                 if (owner.lessResourceIntensive || processed % 20 == 0)
                 {
-                    Progress = (float)processed / regionInfo.rooms.Count;
-                    yield return null;
+                    yield return (float)processed / regionInfo.rooms.Count;
                 }
             }
 
             owner.metadata["geo_features"] = geo;
             
-            Progress = 1f;
-            yield return null;
-            Done = true;
+            yield break;
         }
 
         private struct GeometryInfo : IJsonObject

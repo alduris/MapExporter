@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace MapExporter.Generation
 {
-    internal class Cleaner : Processor
+    internal class CleanerProcessor : Processor
     {
         private readonly List<string> files = [];
 
-        public Cleaner(Generator owner) : base(owner)
+        public CleanerProcessor(Generator owner) : base(owner)
         {
             // Figure out what files need to be cleared
             for (int i = 0; i > -8; i--)
@@ -24,7 +23,7 @@ namespace MapExporter.Generation
                         files.AddRange(Directory.GetFiles(dir).Where(x => x.EndsWith(".png")));
                     }
                 }
-                catch (UnauthorizedAccessException) { }
+                catch (UnauthorizedAccessException) { } // this shouldn't happen
             }
         }
 
@@ -32,20 +31,23 @@ namespace MapExporter.Generation
 
         public override string ProcessName => "Cleaning old files";
 
-        protected override IEnumerator Process()
+        protected override IEnumerator<float> Process()
         {
             int i = 0;
             foreach (var file in files)
             {
                 i++;
-                File.Delete(file);
-                Progress = (float)i / files.Count;
-                if (i % (owner.lessResourceIntensive ? 100 : 250) == 0) yield return null;
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (UnauthorizedAccessException) { } // this shouldn't happen
+
+                if (i % (owner.lessResourceIntensive ? 100 : 250) == 0)
+                    yield return (float)i / files.Count;
             }
 
-            Progress = 1f;
-            Done = true;
-            yield return null;
+            yield break;
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,7 +11,7 @@ namespace MapExporter.Generation
     {
         public override string ProcessName => "Spawns";
 
-        protected override IEnumerator Process()
+        protected override IEnumerator<float> Process()
         {
             List<SpawnInfo> spawns = [];
 
@@ -41,9 +40,8 @@ namespace MapExporter.Generation
 
             owner.metadata["spawn_features"] = spawns;
 
-            Progress = 1f;
-            yield return null;
-            Done = true;
+            yield return 1f;
+            yield break;
         }
 
         public struct SpawnInfo : IJsonObject

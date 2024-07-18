@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using RWCustom;
 using UnityEngine;
 using static MapExporter.Generation.GenUtil;
@@ -10,7 +9,7 @@ namespace MapExporter.Generation
     {
         public override string ProcessName => "Misc";
 
-        protected override IEnumerator Process()
+        protected override IEnumerator<float> Process()
         {
             var metadata = owner.metadata;
             var regionInfo = owner.regionInfo;
@@ -46,9 +45,8 @@ namespace MapExporter.Generation
 
             metadata["geocolor"] = Color2Arr(HSV2HSL(sh, ss, sv).rgb);
 
-            Progress = 1f;
-            yield return null;
-            Done = true;
+            yield return 1f;
+            yield break;
         }
 
         private static Color Mode(List<Color> colors)

@@ -38,7 +38,7 @@ namespace MapExporter.Generation
             }
 
             // Enqueue processes
-            processes.Enqueue(new Cleaner(this));
+            processes.Enqueue(new CleanerProcessor(this));
             for (int i = 0; i < 8; i++)
             {
                 processes.Enqueue(new TileProcessor(this, -i));
