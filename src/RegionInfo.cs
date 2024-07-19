@@ -200,6 +200,7 @@ namespace MapExporter
 
             public DenSpawnData[][] spawns;
             public string[] tags;
+            public PlacedObjectData[] placedObjects;
 
             internal bool offscreenDen = false;
 
@@ -214,6 +215,7 @@ namespace MapExporter
                 subregion = room.subregionName;
                 devPos = owner.devPos[room.name] / 2f; // I do not want to write a paragraph explaining the dividing by 2
 
+                // spawns
                 if (spawnerCWT.TryGetValue(world, out var spawners))
                 {
                     List<DenSpawnData[]> spawns = [];
@@ -300,7 +302,6 @@ namespace MapExporter
                     }
 
                     int nodeIndex = room.shortcuts.Select(x => x.destNode).ToList().IndexOf(aRoom.ExitIndex(other.index));
-                    Plugin.Logger.LogInfo(nodeIndex);
                     if (conn == null)
                     {
                         conn = new ConnectionEntry()
@@ -319,6 +320,9 @@ namespace MapExporter
                         conn.dirB = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posB));
                     }
                 }
+
+                // Get placed objects
+                placedObjects = [.. room.roomSettings.placedObjects.Select(x => new PlacedObjectData(x))];
             }
 
             public Dictionary<string, object> ToJson()
@@ -336,6 +340,7 @@ namespace MapExporter
 
                     { "spawns", spawns },
                     { "tags", tags },
+                    { "objects", placedObjects },
                 };
             }
 
@@ -357,6 +362,7 @@ namespace MapExporter
                         return list.ToArray();
                     }).ToArray(),
                     tags = ((List<object>)json["tags"]).Cast<string>().ToArray(),
+                    placedObjects = ((List<object>)json["objects"] ?? []).Cast<Dictionary<string, object>>().Select(PlacedObjectData.FromJson).ToArray(),
                 };
 
                 if (json["cameras"] != null)
@@ -412,6 +418,36 @@ namespace MapExporter
                         night = (bool)json["night"],
                         data = (string)json["data"],
                         den = (int)(long)json["den"],
+                    };
+                }
+            }
+
+            public struct PlacedObjectData : IJsonObject
+            {
+                public PlacedObjectData(PlacedObject obj)
+                {
+                    pos = obj.pos;
+                    data = [.. obj.data.ToString().Split('~')]; // this is an awful way to do it but it should work with every built-in placed object data type
+                }
+
+                public Vector2 pos;
+                public List<string> data;
+
+                public readonly Dictionary<string, object> ToJson()
+                {
+                    return new()
+                    {
+                        { "pos", Vec2arr(pos) },
+                        { "data", data }
+                    };
+                }
+
+                public static PlacedObjectData FromJson(Dictionary<string, object> json)
+                {
+                    return new PlacedObjectData()
+                    {
+                        pos = Arr2Vec2((List<object>)json["pos"]),
+                        data = ((List<object>)json["data"]).Cast<string>().ToList()
                     };
                 }
             }
