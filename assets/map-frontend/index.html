@@ -17,6 +17,10 @@
     <script src="./global.js"></script>
 
     <style>
+        :root {
+            --cols: 1;
+        }
+
         /* big flex block of darkness */
         body,
         html {
@@ -60,12 +64,12 @@
             margin-right: auto;
             margin-top: 0.8em;
             margin-bottom: 0.8em;
-            max-width: 100vw;
-            display: flex;
-            flex-direction: column;
-            flex-wrap: wrap;
-			justify-content: center;
-			gap: 4px;
+            max-width: 90vw;
+            
+            display: grid;
+            grid-template-columns: repeat(var(--cols), auto);
+            justify-items: center;
+            gap: 4px;
         }
 
         button.region-button {
@@ -73,7 +77,6 @@
             width: 200px;
             height: 40px;
             background: black;
-            margin: 4px;
         }
 
         .difficulty-btn {
@@ -97,15 +100,50 @@
 
         <script>
             let regions = {};
+            const gap = 4;
+
+            function organizeColumns() {
+                const buttons = document.getElementsByClassName("region-button");
+                let numRegions = buttons.length;
+
+                // Return 1 if no regions
+                if (numRegions == 0) {
+                    console.log("No regions!");
+                    document.documentElement.style.setProperty("--cols", "1");
+                    return;
+                }
+
+                // Compute body size
+                const maxWidth = window.innerWidth * 0.9;
+                const idealHeight = window.innerHeight * 0.6;
+
+                // Compute size of buttons
+                const buttonBox = buttons[0].getBoundingClientRect();
+                const buttonWidth = buttonBox.width + gap;
+                const buttonHeight = buttonBox.height + gap;
+                const maxColumns = Math.floor(maxWidth / buttonWidth);
+                const idealMaxRows = Math.floor(idealHeight / buttonHeight);
+
+                // Figure out how many columns we can get away with
+                const idealColumns = Math.ceil(numRegions * buttonHeight / idealHeight);
+                document.documentElement.style.setProperty("--cols", Math.max(1, idealColumns > maxColumns ? maxColumns : idealColumns));
+
+                console.log(`Num regions: ${numRegions}
+Possible columns: ${maxColumns}
+Possible rows: ${idealMaxRows}
+Ideal number of columns: ${idealColumns}`);
+            }
+            window.addEventListener("resize", () => organizeColumns());
 
             getJsonObject("regions.json", function(json) {
                 console.log(json);
                 regions = json;
-                var html = "";
-                for(const r in regions) {
+                let html = "";
+                for (const r in regions) {
                     html += '<button class="region-button rw-ui rw-text" name="region" value="' + r + '">' + regions[r]["name"].toUpperCase() + '</button>';
                 }
                 document.getElementById('regionlist').innerHTML = html;
+                organizeColumns();
             }, true);
         </script>
     </form>
