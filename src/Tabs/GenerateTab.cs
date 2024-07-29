@@ -176,7 +176,11 @@ namespace MapExporter.Tabs
                         {
                             if (Data.FinishedRegions.TryGetValue(current, out var slugcats))
                             {
-                                Data.FinishedRegions[current].Add(slugQueue.Peek());
+                                if (slugcats.Any(x => x.value.Equals(slugQueue.Peek().value, StringComparison.InvariantCultureIgnoreCase)))
+                                {
+                                    // Guarantee unique so you don't get repetitions in the list
+                                    Data.FinishedRegions[current].Add(slugQueue.Peek());
+                                }
                             }
                             else
                             {

@@ -169,10 +169,10 @@
             padding-right: 24px !important;
             margin-right: -16px !important;
         }
-		
-		.hidden {
-			display: none !important;
-		}
+        
+        .hidden {
+            display: none !important;
+        }
 
     </style>
 
@@ -251,9 +251,6 @@
                 region = value;
                 if (regions[region]["slugcats"].indexOf(difficulty) == -1) {
                     difficulty = regions[region]["slugcats"][0];
-                }
-                for (let i = 0; i < slugcats.length; i++) {
-                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(difficulty) == -1);
                 }
                 pushState();
             }
@@ -368,6 +365,12 @@
                     window.history.pushState(null, '', window.location.pathname + '?' + newstr);
                 } else if (!noNavigation) document.location.search = newstr;
                 if (!noNavigation) newState();
+            }
+
+            if (region != region_param) {
+                for (let i = 0; i < slugcats.length; i++) {
+                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
+                }
             }
         }
         function newState() {
@@ -532,24 +535,14 @@
             }
             region = pregion; // chaos
             console.log("Loading: region {" + region + "} on slugcat {" + pdifficulty + "}");
-            var slugcat_url = {
-                "artificer": "./slugcats/artificer",
-                "gourmand": "./slugcats/gourmand",
-                "rivulet": "./slugcats/rivulet",
-                "saint": "./slugcats/saint",
-                "spear": "./slugcats/spear",
-                "white": "./slugcats/white",
-                "yellow": "./slugcats/yellow",
-                "red": "./slugcats/red",
-            };
             var region_url = region.toLowerCase();
             var roompath = `./slugcats/${pdifficulty}/${region_url}`;
             getJsonObject(`${roompath}/region.json`, function (json) {
                 var roomjson = json;
                 if ('copyingrooms' in json) {
-                    getJsonObject(`${slugcat_url[json['copyingrooms']]}/${region_url}/region.json`, function (copyjson) {
+                    getJsonObject(`${roompath}/${region_url}/region.json`, function (copyjson) {
                         roomjson = copyjson;
-                        roompath = `${slugcat_url[json['copyingrooms']]}/${region_url}`;
+                        roompath = `${roompath}/${region_url}`;
                     }, false);
                 }
 
@@ -722,7 +715,14 @@
 
                 loadedDifficulty = pdifficulty;
                 loadedRegion = pregion;
+
             }, true);
+
+            if (Object.keys(regions).indexOf(region) != -1) {
+                for (let i = 0; i < slugcats.length; i++) {
+                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
+                }
+            }
         }
 
     </script>
