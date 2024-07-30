@@ -62,7 +62,7 @@ namespace MapExporter.Server
                 }
                 else if (Resources.TryGetTile(req.Url.AbsolutePath, out buffer))
                 {
-                    res.ContentType = "image/png";
+                    res.ContentType = GetMimeType(req.Url.AbsolutePath);
                     message += "tile. (200)";
                 }
                 else if (Resources.TryGetActualPath(req.Url.AbsolutePath, out string path))

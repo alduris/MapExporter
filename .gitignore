@@ -9,6 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+desktop.ini
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -401,5 +402,31 @@ FodyWeavers.xsd
 assets/plugins/*.*
 assets/newest/plugins/*.*
 
-# Don't keep creature icons since they get auto-generated
+# Don't keep auto-generated icons
 assets/map-frontend/resources/creatures/*
+assets/map-frontend/resources/objects/*
+assets/map-frontend/resources/slugcats/*
+
+# Exceptions for custom art or necessary ones
+!assets/map-frontend/resources/creatures/hoverfly.png
+
+!assets/map-frontend/resources/objects/ghostspot.png
+!assets/map-frontend/resources/objects/eeghostspot.png
+
+!assets/map-frontend/resources/objects/bluetoken.png
+!assets/map-frontend/resources/objects/devtoken.png
+!assets/map-frontend/resources/objects/goldtoken.png
+!assets/map-frontend/resources/objects/greentoken.png
+!assets/map-frontend/resources/objects/redtoken.png
+
+!assets/map-frontend/resources/slugcat/default.png
+!assets/map-frontend/resources/slugcat/white.png
+!assets/map-frontend/resources/slugcat/yellow.png
+!assets/map-frontend/resources/slugcat/red.png
+!assets/map-frontend/resources/slugcat/night.png
+!assets/map-frontend/resources/slugcat/artificer.png
+!assets/map-frontend/resources/slugcat/gourmand.png
+!assets/map-frontend/resources/slugcat/rivulet.png
+!assets/map-frontend/resources/slugcat/spear.png
+!assets/map-frontend/resources/slugcat/saint.png
+!assets/map-frontend/resources/slugcat/inv.png

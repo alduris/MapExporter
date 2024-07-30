@@ -179,6 +179,7 @@ namespace MapExporter.Tabs
                                 if (slugcats.Any(x => x.value.Equals(slugQueue.Peek().value, StringComparison.InvariantCultureIgnoreCase)))
                                 {
                                     // Guarantee unique so you don't get repetitions in the list
+#warning actually this doesn't really work why not
                                     Data.FinishedRegions[current].Add(slugQueue.Peek());
                                 }
                             }
