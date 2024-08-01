@@ -280,8 +280,19 @@ namespace MapExporter
                         //terain, vb+hb, sc
                     }
                 }
-                // nodes = room.exitAndDenIndex;
-                nodes = [.. aRoom.nodes.Select((_, i) => room.LocalCoordinateOfNode(i).Tile)];
+                nodes = new IntVector2[aRoom.nodes.Length];
+                for (int i = 0; i < nodes.Length; i++)
+                {
+                    try
+                    {
+                        nodes[i] = room.LocalCoordinateOfNode(i).Tile;
+                    }
+                    catch (IndexOutOfRangeException) // die
+                    {
+                        nodes[i] = new IntVector2(-1, -1);
+                    }
+                }
+                // nodes = [.. aRoom.nodes.Select((_, i) => room.LocalCoordinateOfNode(i).Tile)];
 
                 // Initialize connections
                 for (int i = 0; i < aRoom.connections.Length; i++)
