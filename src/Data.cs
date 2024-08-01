@@ -67,6 +67,7 @@ namespace MapExporter
             Inactive,
             Unfinished,
             Errored,
+            Relaunch,
             Finished
         }
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;

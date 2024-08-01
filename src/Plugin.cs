@@ -1,19 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Permissions;
 using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Logging;
+using MapExporter.Screenshotter;
+using Menu.Remix.MixedUI;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using Mono.Cecil.Cil;
-using UnityEngine;
 using MoreSlugcats;
-using RWCustom;
-using MapExporter.Screenshotter;
+using UnityEngine;
 using Random = UnityEngine.Random;
-using Menu.Remix.MixedUI;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -533,6 +533,7 @@ sealed class Plugin : BaseUnityPlugin
             if (self.roomSettings.effects[i].type == RoomSettings.RoomEffect.Type.VoidSea) self.roomSettings.effects.RemoveAt(i); // breaks with no player
             else if (self.roomSettings.effects[i].type.ToString() == "CGCameraZoom") self.roomSettings.effects.RemoveAt(i); // bad for screenies
         }
+        List<PlacedObject> reactivateLater = [];
         foreach (var item in self.roomSettings.placedObjects)
         {
             // if (item.type == PlacedObject.Type.InsectGroup) item.active = false;
@@ -566,8 +567,24 @@ sealed class Plugin : BaseUnityPlugin
             )
                 self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 20);
 
+            // Fuck you
+            if (item.active)
+            {
+                if (ModManager.MSC && item.type == MoreSlugcatsEnums.PlacedObjectType.Stowaway)
+                {
+                    item.active = false;
+                    reactivateLater.Add(item);
+                }
+            }
+
         }
+
         orig(self);
+
+        foreach (var item in reactivateLater)
+        {
+            item.active = true;
+        }
     }
 
     private void WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues(On.WorldLoader.orig_ctor_RainWorldGame_Name_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game, SlugcatStats.Name playerCharacter, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)

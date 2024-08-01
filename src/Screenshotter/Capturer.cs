@@ -62,6 +62,8 @@ namespace MapExporter.Screenshotter
             return $"{Path.Combine(PathOfRegion(slugcat, region), room.ToLower())}_{num}.png";
         }
 
+        private static int screens = 0;
+        private const int THRESHOLD = 300;
         public System.Collections.IEnumerator CaptureTask(RainWorldGame game)
         {
             // Task start
@@ -92,6 +94,15 @@ namespace MapExporter.Screenshotter
             // Recreate scuglat list from last time if needed
             while (slugsRendering.Count > 0)
             {
+                if (screens > THRESHOLD)
+                {
+                    // Save the memory!
+                    Data.ScreenshotterStatus = Data.SSStatus.Relaunch;
+                    Data.SaveData();
+                    Application.Quit();
+                    yield break;
+                }
+
                 SlugcatStats.Name slugcat = new(slugsRendering.Dequeue());
 
                 game.GetStorySession.saveStateNumber = slugcat;
@@ -99,6 +110,13 @@ namespace MapExporter.Screenshotter
 
                 foreach (var step in CaptureRegion(game, regionRendering))
                     yield return step;
+
+                if (Data.QueuedRegions.Count > 0 && Data.QueuedRegions.Peek().acronym == regionRendering)
+                {
+                    // Save new progress in case of bad thing
+                    Data.QueuedRegions.Peek().scugs.Remove(slugcat);
+                    Data.SaveData();
+                }
             }
 
             Data.ScreenshotterStatus = Data.SSStatus.Finished;
@@ -205,6 +223,8 @@ namespace MapExporter.Screenshotter
 
                 yield return new WaitForEndOfFrame(); // wait an extra frame or two so objects can render, why not
                 yield return null;
+
+                screens++;
 
                 string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
                 if (!Data.GetPreference(Preferences.ScreenshotterSkipExisting) || !File.Exists(filename)) // does the user want to skip existing tiles

@@ -74,6 +74,7 @@ namespace MapExporter.Tabs
 
             var abortButton = new OpSimpleButton(new Vector2(315f, 530f), new Vector2(80f, 24f), "ABORT") { colorEdge = RedColor };
             var skipButton = new OpSimpleButton(new Vector2(405f, 530f), new Vector2(80f, 24f), "SKIP");
+            var retryButton = new OpSimpleButton(new Vector2(495f, 530f), new Vector2(80f, 24f), "RETRY");
 
             // Event listeners
             addButton.OnClick += AddButton_OnClick;
@@ -83,6 +84,7 @@ namespace MapExporter.Tabs
 
             abortButton.OnClick += AbortButton_OnClick;
             skipButton.OnClick += SkipButton_OnClick;
+            retryButton.OnClick += RetryButton_OnClick;
 
             // Add UI to UI
             AddItems([
@@ -101,6 +103,7 @@ namespace MapExporter.Tabs
                 new OpShinyLabel(315f, 560f, "SCREENSHOTTING", true),
                 abortButton,
                 skipButton,
+                retryButton,
                 queueBox,
 
                 // For z-index ordering reasons
@@ -385,6 +388,30 @@ namespace MapExporter.Tabs
                     Data.SaveData();
                     RetryAttempts = 0;
                 }
+                else if (Data.ScreenshotterStatus == SSStatus.Relaunch)
+                {
+                    Data.GetData();
+                    QueueDirty = true;
+                    Data.ScreenshotterStatus = SSStatus.Inactive;
+                    var data = Data.QueuedRegions.Peek();
+                    foreach (var scug in data.scugs)
+                    {
+                        if (Data.RenderedRegions.TryGetValue(scug, out var list))
+                        {
+                            if (!list.Contains(data.acronym))
+                            {
+                                // Don't add duplicate acronyms (oops)
+                                list.Add(data.acronym);
+                            }
+                        }
+                        else
+                        {
+                            Data.RenderedRegions.Add(scug, [data.acronym]);
+                        }
+                    }
+                    Data.SaveData();
+                    RetryAttempts = 0;
+                }
                 else
                 {
                     // Uh-oh spaghetti-o's! Retry just in case user accidentally closed it or the problem was fixed idk
@@ -515,6 +542,29 @@ namespace MapExporter.Tabs
             RetryAttempts = 0;
             Data.QueuedRegions.Dequeue();
             QueueDirty = true;
+            Data.ScreenshotterStatus = SSStatus.Inactive;
+            Data.SaveData();
+        }
+
+        private void RetryButton_OnClick(UIfocusable trigger)
+        {
+            if (Data.QueuedRegions.Count == 0)
+            {
+                trigger.PlaySound(SoundID.MENU_Error_Ping);
+                return;
+            }
+
+            if (ScreenshotProcess != null)
+            {
+                ScreenshotProcess.Kill();
+                ScreenshotProcess.Close();
+                ScreenshotProcess.Dispose();
+                ScreenshotProcess = null;
+            }
+            RetryAttempts = 0;
+
+            QueueDirty = true;
+            Data.GetData();
             Data.ScreenshotterStatus = SSStatus.Inactive;
             Data.SaveData();
         }
