@@ -158,6 +158,7 @@ sealed class Plugin : BaseUnityPlugin
     private void WorldLoader_MappingRooms(ILContext il)
     {
         // Always put room tags in the WorldLoader roomTags array so they get added to the room
+#warning NOT ALL TAGS GET SAVED!! FIX THIS CODE
         try
         {
             var c = new ILCursor(il);

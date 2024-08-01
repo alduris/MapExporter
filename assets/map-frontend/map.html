@@ -60,6 +60,38 @@
             height: 24px;
         }
 
+        .roomtag-divs {
+            display: flex;
+            justify-content: center;
+        }
+
+        .roomtag-entry {
+            display: none;
+            /* to be overwritten */
+            margin-left: 16px;
+            margin-right: 16px;
+        }
+
+        .roomtag-label {
+            position: absolute;
+            margin-left: 0px;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 125%;
+            color: white;
+            -webkit-text-fill-color: white;
+            /* Will override color (regardless of order) */
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: black;
+            font-family: var(--font-body);
+        }
+
+        .roomtag-image {
+            position: absolute;
+            margin-left: -45px;
+            margin-top: 0px;
+        }
+
         .icon-image {
             position: absolute;
             margin-left: -25px;
@@ -105,7 +137,6 @@
             max-height: calc(100vh - 54px);
             display: flex;
             flex-direction: column;
-
             padding: 8px;
             background: #0c0c0c;
             z-index: 1000;
@@ -153,7 +184,7 @@
             margin-bottom: 8px;
         }
 
-        input[type='radio'].rw-ui+span {
+        input[type='radio'].rw-ui + span {
             top: calc(50% - 10px);
             /* proof that CSS is stupid, cant fucking vertical center text */
         }
@@ -169,11 +200,10 @@
             padding-right: 24px !important;
             margin-right: -16px !important;
         }
-		
-		.hidden {
-			display: none !important;
-		}
 
+        .hidden {
+            display: none !important;
+        }
     </style>
 
 
@@ -181,14 +211,24 @@
         .spawn-filter {
             display: initial
         }
+    </style>
 
+    <style id="objectfilters">
+        .object-filter {
+            display: initial
+        }
+    </style>
+
+    <style id="roomtagfilters">
+        .roomtag-filter {
+            display: initial
+        }
     </style>
 
     <style id="hoverlabels">
         .hover-label {
             display: none;
         }
-
     </style>
 
 </head>
@@ -251,9 +291,6 @@
                 region = value;
                 if (regions[region]["slugcats"].indexOf(difficulty) == -1) {
                     difficulty = regions[region]["slugcats"][0];
-                }
-                for (let i = 0; i < slugcats.length; i++) {
-                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(difficulty) == -1);
                 }
                 pushState();
             }
@@ -369,6 +406,12 @@
                 } else if (!noNavigation) document.location.search = newstr;
                 if (!noNavigation) newState();
             }
+
+            if (region != region_param) {
+                for (let i = 0; i < slugcats.length; i++) {
+                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
+                }
+            }
         }
         function newState() {
             //console.log("newState");
@@ -468,7 +511,7 @@
             crs: L.CRS.Simple,
             zoomControl: false,
         });
-        map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &amp <a href="https://github.com/henpemaz" title="Gamedev &amp associated arts enthusiast">Henpemaz</a>')
+        map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>, <a href="https://github.com/henpemaz" title="Gamedev &amp; associated arts enthusiast">Henpemaz</a>, &amp; <a href="https://github.com/alduris" title="Some kind of programmer I think">Alduris</a>')
         map.setView([0, 0], -5);
 
         // Events
@@ -507,6 +550,8 @@
         var connectionsLayer;
         var geometryLayer;
         var densLayer;
+        var placedObjectsLayer;
+        var roomTagsLayer;
         var loadedDifficulty = null;
         var loadedRegion = null;
         function loadRegion(pdifficulty, pregion) {
@@ -532,24 +577,14 @@
             }
             region = pregion; // chaos
             console.log("Loading: region {" + region + "} on slugcat {" + pdifficulty + "}");
-            var slugcat_url = {
-                "artificer": "./slugcats/artificer",
-                "gourmand": "./slugcats/gourmand",
-                "rivulet": "./slugcats/rivulet",
-                "saint": "./slugcats/saint",
-                "spear": "./slugcats/spear",
-                "white": "./slugcats/white",
-                "yellow": "./slugcats/yellow",
-                "red": "./slugcats/red",
-            };
             var region_url = region.toLowerCase();
             var roompath = `./slugcats/${pdifficulty}/${region_url}`;
             getJsonObject(`${roompath}/region.json`, function (json) {
                 var roomjson = json;
                 if ('copyingrooms' in json) {
-                    getJsonObject(`${slugcat_url[json['copyingrooms']]}/${region_url}/region.json`, function (copyjson) {
+                    getJsonObject(`${roompath}/${region_url}/region.json`, function (copyjson) {
                         roomjson = copyjson;
-                        roompath = `${slugcat_url[json['copyingrooms']]}/${region_url}`;
+                        roompath = `${roompath}/${region_url}`;
                     }, false);
                 }
 
@@ -698,6 +733,75 @@
                 if (hadSpawns) densLayer.addTo(map);
                 overlays.addOverlay(densLayer, "Spawns");
 
+                // Placed Objects
+                // todo
+
+                // Room Tags
+                let hadRoomTags = map.hasLayer(roomTagsLayer) || loadedRegion == null;
+                if (roomTagsLayer != null) {
+                    overlays.removeLayer(roomTagsLayer);
+                    map.removeLayer(roomTagsLayer);
+                }
+                roomTagsLayer = L.geoJSON(json["roomtag_features"], {
+                    pointToLayer: function (feature, latlng) {
+                        let taghtml = "";
+                        let roomtag = feature.properties;
+                        let icons = [];
+                        let tooltips = [];
+
+                        for (const tag of roomtag.tags) {
+                            if (tag == "SHELTER") {
+                                tooltips.push("Shelter");
+                                icons.push("Shelter_icon");
+                            } else if (tag == "ANCIENTSHELTER") {
+                                tooltips.push("Ancient Shelter");
+                                icons.push("AncientShelter_icon");
+                            } else if (tag == "GATE") {
+                                tooltips.push("Gate");
+                                icons.push("Gate_icon");
+                            } else if (tag == "SWARMROOM") {
+                                tooltips.push("Swarm Room");
+                                icons.push("SwarmRoom_icon");
+                            } else if (tag == "PERF_HEAVY") {
+                                tooltips.push("Performance Heavy");
+                            } else if (tag == "SCAVOUTPOST") {
+                                tooltips.push("Scavenger Toll");
+                                icons.push("ScavOutpost_icon");
+                            } else if (tag == "SCAVTRADER") {
+                                tooltips.push("Scavenger Merchant");
+                                icons.push("ScavTrader_icon");
+                            } else if (tag == "NOTRACKERS") {
+                                tooltips.push("No Trackers");
+                            } else if (tag == "ARENA") {
+                                tooltips.push("Arena");
+                            } else {
+                                tooltips.push(tag);
+                                icons.push("unknown-white");
+                            }
+                        }
+
+                        // Put together the HTML
+                        taghtml += "<div class=\"roomtag-entry roomtag-filter\">";
+                        for (const icon of icons) {
+                            taghtml += `<img class="roomtag-image" src="./resources/${icon}.png"/>`;
+                        }
+                        for (const tooltip of tooltips) {
+                            taghtml += `<div class="roomtag-label">${tooltip}</div>`;
+                        }
+                        taghtml += "</div>";
+
+                        return L.marker(latlng, {
+                            icon: L.divIcon({
+                                className: 'roomtag-divs',
+                                html: taghtml,
+                            }),
+                            interactive: false,
+                        });
+                    },
+                });
+                if (hadRoomTags) roomTagsLayer.addTo(map);
+                overlays.addOverlay(roomTagsLayer, "Room Tags");
+
                 // Zoom to room on rooms loaded
                 let foundRoom = false;
                 if (room != null && roomsLayer != null) {
@@ -722,7 +826,19 @@
 
                 loadedDifficulty = pdifficulty;
                 loadedRegion = pregion;
+
+                // Don't enable certain layers when loaded for the first time
+                if (loadedCount == 1) {
+                    map.removeLayer(placedObjectsLayer);
+                    map.removeLayer(roomTagsLayer);
+                };
             }, true);
+
+            if (Object.keys(regions).indexOf(region) != -1) {
+                for (let i = 0; i < slugcats.length; i++) {
+                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
+                }
+            }
         }
 
     </script>
