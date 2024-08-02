@@ -72,7 +72,7 @@ namespace MapExporter
         }
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;
 
-        public static readonly Dictionary<SlugcatStats.Name, List<string>> RenderedRegions = [];
+        public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> RenderedRegions = [];
         public static readonly Dictionary<string, List<SlugcatStats.Name>> FinishedRegions = [];
 
         public static void GetData()
@@ -106,23 +106,23 @@ namespace MapExporter
                     var regions = (Dictionary<string, object>)json["rendered"];
                     foreach (var scugRegions in regions)
                     {
-                        var scug = new SlugcatStats.Name(scugRegions.Key, false);
-                        var savedList = ((List<object>)scugRegions.Value).Cast<string>().ToList();
+                        var region = scugRegions.Key;
+                        var scugs = ((List<object>)scugRegions.Value).Select(x => new SlugcatStats.Name((string)x, false)).ToList();
 
                         // Make sure the regions still exist in our file system
-                        var foundList = new List<string>();
-                        foreach (var region in savedList)
+                        var foundList = new HashSet<SlugcatStats.Name>();
+                        foreach (var scug in scugs)
                         {
-                            if (Directory.Exists(RenderOutputDir(scugRegions.Key, region)))
+                            if (Directory.Exists(RenderOutputDir(scug.value, region)))
                             {
-                                foundList.Add(region);
+                                foundList.Add(scug);
                             }
                         }
 
                         // Don't add the scug to the list if they have no rendered regions in the file system
                         if (foundList.Count > 0)
                         {
-                            RenderedRegions.Add(scug, foundList);
+                            RenderedRegions.Add(region, foundList);
                         }
                     }
                 }
@@ -185,7 +185,7 @@ namespace MapExporter
             Dictionary<string, string[]> rendered = [];
             foreach (var kv in RenderedRegions)
             {
-                rendered.Add(kv.Key.value, [.. kv.Value]);
+                rendered.Add(kv.Key, [.. kv.Value.Select(x => x.value)]);
             }
             Dictionary<string, string[]> finished = [];
             foreach (var kv in FinishedRegions)

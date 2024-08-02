@@ -370,19 +370,15 @@ namespace MapExporter.Tabs
                     var data = Data.QueuedRegions.Dequeue();
                     QueueDirty = true;
                     Data.ScreenshotterStatus = SSStatus.Inactive;
-                    foreach (var scug in data.scugs)
+                    if (!Data.RenderedRegions.TryGetValue(data.acronym, out var scugs))
                     {
-                        if (Data.RenderedRegions.TryGetValue(scug, out var list))
+                        Data.RenderedRegions.Add(data.acronym, data.scugs);
+                    }
+                    else
+                    {
+                        foreach (var scug in data.scugs)
                         {
-                            if (!list.Contains(data.acronym))
-                            {
-                                // Don't add duplicate acronyms (oops)
-                                list.Add(data.acronym);
-                            }
-                        }
-                        else
-                        {
-                            Data.RenderedRegions.Add(scug, [data.acronym]);
+                            scugs.Add(scug);
                         }
                     }
                     Data.SaveData();
@@ -394,21 +390,6 @@ namespace MapExporter.Tabs
                     QueueDirty = true;
                     Data.ScreenshotterStatus = SSStatus.Inactive;
                     var data = Data.QueuedRegions.Peek();
-                    foreach (var scug in data.scugs)
-                    {
-                        if (Data.RenderedRegions.TryGetValue(scug, out var list))
-                        {
-                            if (!list.Contains(data.acronym))
-                            {
-                                // Don't add duplicate acronyms (oops)
-                                list.Add(data.acronym);
-                            }
-                        }
-                        else
-                        {
-                            Data.RenderedRegions.Add(scug, [data.acronym]);
-                        }
-                    }
                     Data.SaveData();
                     RetryAttempts = 0;
                 }

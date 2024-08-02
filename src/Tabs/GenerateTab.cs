@@ -22,6 +22,7 @@ namespace MapExporter.Tabs
 
         private Generator generator;
         private int dataVersion = 0;
+        private bool running = false;
 
         private readonly Queue<string> queue = [];
         private string current;
@@ -33,9 +34,7 @@ namespace MapExporter.Tabs
             const float MARGIN = 6f;
             const float BOX_HEIGHT = (MENU_SIZE - 4 * PADDING - 3 * BIG_LINE_HEIGHT - 3 * MARGIN - 24f) / 2;
 
-            var allRegions = new HashSet<string>(Data.RenderedRegions.Values.SelectMany(x => x))
-                .Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i))
-                .ToList();
+            var allRegions = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToList();
             if (allRegions.Count == 0)
             {
                 allRegions.Add(new ListItem("", ""));
@@ -51,26 +50,30 @@ namespace MapExporter.Tabs
                 0f, true, true, true);
             currentBox = new OpScrollBox(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, BOX_HEIGHT), BOX_HEIGHT, false, true, false);
 
+            var startButton = new OpSimpleButton(new Vector2(), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
+            startButton.OnClick += StartButton_OnClick;
+
             AddItems(
                 new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "GENERATE", true),
                 regionSelector, regionAdd,
                 new OpLabel(PADDING, regionSelector.pos.y - PADDING - BIG_LINE_HEIGHT, "QUEUE", true),
                 queueBox,
                 new OpLabel(PADDING, queueBox.pos.y - PADDING - BIG_LINE_HEIGHT, "CURRENT", true),
-                currentBox
+                currentBox,
+                startButton
             );
         }
 
         public override void Update()
         {
             // Update queue
-            if (generator == null && (queue.Count > 0 || current != null))
+            if (generator == null && (queue.Count > 0 || current != null) && running)
             {
                 if (current == null)
                 {
                     current = queue.Dequeue();
 
-                    var scugs = Data.RenderedRegions.Select(x => x.Value.Any(x => x == current) ? x.Key : null).Where(x => x != null);
+                    var scugs = Data.RenderedRegions[current];
                     slugQueue.Clear(); // there should be nothing in it but just as a safety
                     foreach (var scug in scugs) slugQueue.Enqueue(scug);
                 }
@@ -78,6 +81,10 @@ namespace MapExporter.Tabs
 
                 queueDirty = true;
                 currentDirty = true;
+            }
+            else if (queue.Count == 0 && current == null)
+            {
+                running = false;
             }
 
             // Update queuebox
@@ -204,20 +211,7 @@ namespace MapExporter.Tabs
             {
                 dataVersion = Data.Version;
 
-                // Update slugcat list
-                var regionListList = Data.RenderedRegions.Values.ToList();
-                if (regionListList.Count == 0)
-                    regionListList.Add([""]); // dummy placeholder
-
-                var regionList = new HashSet<string>();
-                foreach (var list in regionListList)
-                {
-                    foreach (var region in list)
-                    {
-                        regionList.Add(region);
-                    }
-                }
-                regionSelector._itemList = regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToArray();
+                regionSelector._itemList = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToArray();
                 regionSelector._ResetIndex();
                 regionSelector.value = null;
                 regionSelector.Change();
@@ -235,6 +229,11 @@ namespace MapExporter.Tabs
 
             queue.Enqueue(regionSelector.value);
             regionSelector.value = null;
+        }
+
+        private void StartButton_OnClick(UIfocusable trigger)
+        {
+            running = true;
         }
     }
 }

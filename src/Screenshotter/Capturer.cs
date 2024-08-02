@@ -115,8 +115,18 @@ namespace MapExporter.Screenshotter
                 {
                     // Save new progress in case of bad thing
                     Data.QueuedRegions.Peek().scugs.Remove(slugcat);
-                    Data.SaveData();
                 }
+
+                if (!Data.RenderedRegions.TryGetValue(regionRendering, out var scugs))
+                {
+                    Data.RenderedRegions.Add(regionRendering, [slugcat]);
+                }
+                else
+                {
+                    scugs.Add(slugcat);
+                }
+
+                Data.SaveData();
             }
 
             Data.ScreenshotterStatus = Data.SSStatus.Finished;

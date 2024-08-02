@@ -13,8 +13,8 @@ namespace MapExporter.Tabs
 {
     internal class EditTab(OptionInterface owner) : BaseTab(owner, "Editor")
     {
-        private OpComboBox scugSelector;
         private OpComboBox regionSelector;
+        private OpComboBox scugSelector;
         private OpScrollBox roomSelector;
         private OpMapBox mapBox;
         private readonly WeakReference<OpTextButton> activeButton = new(null);
@@ -31,16 +31,16 @@ namespace MapExporter.Tabs
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
             const float MENU_SIZE = 600f;
-            var scugList = Data.RenderedRegions.Keys.ToList();
-            if (scugList.Count == 0)
-                scugList.Add(new SlugcatStats.Name("", false)); // dummy placeholder
+            var regionList = Data.RenderedRegions.Keys.ToList();
+            if (regionList.Count == 0)
+                regionList.Add(""); // dummy placeholder
 
             // Top of menu
             const float TOPBAR_UNIT_WIDTH = (MENU_SIZE - SIDE_PADDING * 2f - ITEM_GAP * 2) / 5f;
-            scugSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f), TOPBAR_UNIT_WIDTH, scugList.Select(x => x.value).ToArray());
-            scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
-            regionSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH + ITEM_GAP, scugSelector.pos.y), TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP, [""]);
+            regionSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f), TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP, regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToList());
             regionSelector.OnValueChanged += RegionSelector_OnValueChanged;
+            scugSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP * 2, regionSelector.pos.y), TOPBAR_UNIT_WIDTH, [""]);
+            scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
             var saveButton = new OpSimpleButton(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 24f), "SAVE")
             {
                 colorEdge = BlueColor
@@ -68,8 +68,8 @@ namespace MapExporter.Tabs
                 new OpLabel(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 50f, "Left click + drag to move, right click to pick room (or use list on left)"),
 
                 // Place the top things last for z-index reasons
-                regionSelector,
                 scugSelector,
+                regionSelector,
                 saveButton,
                 new OpShinyLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "MOVE", FLabelAlignment.Center, true)
             );
@@ -82,53 +82,53 @@ namespace MapExporter.Tabs
             {
                 dataVersion = Data.Version;
 
-                // Update slugcat list
-                var scugList = Data.RenderedRegions.Keys.ToList();
-                if (scugList.Count == 0)
-                    scugList.Add(new SlugcatStats.Name("", false)); // dummy placeholder
-                scugSelector._itemList = scugList.Select((x, i) => new ListItem(x.value, i)).ToArray();
-                scugSelector._ResetIndex();
-                scugSelector.Change();
-                ScugSelector_OnValueChanged(null, scugSelector.value, null);
+                // Update region list
+                var regionList = Data.RenderedRegions.Keys.ToList();
+                if (regionList.Count == 0)
+                    regionList.Add(""); // dummy placeholder
+                regionSelector._itemList = regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToArray();
+                regionSelector._ResetIndex();
+                regionSelector.Change();
+                RegionSelector_OnValueChanged(null, regionSelector.value, null);
             }
         }
 
-        private void ScugSelector_OnValueChanged(UIconfig config, string slugcat, string oldSlugcat)
+        private void RegionSelector_OnValueChanged(UIconfig config, string region, string oldRegion)
         {
             const string PLACEHOLDERSTR = ":"; // impossible for region to have as its name because Windows file names can't have colons
-            if (oldSlugcat == slugcat) return;
-
-            var scug = new SlugcatStats.Name(slugcat);
+            if (oldRegion == region) return;
 
             // Clear old list
-            var oldList = regionSelector.GetItemList();
-            regionSelector.AddItems(false, new ListItem(PLACEHOLDERSTR));
-            foreach (var region in oldList)
+            var oldList = scugSelector.GetItemList();
+            scugSelector.AddItems(false, new ListItem(PLACEHOLDERSTR));
+            foreach (var scug in oldList)
             {
-                regionSelector.RemoveItems(true, region.name);
+                scugSelector.RemoveItems(true, scug.name);
             }
 
             // Add new items
-            if (Data.RenderedRegions.ContainsKey(scug))
+            if (Data.RenderedRegions.TryGetValue(region, out var scugs) && scugs.Count > 0)
             {
-                var regions = Data.RenderedRegions[scug];
-                foreach (var region in regions)
+                foreach (var scug in scugs)
                 {
-                    regionSelector.AddItems(false, new ListItem(region, $"({region}) {Region.GetRegionFullName(region, scug)}"));
+                    Plugin.Logger.LogDebug(scug.value);
+                    scugSelector.AddItems(true, new ListItem(scug.value));
                 }
             }
             else
             {
-                regionSelector.AddItems(false, new ListItem("")); // there has to be at least 1 for some reason
+                Plugin.Logger.LogDebug("NOPE");
+                scugSelector.AddItems(false, new ListItem("")); // there has to be at least 1 for some reason
             }
 
-            regionSelector.RemoveItems(true, PLACEHOLDERSTR);
-            regionSelector.value = null;
+            scugSelector.RemoveItems(true, PLACEHOLDERSTR);
+            scugSelector.value = null;
+            mapBox.UnloadRegion();
         }
 
-        private void RegionSelector_OnValueChanged(UIconfig config, string acronym, string oldAcronym)
+        private void ScugSelector_OnValueChanged(UIconfig config, string scug, string oldScug)
         {
-            if (acronym == oldAcronym) return;
+            if (scug == oldScug) return;
 
             // Remove items from boxes
             foreach (var item in roomSelector.items)
@@ -139,20 +139,18 @@ namespace MapExporter.Tabs
             roomSelector.SetContentSize(0);
 
             // Don't put any new stuff if there is no region
-            var scug = new SlugcatStats.Name(scugSelector.value, false);
-            if (acronym == null || scug.Index == -1 || !Data.RenderedRegions.ContainsKey(scug) ||
-                !Data.RenderedRegions[scug].Contains(acronym, StringComparer.InvariantCultureIgnoreCase))
+            var region = regionSelector.value;
+            if (region == null || region == "" || scug == "" || new SlugcatStats.Name(scug, false).Index == -1 || !Data.RenderedRegions.TryGetValue(region, out var scugs) || scugs.Count == 0)
             {
                 mapBox.UnloadRegion();
                 return;
             }
 
             // Find the room list and add its contents
-            if (File.Exists(Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json")))
+            if (File.Exists(Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json")))
             {
-
                 activeRegion = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
-                    Path.Combine(Data.RenderOutputDir(scug.value, acronym), "metadata.json"))));
+                    Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json"))));
                 var roomList = activeRegion.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
 
                 float y = roomSelector.size.y - ROOMLIST_EDGE_PAD;
