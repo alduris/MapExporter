@@ -156,9 +156,11 @@ namespace MapExporter.Tabs.UI
             }
         }
 
+        private static readonly Vector2[] fourDirections = [Vector2.right, Vector2.up, Vector2.left, Vector2.down];
         private void Draw()
         {
             ClearCanvas();
+            Color[] pixels = texture.GetPixels();
             labelBorrower.Update();
 
             // Draw nothing if there is no active region
@@ -221,7 +223,7 @@ namespace MapExporter.Tabs.UI
                             continue;
 
                         var p = new Vector2(startX + i - drawBL.x, startY + j - drawBL.y) + Vector2.one * 0.0001f;
-                        texture.SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), GetTileColor(room.tiles?[i, j]));
+                        SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), GetTileColor(room.tiles?[i, j]), pixels);
                     }
                 }
 
@@ -231,14 +233,14 @@ namespace MapExporter.Tabs.UI
                     foreach (var cam in room.cameras)
                     {
                         // Cameras are 1400x800, tiles are 20x20. Using this, we can determine cameras here should be 70x40 pixels.
-                        DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, new Vector2(70f, 40f), CAMERA_COLOR, 1);
+                        DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, new Vector2(70f, 40f), CAMERA_COLOR, pixels, 1);
                     }
                 }
 
                 // Give it a border if it is the focused room
                 if (activeRoom != null && room.roomName == activeRoom)
                 {
-                    DrawRectOutline(new Vector2(startX - 1, startY - 1) - drawBL, new Vector2(room.size.x + 2, room.size.y + 2), FOCUS_COLOR, 2);
+                    DrawRectOutline(new Vector2(startX - 1, startY - 1) - drawBL, new Vector2(room.size.x + 2, room.size.y + 2), FOCUS_COLOR, pixels, 2);
                 }
 
                 // Give it an OpLabel name
@@ -251,17 +253,23 @@ namespace MapExporter.Tabs.UI
                 Vector2 A = activeRegion.rooms[conn.roomA].devPos + conn.posA.ToVector2() - drawBL;
                 Vector2 B = activeRegion.rooms[conn.roomB].devPos + conn.posB.ToVector2() - drawBL;
 
-                DrawLine(A, B, CONNECTION_COLOR, 1);
+                // DrawLine(A, B, CONNECTION_COLOR, pixels, 1);
+                float dist = (B - A).magnitude / 4f;
+                Vector2 basicDir = (B - A).normalized;
+                Vector2 A1 = A + (conn.dirA == -1 ? basicDir : fourDirections[conn.dirA]) * dist;
+                Vector2 B1 = B + (conn.dirB == -1 ? -basicDir : fourDirections[conn.dirB]) * dist;
+                DrawCubic(A, A1, B1, B, CONNECTION_COLOR, pixels, 1);
             }
 
             // Draw cursor if needed
             if (!MenuMouseMode && held)
             {
-                DrawLine(size / 2 + Vector2.down * CROSSHAIR_SIZE, size / 2 + Vector2.up    * CROSSHAIR_SIZE, colorEdge, 1);
-                DrawLine(size / 2 + Vector2.left * CROSSHAIR_SIZE, size / 2 + Vector2.right * CROSSHAIR_SIZE, colorEdge, 1);
+                DrawLine(size / 2 + Vector2.down * CROSSHAIR_SIZE, size / 2 + Vector2.up    * CROSSHAIR_SIZE, colorEdge, pixels, 1);
+                DrawLine(size / 2 + Vector2.left * CROSSHAIR_SIZE, size / 2 + Vector2.right * CROSSHAIR_SIZE, colorEdge, pixels, 1);
             }
 
             // Apply texture so it actually shows lol
+            texture.SetPixels(pixels);
             UpdateTexture();
         }
 
@@ -335,7 +343,15 @@ namespace MapExporter.Tabs.UI
             (mapOpImage.sprite as FTexture).SetTexture(texture);
         }
 
-        private void DrawRectOutline(Vector2 pos, Vector2 size, Color color, int width = 1)
+        private void SetPixel(int x, int y, Color color, Color[] pixels)
+        {
+            if (x < 0 || x >= texture.width || y < 0 || y >= texture.height) return;
+            int i = x + y * texture.width;
+            if (i < 0 || i >= pixels.Length) return;
+            pixels[i] = color;
+        }
+
+        private void DrawRectOutline(Vector2 pos, Vector2 size, Color color, Color[] pixels, int width = 1)
         {
             pos = new Vector2(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
             size = new Vector2(Mathf.RoundToInt(size.x), Mathf.RoundToInt(size.y));
@@ -347,11 +363,11 @@ namespace MapExporter.Tabs.UI
                 {
                     int x = Mathf.RoundToInt(pos.x + i), y = Mathf.RoundToInt(pos.y);
                     if (x < 0 || x >= texture.width) continue;
-                    texture.SetPixel(x, y, color);
+                    SetPixel(x, y, color, pixels);
 
                     for (int j = 1; j <= width; j++)
                     {
-                        texture.SetPixel(x, y - j, color);
+                        SetPixel(x, y - j, color, pixels);
                     }
                 }
             }
@@ -362,11 +378,11 @@ namespace MapExporter.Tabs.UI
                 {
                     int x = Mathf.RoundToInt(pos.x + i), y = Mathf.RoundToInt(pos.y + size.y - 1);
                     if (x < 0 || x >= texture.width) continue;
-                    texture.SetPixel(x, y, color);
+                    SetPixel(x, y, color, pixels);
 
                     for (int j = 1; j <= width; j++)
                     {
-                        texture.SetPixel(x, y + j, color);
+                        SetPixel(x, y + j, color, pixels);
                     }
                 }
             }
@@ -377,11 +393,11 @@ namespace MapExporter.Tabs.UI
                 {
                     int x = Mathf.RoundToInt(pos.x), y = Mathf.RoundToInt(pos.y + j);
                     if (y < 0 || y >= texture.height) continue;
-                    texture.SetPixel(x, y, color);
+                    SetPixel(x, y, color, pixels);
 
                     for (int i = 1; i <= width; i++)
                     {
-                        texture.SetPixel(x - i, y, color);
+                        SetPixel(x - i, y, color, pixels);
                     }
                 }
             }
@@ -392,17 +408,17 @@ namespace MapExporter.Tabs.UI
                 {
                     int x = Mathf.RoundToInt(pos.x + size.x - 1), y = Mathf.RoundToInt(pos.y + j);
                     if (y < 0 || y >= texture.height) continue;
-                    texture.SetPixel(x, y, color);
+                    SetPixel(x, y, color, pixels);
 
                     for (int i = 1; i <= width; i++)
                     {
-                        texture.SetPixel(x + i, y, color);
+                        SetPixel(x + i, y, color, pixels);
                     }
                 }
             }
         }
 
-        private void DrawLine(Vector2 A, Vector2 B, Color color, int width = 1)
+        private void DrawLine(Vector2 A, Vector2 B, Color color, Color[] pixels, int width = 1)
         {
             float dy = B.y - A.y;
             float dx = B.x - A.x;
@@ -422,16 +438,17 @@ namespace MapExporter.Tabs.UI
                     if (x < 0 || x >= texture.width) continue;
                     int y = Mathf.RoundToInt(A.y + m * (x - A.x));
                     if (y < 0 || y >= texture.height) continue;
-                    texture.SetPixel(x, y, color);
+                    SetPixel(x, y, color, pixels);
                     if (width > 1)
                     {
+                        // Yes there are two for-loops. Note that one is ceil and one is floor, they cannot be combined.
                         for (int i = 1; i <= Mathf.CeilToInt(width / 2f); i++)
                         {
-                            texture.SetPixel(x, y + i, color);
+                            SetPixel(x, y + i, color, pixels);
                         }
                         for (int i = 1; i <= Mathf.FloorToInt(width / 2f); i++)
                         {
-                            texture.SetPixel(x, y - i, color);
+                            SetPixel(x, y - i, color, pixels);
                         }
                     }
                 }
@@ -451,19 +468,51 @@ namespace MapExporter.Tabs.UI
                     if (y < 0 || y >= texture.height) continue;
                     int x = Mathf.RoundToInt(A.x + m * (y - A.y));
                     if (x < 0 || x >= texture.width) continue;
-                    texture.SetPixel(x, y, color);
+                    SetPixel(x, y, color, pixels);
                     if (width > 1)
                     {
                         for (int i = 1; i <= Mathf.CeilToInt(width / 2f); i++)
                         {
-                            texture.SetPixel(x + i, y, color);
+                            SetPixel(x + i, y, color, pixels);
                         }
                         for (int i = 1; i <= Mathf.FloorToInt(width / 2f); i++)
                         {
-                            texture.SetPixel(x - i, y, color);
+                            SetPixel(x - i, y, color, pixels);
                         }
                     }
                 }
+            }
+        }
+
+        private void DrawCubic(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, Color color, Color[] pixels, int width = 1, int samples = -1)
+        {
+            // Figure out some number of samples thing
+            if (samples <= 1)
+            {
+                samples = (int)(Vector2.Distance(p0, p1) + Vector2.Distance(p1, p2) + Vector2.Distance(p2, p3)) / (1 + 2 * width);
+            }
+
+            // Take samples and draw lines
+            Vector2 lastPoint = p0;
+            for (int i = 0; i < samples; i++)
+            {
+                float t = (i + 1f) / samples;
+
+                // Calculate the bezier point
+                float u = 1 - t;
+                float tt = t * t;
+                float uu = u * u;
+                float uuu = uu * u;
+                float ttt = tt * t;
+
+                Vector2 point = uuu * p0; // (1-t)^3 * P0
+                point += 3 * uu * t * p1; // 3(1-t)^2 * t * P1
+                point += 3 * u * tt * p2; // 3(1-t) * t^2 * P2
+                point += ttt * p3; // t^3 * P3
+
+                // Draw the line
+                DrawLine(lastPoint, point, color, pixels, width);
+                lastPoint = point;
             }
         }
 
