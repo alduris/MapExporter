@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MapExporter.Generation;
 using Menu.Remix.MixedUI;
 using UnityEngine;
 using static MapExporter.RegionInfo;
@@ -29,6 +30,9 @@ namespace MapExporter.Tabs.UI
         private const float CROSSHAIR_SIZE = 6f;
         private bool checkForOverlap = false;
 
+        private Player.InputPackage ctlr;
+        private Player.InputPackage lastCtlr;
+
         public OpMapBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, 0, horizontal, hasSlideBar)
         {
             throw new NotImplementedException(); // nope, not for you :3
@@ -37,8 +41,7 @@ namespace MapExporter.Tabs.UI
         public OpMapBox(Vector2 pos, Vector2 size) : base(pos, size, size.y, false, true, false)
         {
             labelBorrower = new(this);
-            description = "Left click + drag to move, right click to pick room (or use list)";
-            checkForOverlap = Preferences.EditorCheckOverlap.GetValue();
+            description = "Left click + drag to move, right click to pick room (or use list), right click picked room to toggle hidden";
         }
 
         public void Initialize()
@@ -58,6 +61,7 @@ namespace MapExporter.Tabs.UI
         public override void Update()
         {
             base.Update();
+            checkForOverlap = Preferences.EditorCheckOverlap.GetValue();
 
             if (activeRegion != null)
             {
@@ -95,6 +99,11 @@ namespace MapExporter.Tabs.UI
                                     }
                                 }
 
+                                if (roomEntry != null && activeRoom == roomEntry.roomName)
+                                {
+                                    roomEntry.hidden = !roomEntry.hidden;
+                                    UpdateMap();
+                                }
                                 FocusRoom(roomEntry?.roomName);
                                 (tab as EditTab)._SwitchActiveButton(roomEntry?.roomName);
                             }
@@ -113,11 +122,15 @@ namespace MapExporter.Tabs.UI
                 }
                 else if (held)
                 {
-                    var dir = new Vector2(CtlrInput.x, CtlrInput.y) * (CtlrInput.pckp ? 4f : 1f);
-                    Move(dir);
-                    bool redraw = dir.magnitude > 0f;
+                    // Get player input manually because CtlrInput won't record other button presses
+                    lastCtlr = ctlr;
+                    ctlr = RWInput.PlayerInput(0);
 
-                    if (CtlrInput.jmp && !LastCtlrInput.jmp)
+                    var dir = new Vector2(ctlr.x, ctlr.y) * (ctlr.pckp ? 4f : 1f);
+                    Move(dir);
+                    bool redraw = dir.magnitude > 0.1f;
+
+                    if (ctlr.jmp && !lastCtlr.jmp)
                     {
                         if (activeRoom == null)
                         {
@@ -150,6 +163,13 @@ namespace MapExporter.Tabs.UI
                         }
                     }
 
+                    if (ctlr.mp && !lastCtlr.mp && activeRoom != null)
+                    {
+                        var room = activeRegion.rooms[activeRoom];
+                        room.hidden = !room.hidden;
+                        redraw = true;
+                    }
+
                     if (redraw)
                         UpdateMap();
                 }
@@ -163,7 +183,6 @@ namespace MapExporter.Tabs.UI
             }
         }
 
-        private static readonly Vector2[] fourDirections = [Vector2.right, Vector2.up, Vector2.left, Vector2.down];
         private static readonly Vector2 camSize = new(70f, 40f); // Cameras are 1400x800, tiles are 20x20. Using this, we can determine cameras here should be 70x40 pixels.
         private void Draw()
         {
@@ -220,23 +239,27 @@ namespace MapExporter.Tabs.UI
                 int startY = Mathf.RoundToInt(room.devPos.y);
 
                 // Draw the pixels of the room geometry
-                for (int i = 0; i < room.size.x; i++)
+                int sizeX = room.tiles != null ? room.size.x : GenUtil.offscreenSizeInt.x / 20;
+                int sizeY = room.tiles != null ? room.size.y : GenUtil.offscreenSizeInt.y / 20;
+                for (int i = 0; i < sizeX; i++)
                 {
                     if (startX + i < drawArea.xMin || startX + i > drawArea.xMax)
                         continue;
 
-                    for (int j = 0; j < room.size.y; j++)
+                    for (int j = 0; j < sizeY; j++)
                     {
                         if (startY + j < drawArea.yMin || startY + j > drawArea.yMax)
                             continue;
 
                         var p = new Vector2(startX + i - drawBL.x, startY + j - drawBL.y) + Vector2.one * 0.0001f;
-                        SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), GetTileColor(room.tiles?[i, j]), pixels);
+                        var color = GetTileColor(room.tiles?[i, j]);
+                        if (room.hidden) color = Color.Lerp(color, Color.black, 0.5f);
+                        SetPixel(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y), color, pixels);
                     }
                 }
 
                 // Draw camera outlines
-                if (room.cameras != null)
+                if (room.cameras != null && !room.hidden)
                 {
                     if (Preferences.EditorShowCameras.GetValue())
                     {
@@ -286,6 +309,7 @@ namespace MapExporter.Tabs.UI
                                 Rect thisRoom = new(room.devPos + cam / 20f, camSize);
                                 foreach (var other in showRooms)
                                 {
+                                    if (other.hidden) continue;
                                     if (other == room || other.cameras == null) continue;
                                     foreach (var ocam in other.cameras)
                                     {
@@ -324,8 +348,8 @@ namespace MapExporter.Tabs.UI
                 // DrawLine(A, B, CONNECTION_COLOR, pixels, 1);
                 float dist = (B - A).magnitude / 4f;
                 Vector2 basicDir = (B - A).normalized;
-                Vector2 A1 = A + (conn.dirA == -1 ? basicDir : fourDirections[conn.dirA]) * dist;
-                Vector2 B1 = B + (conn.dirB == -1 ? -basicDir : fourDirections[conn.dirB]) * dist;
+                Vector2 A1 = A + (conn.dirA == -1 ? basicDir : GenUtil.fourDirections[conn.dirA]) * dist;
+                Vector2 B1 = B + (conn.dirB == -1 ? -basicDir : GenUtil.fourDirections[conn.dirB]) * dist;
                 DrawCubic(A, A1, B1, B, CONNECTION_COLOR, pixels, 1);
             }
 

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using MapExporter.Tabs.UI;
 using Menu.Remix.MixedUI;
-using MoreSlugcats;
+using RWCustom;
 using UnityEngine;
 
 #pragma warning disable IDE1006 // Naming Styles (beginning with underscore)
@@ -71,13 +71,15 @@ namespace MapExporter.Tabs
             mapBox = new OpMapBox(new(BODY_LEFT_WIDTH + ITEM_GAP / 2, roomSelector.pos.y), new(mapWidth, roomSelector.size.y));
 
             // Add the items
+            const string MOUSE_MODE_TEXT = "Left click + drag to move, right click to pick room (or use list on left), right click picked room to toggle hidden";
+            const string CONTROLLER_TEXT = "<pickup> to move fast, <jump> to pick room (or use list on left), <map> to toggle hidden";
             AddItems(
                 // Input boxes and such
                 roomSelector,
                 mapBox,
 
                 // Tutorial
-                new OpLabel(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 50f, "Left click + drag to move, right click to pick room (or use list on left)"),
+                new OpLabel(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 50f, Custom.rainWorld.processManager.menuesMouseMode ? MOUSE_MODE_TEXT : CONTROLLER_TEXT),
 
                 // Top things
                 new OpShinyLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "MOVE", FLabelAlignment.Center, true),
@@ -319,6 +321,7 @@ namespace MapExporter.Tabs
                     if (activeRegion.rooms.TryGetValue(newRoom.Key, out var room))
                     {
                         room.devPos = newRoom.Value.devPos;
+                        room.hidden = newRoom.Value.hidden;
                     }
                 }
 

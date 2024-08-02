@@ -192,6 +192,7 @@ namespace MapExporter
             public string roomName;
             public string subregion;
             public Vector2 devPos;
+            public bool hidden = false;
 
             public Vector2[] cameras;
             public IntVector2 size = new(0, 0);
@@ -339,6 +340,7 @@ namespace MapExporter
                     { "name", roomName },
                     { "subregion", subregion },
                     { "pos", Vec2arr(devPos) },
+                    { "hidden", hidden },
 
                     { "cameras", cameras?.Select(Vec2arr).ToList() },
                     { "size", size != null ? Intvec2arr(size) : null },
@@ -357,6 +359,7 @@ namespace MapExporter
                     roomName = (string)json["name"],
                     subregion = (string)json["subregion"],
                     devPos = Arr2Vec2((List<object>)json["pos"]),
+                    hidden = json.TryGetValue("hidden", out var hidden) && (bool)hidden,
 
                     spawns = ((List<object>)json["spawns"]).Cast<List<object>>().Select(x =>
                     {
