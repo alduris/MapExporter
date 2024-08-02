@@ -230,6 +230,7 @@ namespace MapExporter
         public static readonly Preference ScreenshotterSkipExisting = new("screenshotter/skipexisting", false);
 
         public static readonly Preference EditorCheckOverlap = new("editor/overlap", false);
+        public static readonly Preference EditorShowCameras = new("editor/cameras", false);
 
         public static readonly Preference GeneratorLessInsense = new("generator/lessintensive", false);
         public static readonly Preference GeneratorSkipTiles = new("generator/skipexisting", false);

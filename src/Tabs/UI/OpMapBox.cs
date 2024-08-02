@@ -13,6 +13,8 @@ namespace MapExporter.Tabs.UI
 
         private OpImage mapOpImage = null;
         private Texture2D texture = null;
+        private int textureWidth;
+        private int textureHeight;
 
         private bool mapDirty = false;
         public Vector2 viewOffset = Vector2.zero;
@@ -43,6 +45,8 @@ namespace MapExporter.Tabs.UI
         {
             if (texture != null) return;
             texture = new Texture2D(Mathf.CeilToInt(size.x), Mathf.CeilToInt(size.y), TextureFormat.ARGB32, false);
+            textureWidth = texture.width; // store these in variable to reduce method call (width and height are properties)
+            textureHeight = texture.height;
             mapOpImage = new OpImage(new(0, 0), texture)
             {
                 color = new Color(0f, 0f, 0f, 0f)
@@ -234,30 +238,70 @@ namespace MapExporter.Tabs.UI
                 // Draw camera outlines
                 if (room.cameras != null)
                 {
-                    foreach (var cam in room.cameras)
+                    if (Preferences.EditorShowCameras.GetValue())
                     {
-                        // Check for overlap if needed
-                        bool overlap = false;
-                        if (checkForOverlap)
+                        // Draw individual cameras
+                        foreach (var cam in room.cameras)
                         {
-                            Rect thisRoom = new(room.devPos + cam / 20f, camSize);
-                            foreach (var other in showRooms)
+                            // Check for overlap if needed
+                            bool overlap = false;
+                            if (checkForOverlap)
                             {
-                                if (other == room || other.cameras == null) continue;
-                                foreach (var ocam in other.cameras)
+                                Rect thisRoom = new(room.devPos + cam / 20f, camSize);
+                                foreach (var other in showRooms)
                                 {
-                                    if (thisRoom.CheckIntersect(new Rect(other.devPos + ocam / 20f, camSize)))
+                                    if (other == room || other.cameras == null) continue;
+                                    foreach (var ocam in other.cameras)
                                     {
-                                        overlap = true;
-                                        break;
+                                        if (thisRoom.CheckIntersect(new Rect(other.devPos + ocam / 20f, camSize)))
+                                        {
+                                            overlap = true;
+                                            break;
+                                        }
                                     }
+                                    if (overlap) break;
                                 }
-                                if (overlap) break;
+                            }
+                        
+                            // Draw
+                            DrawRectOutline(room.devPos + cam / 20f - drawBL, camSize, overlap ? OVERLAP_COLOR : CAMERA_COLOR, pixels, 1);
+                        }
+                    }
+                    else
+                    {
+                        // Draw a whole rectangle for all room camera boundaries
+
+                        bool overlap = false;
+                        Vector2 start = room.cameras[0] / 20f;
+                        Vector2 end = room.cameras[0] / 20f + camSize;
+                        foreach (var cam in room.cameras)
+                        {
+                            // Get bounds
+                            start = Vector2.Min(start, cam / 20f);
+                            end = Vector2.Max(end, cam / 20f + camSize);
+
+                            // Check for overlap if needed
+                            if (checkForOverlap)
+                            {
+                                Rect thisRoom = new(room.devPos + cam / 20f, camSize);
+                                foreach (var other in showRooms)
+                                {
+                                    if (other == room || other.cameras == null) continue;
+                                    foreach (var ocam in other.cameras)
+                                    {
+                                        if (thisRoom.CheckIntersect(new Rect(other.devPos + ocam / 20f, camSize)))
+                                        {
+                                            overlap = true;
+                                            break;
+                                        }
+                                    }
+                                    if (overlap) break;
+                                }
                             }
                         }
-                        
+
                         // Draw
-                        DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, camSize, overlap ? OVERLAP_COLOR : CAMERA_COLOR, pixels, 1);
+                        DrawRectOutline(room.devPos + start - drawBL, end - start, overlap ? OVERLAP_COLOR : CAMERA_COLOR, pixels, 1);
                     }
                 }
 
@@ -369,8 +413,8 @@ namespace MapExporter.Tabs.UI
 
         private void SetPixel(int x, int y, Color color, Color[] pixels)
         {
-            if (x < 0 || x >= texture.width || y < 0 || y >= texture.height) return;
-            int i = x + y * texture.width;
+            if (x < 0 || x >= textureWidth || y < 0 || y >= textureHeight) return;
+            int i = x + y * textureWidth;
             if (i < 0 || i >= pixels.Length) return;
             pixels[i] = color;
         }
@@ -386,7 +430,7 @@ namespace MapExporter.Tabs.UI
                 for (int i = -width; i < size.x + width; i++)
                 {
                     int x = Mathf.RoundToInt(pos.x + i), y = Mathf.RoundToInt(pos.y);
-                    if (x < 0 || x >= texture.width) continue;
+                    if (x < 0 || x >= textureWidth) continue;
                     SetPixel(x, y, color, pixels);
 
                     for (int j = 1; j <= width; j++)
@@ -396,12 +440,12 @@ namespace MapExporter.Tabs.UI
                 }
             }
             // Bottom
-            if (pos.y + size.y - 1 < texture.height)
+            if (pos.y + size.y - 1 < textureHeight)
             {
                 for (int i = -width; i < size.x + width; i++)
                 {
                     int x = Mathf.RoundToInt(pos.x + i), y = Mathf.RoundToInt(pos.y + size.y - 1);
-                    if (x < 0 || x >= texture.width) continue;
+                    if (x < 0 || x >= textureWidth) continue;
                     SetPixel(x, y, color, pixels);
 
                     for (int j = 1; j <= width; j++)
@@ -416,7 +460,7 @@ namespace MapExporter.Tabs.UI
                 for (int j = -width; j < size.y + width; j++)
                 {
                     int x = Mathf.RoundToInt(pos.x), y = Mathf.RoundToInt(pos.y + j);
-                    if (y < 0 || y >= texture.height) continue;
+                    if (y < 0 || y >= textureHeight) continue;
                     SetPixel(x, y, color, pixels);
 
                     for (int i = 1; i <= width; i++)
@@ -426,12 +470,12 @@ namespace MapExporter.Tabs.UI
                 }
             }
             // Right
-            if (pos.x + size.x - 1 < texture.width)
+            if (pos.x + size.x - 1 < textureWidth)
             {
                 for (int j = -width; j < size.y + width; j++)
                 {
                     int x = Mathf.RoundToInt(pos.x + size.x - 1), y = Mathf.RoundToInt(pos.y + j);
-                    if (y < 0 || y >= texture.height) continue;
+                    if (y < 0 || y >= textureHeight) continue;
                     SetPixel(x, y, color, pixels);
 
                     for (int i = 1; i <= width; i++)
@@ -459,9 +503,9 @@ namespace MapExporter.Tabs.UI
 
                 for (int x = Mathf.RoundToInt(A.x); x < Mathf.RoundToInt(B.x); x++)
                 {
-                    if (x < 0 || x >= texture.width) continue;
+                    if (x < 0 || x >= textureWidth) continue;
                     int y = Mathf.RoundToInt(A.y + m * (x - A.x));
-                    if (y < 0 || y >= texture.height) continue;
+                    if (y < 0 || y >= textureHeight) continue;
                     SetPixel(x, y, color, pixels);
                     if (width > 1)
                     {
@@ -489,9 +533,9 @@ namespace MapExporter.Tabs.UI
 
                 for (int y = Mathf.RoundToInt(A.y); y < Mathf.RoundToInt(B.y); y++)
                 {
-                    if (y < 0 || y >= texture.height) continue;
+                    if (y < 0 || y >= textureHeight) continue;
                     int x = Mathf.RoundToInt(A.x + m * (y - A.y));
-                    if (x < 0 || x >= texture.width) continue;
+                    if (x < 0 || x >= textureWidth) continue;
                     SetPixel(x, y, color, pixels);
                     if (width > 1)
                     {

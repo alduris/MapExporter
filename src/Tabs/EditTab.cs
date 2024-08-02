@@ -15,6 +15,7 @@ namespace MapExporter.Tabs
     {
         private OpComboBox regionSelector;
         private OpComboBox scugSelector;
+        private OpComboBox importSelector;
         private OpScrollBox roomSelector;
         private OpMapBox mapBox;
         private readonly WeakReference<OpTextButton> activeButton = new(null);
@@ -37,9 +38,12 @@ namespace MapExporter.Tabs
 
             // Top of menu
             const float TOPBAR_UNIT_WIDTH = (MENU_SIZE - SIDE_PADDING * 2f - ITEM_GAP * 2) / 5f;
-            regionSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f), TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP, regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToList());
+            regionSelector = new OpComboBox(OIUtil.CosmeticBind(""),
+                new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f),
+                TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP,
+                regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToList());
             regionSelector.OnValueChanged += RegionSelector_OnValueChanged;
-            scugSelector = new(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP * 2, regionSelector.pos.y), TOPBAR_UNIT_WIDTH, [""]);
+            scugSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP * 2, regionSelector.pos.y), TOPBAR_UNIT_WIDTH, [""]);
             scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
             var saveButton = new OpSimpleButton(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 24f), "SAVE")
             {
@@ -47,13 +51,21 @@ namespace MapExporter.Tabs
             };
             saveButton.OnClick += SaveButton_OnClick;
 
+            // Bottom of menu
+            const string IMPORT_TEXT = "Import from: ";
+            var importLabel = new OpLabel(SIDE_PADDING, SIDE_PADDING + (12f - LabelTest.LineHeight(false) / 2f), IMPORT_TEXT, false);
+            importSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(importLabel.pos.x + LabelTest.GetWidth(IMPORT_TEXT, false) + 6f, importLabel.pos.y), TOPBAR_UNIT_WIDTH, [""]);
+            var importButton = new OpSimpleButton(new(importSelector.pos.x + importSelector.size.x + 6f, importSelector.pos.y), new Vector2(80f, 24f), "IMPORT");
+            importButton.OnClick += ImportButton_OnClick;
+
             // Body boxes and such
             const float BODY_LEFT_WIDTH = MENU_SIZE * 0.25f;
             const float BODY_RIGHT_WIDTH = MENU_SIZE - BODY_LEFT_WIDTH;
             const float TOPBAR_HEIGHT = 50f + SIDE_PADDING + ITEM_GAP;
+            const float BOTTOMBAR_HEIGHT = 24f + ITEM_GAP;
             roomSelector = new(
-                new Vector2(SIDE_PADDING, SIDE_PADDING),
-                new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT),
+                new Vector2(SIDE_PADDING, SIDE_PADDING + BOTTOMBAR_HEIGHT),
+                new Vector2(BODY_LEFT_WIDTH - SIDE_PADDING - ITEM_GAP / 2f, MENU_SIZE - TOPBAR_HEIGHT - BOTTOMBAR_HEIGHT),
                 0, false, true, true);
             float mapWidth = BODY_RIGHT_WIDTH - SIDE_PADDING - ITEM_GAP / 2;
             mapBox = new OpMapBox(new(BODY_LEFT_WIDTH + ITEM_GAP / 2, roomSelector.pos.y), new(mapWidth, roomSelector.size.y));
@@ -67,11 +79,18 @@ namespace MapExporter.Tabs
                 // Tutorial
                 new OpLabel(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 50f, "Left click + drag to move, right click to pick room (or use list on left)"),
 
-                // Place the top things last for z-index reasons
+                // Top things
+                new OpShinyLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "MOVE", FLabelAlignment.Center, true),
+                saveButton,
+
+                // Bottom things
+                importLabel,
+                importButton,
+
+                // Place the combo boxes last for z-index reasons
                 scugSelector,
                 regionSelector,
-                saveButton,
-                new OpShinyLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "MOVE", FLabelAlignment.Center, true)
+                importSelector
             );
             mapBox.Initialize();
         }
@@ -95,15 +114,17 @@ namespace MapExporter.Tabs
 
         private void RegionSelector_OnValueChanged(UIconfig config, string region, string oldRegion)
         {
-            const string PLACEHOLDERSTR = ":"; // impossible for region to have as its name because Windows file names can't have colons
+            const string PLACEHOLDERSTR = ":"; // idk why someone would make their slugcat's id a colon; regardless, windows file names can't have colons
             if (oldRegion == region) return;
 
             // Clear old list
             var oldList = scugSelector.GetItemList();
             scugSelector.AddItems(false, new ListItem(PLACEHOLDERSTR));
+            importSelector.AddItems(false, new ListItem(PLACEHOLDERSTR));
             foreach (var scug in oldList)
             {
                 scugSelector.RemoveItems(true, scug.name);
+                importSelector.RemoveItems(true, scug.name);
             }
 
             // Add new items
@@ -111,18 +132,21 @@ namespace MapExporter.Tabs
             {
                 foreach (var scug in scugs)
                 {
-                    Plugin.Logger.LogDebug(scug.value);
                     scugSelector.AddItems(true, new ListItem(scug.value));
+                    importSelector.AddItems(true, new ListItem(scug.value));
                 }
             }
             else
             {
-                Plugin.Logger.LogDebug("NOPE");
-                scugSelector.AddItems(false, new ListItem("")); // there has to be at least 1 for some reason
+                // There has to be at least 1 item for some reason
+                scugSelector.AddItems(false, new ListItem(""));
+                importSelector.AddItems(false, new ListItem(""));
             }
 
             scugSelector.RemoveItems(true, PLACEHOLDERSTR);
+            importSelector.RemoveItems(true, PLACEHOLDERSTR);
             scugSelector.value = null;
+            importSelector.value = null;
             mapBox.UnloadRegion();
         }
 
@@ -272,6 +296,35 @@ namespace MapExporter.Tabs
             _SwitchActiveButton(null);
             mapBox.viewOffset = Vector2.zero;
             mapBox.UpdateMap();
+        }
+
+        private void ImportButton_OnClick(UIfocusable trigger)
+        {
+            var scug = importSelector.value;
+
+            // Don't do anything cases
+            if (scug == null || scug == "" || scug == scugSelector.value || new SlugcatStats.Name(scug, false).Index == -1)
+                return;
+
+            var region = activeRegion.acronym;
+            if (File.Exists(Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json")))
+            {
+                importSelector.value = null;
+                SwitchToRoom(null);
+
+                // Get the other slugcat's region and load its positions
+                var newState = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json"))));
+                foreach (var newRoom in newState.rooms)
+                {
+                    if (activeRegion.rooms.TryGetValue(newRoom.Key, out var room))
+                    {
+                        room.devPos = newRoom.Value.devPos;
+                    }
+                }
+
+                // Update map
+                mapBox.UpdateMap();
+            }
         }
     }
 }
