@@ -23,7 +23,9 @@ namespace MapExporter.Tabs.UI
         private static readonly Color FOCUS_COLOR = new(0.5f, 1f, 1f);
         private static readonly Color CONNECTION_COLOR = new(0.75f, 0.75f, 0.75f);
         private static readonly Color CAMERA_COLOR = new(1f, 1f, 0.5f);
+        private static readonly Color OVERLAP_COLOR = new(1f, 0.3f, 0.3f);
         private const float CROSSHAIR_SIZE = 6f;
+        private bool checkForOverlap = false;
 
         public OpMapBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, 0, horizontal, hasSlideBar)
         {
@@ -34,6 +36,7 @@ namespace MapExporter.Tabs.UI
         {
             labelBorrower = new(this);
             description = "Left click + drag to move, right click to pick room (or use list)";
+            checkForOverlap = Preferences.EditorCheckOverlap.GetValue();
         }
 
         public void Initialize()
@@ -157,6 +160,7 @@ namespace MapExporter.Tabs.UI
         }
 
         private static readonly Vector2[] fourDirections = [Vector2.right, Vector2.up, Vector2.left, Vector2.down];
+        private static readonly Vector2 camSize = new(70f, 40f); // Cameras are 1400x800, tiles are 20x20. Using this, we can determine cameras here should be 70x40 pixels.
         private void Draw()
         {
             ClearCanvas();
@@ -232,8 +236,28 @@ namespace MapExporter.Tabs.UI
                 {
                     foreach (var cam in room.cameras)
                     {
-                        // Cameras are 1400x800, tiles are 20x20. Using this, we can determine cameras here should be 70x40 pixels.
-                        DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, new Vector2(70f, 40f), CAMERA_COLOR, pixels, 1);
+                        // Check for overlap if needed
+                        bool overlap = false;
+                        if (checkForOverlap)
+                        {
+                            Rect thisRoom = new(room.devPos + cam / 20f, camSize);
+                            foreach (var other in showRooms)
+                            {
+                                if (other == room || other.cameras == null) continue;
+                                foreach (var ocam in other.cameras)
+                                {
+                                    if (thisRoom.CheckIntersect(new Rect(other.devPos + ocam / 20f, camSize)))
+                                    {
+                                        overlap = true;
+                                        break;
+                                    }
+                                }
+                                if (overlap) break;
+                            }
+                        }
+                        
+                        // Draw
+                        DrawRectOutline(new Vector2(startX, startY) + cam / 20f - drawBL, camSize, overlap ? OVERLAP_COLOR : CAMERA_COLOR, pixels, 1);
                     }
                 }
 
