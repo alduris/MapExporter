@@ -223,7 +223,7 @@ sealed class Plugin : BaseUnityPlugin
     {
         // Only call orig if user wants to spawn iteratosr
         orig(self, eu);
-        bool value = Data.GetPreference(Preferences.ShowGuardians);
+        bool value = Preferences.ShowGuardians.GetValue();
         if (!value)
         {
             self.Destroy();
@@ -247,7 +247,7 @@ sealed class Plugin : BaseUnityPlugin
     {
         // Only call orig if user wants to spawn iteratosr
         orig(self, eu);
-        bool value = Data.GetPreference(Preferences.ShowOracles);
+        bool value = Preferences.ShowOracles.GetValue();
         if (!value)
         {
             self.Destroy();
@@ -259,7 +259,7 @@ sealed class Plugin : BaseUnityPlugin
     private void InsectCoordinator_CreateInsect(On.InsectCoordinator.orig_CreateInsect orig, InsectCoordinator self, CosmeticInsect.Type type, Vector2 pos, InsectCoordinator.Swarm swarm)
     {
         // Only call orig if user wants to spawn insects
-        bool value = Data.GetPreference(Preferences.ShowInsects);
+        bool value = Preferences.ShowInsects.GetValue();
 
         if (value)
         {
@@ -452,7 +452,7 @@ sealed class Plugin : BaseUnityPlugin
     private void World_SpawnGhost(On.World.orig_SpawnGhost orig, World self)
     {
         // true by default
-        if (Data.GetPreference(Preferences.ShowGhosts))
+        if (Preferences.ShowGhosts.GetValue())
         {
             self.game.rainWorld.safariMode = false;
             orig(self);
@@ -463,7 +463,7 @@ sealed class Plugin : BaseUnityPlugin
     // spawn ghosts always, to show them on the map (actually again, use player preference)
     private bool GhostWorldPresence_SpawnGhost(On.GhostWorldPresence.orig_SpawnGhost orig, GhostWorldPresence.GhostID ghostID, int karma, int karmaCap, int ghostPreviouslyEncountered, bool playingAsRed)
     {
-        return Data.GetPreference(Preferences.ShowGhosts);
+        return Preferences.ShowGhosts.GetValue();
     }
 
     // don't let them affect nearby rooms
@@ -501,7 +501,7 @@ sealed class Plugin : BaseUnityPlugin
         setup.cycleStartUp = false;
 
         setup.player1 = false;
-        setup.worldCreaturesSpawn = Data.GetPreference(Preferences.ShowCreatures);
+        setup.worldCreaturesSpawn = Preferences.ShowCreatures.GetValue();
         setup.singlePlayerChar = 0;
 
         return setup;

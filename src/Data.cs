@@ -207,15 +207,6 @@ namespace MapExporter
         }
 
         public static Dictionary<string, bool> UserPreferences = [];
-
-        public static bool GetPreference(Preferences.Preference pref)
-        {
-            if (UserPreferences.TryGetValue(pref.key, out var value))
-            {
-                return value;
-            }
-            return pref.defaultValue;
-        }
     }
 
     public static class Preferences
@@ -239,7 +230,7 @@ namespace MapExporter
             public readonly string key = key;
             public readonly bool defaultValue = defaultValue;
 
-            public readonly bool GetValue() => Data.GetPreference(this);
+            public readonly bool GetValue() => Data.UserPreferences.TryGetValue(key, out var val) ? val : defaultValue;
         }
     }
 

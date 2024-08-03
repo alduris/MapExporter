@@ -58,7 +58,7 @@ namespace MapExporter.Generation
             processes.Enqueue(new MiscProcessor(this));
 
             // Preferences
-            lessResourceIntensive = Data.GetPreference(Preferences.GeneratorLessInsense);
+            lessResourceIntensive = Preferences.GeneratorLessInsense.GetValue();
         }
 
         public void Update()

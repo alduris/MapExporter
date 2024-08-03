@@ -424,7 +424,7 @@ namespace MapExporter.Tabs
             // Add values
             var acronym = comboRegions.value;
             WaitingRegions[acronym] = [];
-            if (Data.GetPreference(Preferences.ScreenshotterAutoFill))
+            if (Preferences.ScreenshotterAutoFill.GetValue())
             {
                 foreach (var scug in Slugcats)
                 {
@@ -446,7 +446,7 @@ namespace MapExporter.Tabs
                 {
                     HashSet<SlugcatStats.Name> scugs = [];
                     WaitingRegions.Add(region.Key, scugs);
-                    if (Data.GetPreference(Preferences.ScreenshotterAutoFill))
+                    if (Preferences.ScreenshotterAutoFill.GetValue())
                     {
                         foreach (var scug in Slugcats)
                         {

@@ -218,7 +218,7 @@ namespace MapExporter.Screenshotter
 
             regionContent.UpdateRoom(room.realizedRoom);
 
-            if (Data.GetPreference(Preferences.ShowCreatures))
+            if (Preferences.ShowCreatures.GetValue())
             {
                 // wait a bit so creatures can more interesting stuff
                 for (int i = 0; i < 6; i++) yield return null;
@@ -237,7 +237,7 @@ namespace MapExporter.Screenshotter
                 screens++;
 
                 string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
-                if (!Data.GetPreference(Preferences.ScreenshotterSkipExisting) || !File.Exists(filename)) // does the user want to skip existing tiles
+                if (!Preferences.ScreenshotterSkipExisting.GetValue() || !File.Exists(filename)) // does the user want to skip existing tiles
                 {
                     ScreenCapture.CaptureScreenshot(filename);
                 }
