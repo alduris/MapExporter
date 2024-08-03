@@ -9,7 +9,6 @@ namespace MapExporter.Generation
         internal readonly string inputDir;
         internal readonly string outputDir;
         internal readonly RegionInfo regionInfo;
-        public readonly bool skipExistingTiles = false;
         public readonly bool lessResourceIntensive = false;
 
         public bool Done { get; private set; } = false;
@@ -59,7 +58,6 @@ namespace MapExporter.Generation
             processes.Enqueue(new MiscProcessor(this));
 
             // Preferences
-            skipExistingTiles = Data.GetPreference(Preferences.GeneratorSkipTiles);
             lessResourceIntensive = Data.GetPreference(Preferences.GeneratorLessInsense);
         }
 

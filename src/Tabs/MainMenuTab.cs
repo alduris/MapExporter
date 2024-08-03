@@ -18,7 +18,6 @@ namespace MapExporter.Tabs
             "";
         public override void Initialize()
         {
-            OpHoldButton deleteScreenshots, deleteOutput, deleteAll;
             AddItems(
                 // Title
                 new OpShinyLabel(new Vector2(0f, 570f), new Vector2(600f, 30f), "MAP EXPORTER", FLabelAlignment.Center, true),
@@ -40,30 +39,40 @@ namespace MapExporter.Tabs
                 new OpLabel(new Vector2(0f, 385f), new Vector2(600f, 30f), "OPTIONS", FLabelAlignment.Center, true),
                 // Showing things: insects, echoes, iterators, guardians, creatures in screenshots
 
-                MapToPreference(Preferences.ShowCreatures, new Vector2(10f, 355f), "Show creatures in the rooms of screenshots. Makes the screenshotting process slower so they can move out of their dens."),
-                new OpLabel(40f, 355f, "Show creatures"),
-                MapToPreference(Preferences.ShowGhosts, new Vector2(10f, 325f), "Show echoes in rooms. Echo effect only appears in the room they spawn in."),
-                new OpLabel(40f, 325f, "Show echoes"),
-                MapToPreference(Preferences.ShowGuardians, new Vector2(10f, 295f), "Show guardians where they spawn (e.g. Depths, Rubicon, Far Shore, etc)."),
-                new OpLabel(40f, 295f, "Show guardians"),
-                MapToPreference(Preferences.ShowInsects, new Vector2(10f, 265f), "Show bugs spawned from insect groups or room effects in rooms."),
-                new OpLabel(40f, 265f, "Show insects"),
-                MapToPreference(Preferences.ShowOracles, new Vector2(10f, 235f), "Show iterators where they spawn."),
-                new OpLabel(40f, 235f, "Show iterators"),
+                MapToPreference(Preferences.ShowCreatures, 0, 0, "Show creatures in the rooms of screenshots. Makes the screenshotting process slower so they can move out of their dens."),
+                new OpLabel(Column(0, true), Row(0), "Show creatures"),
+                MapToPreference(Preferences.ShowGhosts, 0, 1, "Show echoes in rooms. Echo effect only appears in the room they spawn in."),
+                new OpLabel(Column(0, true), Row(1), "Show echoes"),
+                MapToPreference(Preferences.ShowGuardians, 0, 2, "Show guardians where they spawn (e.g. Depths, Rubicon, Far Shore, etc)."),
+                new OpLabel(Column(0, true), Row(2), "Show guardians"),
+                MapToPreference(Preferences.ShowInsects, 0, 3, "Show bugs spawned from insect groups or room effects in rooms."),
+                new OpLabel(Column(0, true), Row(3), "Show insects"),
+                MapToPreference(Preferences.ShowOracles, 0, 4, "Show iterators where they spawn."),
+                new OpLabel(Column(0, true), Row(4), "Show iterators"),
 
-                // Code things: re-screenshotted rooms, skip existing tiles (generator), less resource intensive (generator), auto-fill slugcats styles
-                // Data things: reset screenshots, reset generator output (I should really come up with a better name for that tab lol), reset everything
-                (deleteScreenshots = new OpHoldButton(new Vector2(), new Vector2(), "Screenshots", 120)),
-                (deleteOutput = new OpHoldButton(new Vector2(), new Vector2(), "Output", 120)),
-                (deleteAll = new OpHoldButton(new Vector2(), new Vector2(), "Everything", 200))
+                new OpLabel(Column(1), Row(0), "SCREENSHOTTER"),
+                MapToPreference(Preferences.ScreenshotterAutoFill, 1, 1, "Screenshotter: auto-fill with all slugcats that are marked as being able to access the region."),
+                new OpLabel(Column(1, true), Row(1), "Slugcat auto-fill"),
+                MapToPreference(Preferences.ScreenshotterSkipExisting, 1, 2, "Screenshotter: don't overwrite existing screenshots"),
+                new OpLabel(Column(1, true), Row(2), "Skip existing screenshots"),
+
+                new OpLabel(Column(1), Row(3), "MAP EDITOR"),
+                MapToPreference(Preferences.EditorCheckOverlap, 1, 4, "Map editor: show cameras that overlap. Causes lag."),
+                new OpLabel(Column(1, true), Row(4), "Show overlapping cams"),
+                MapToPreference(Preferences.EditorShowCameras, 1, 5, "Map editor: toggles between showing all cameras in the room (checked) or just an outline containing the cameras (unchecked)"),
+                new OpLabel(Column(1, true), Row(5), "Show individual cameras"),
+
+                new OpLabel(Column(1), Row(6), "GENERATOR"),
+                MapToPreference(Preferences.GeneratorLessInsense, 1, 7, "Generator: makes some parts do less calculation as a performance saver at the cost of taking longer."),
+                new OpLabel(Column(1, true), Row(7), "Less intensive")
             );
 
-            deleteScreenshots.OnPressDone += DeleteScreenshots_OnPressDone;
-            deleteOutput.OnPressDone += DeleteOutput_OnPressDone;
-            deleteAll.OnPressDone += DeleteAll_OnPressDone;
+            const int COLUMN_COUNT = 2; // can probably do up to 4 if labels are short n' sweet
+            const float COLUMN_GAP = 20f;
+            static float Column(int c, bool label = false) => ((MENU_SIZE - 10f * 2 - (COLUMN_COUNT - c + 1) * COLUMN_GAP) / COLUMN_COUNT) * c + COLUMN_GAP * c + (label ? 30 : 0);
+            static float Row(int r) => 355 - 30 * r;
 
-            // todo: get rid of this code, we only need checkboxes
-            static OpCheckBox MapToPreference(Preferences.Preference preference, Vector2 pos, string description = null)
+            static UIelement MapToPreference(Preferences.Preference preference, int c, int r, string description = null)
             {
                 // Create the OpCheckBox
                 if (!Data.UserPreferences.TryGetValue(preference.key, out bool val))
@@ -72,7 +81,7 @@ namespace MapExporter.Tabs
                     Data.UserPreferences.Add(preference.key, preference.defaultValue);
                 }
 
-                var checkbox = new OpCheckBox(OIUtil.CosmeticBind(val), pos)
+                var checkbox = new OpCheckBox(OIUtil.CosmeticBind(val), new Vector2(Column(c), Row(r)))
                 {
                     description = ((description ?? "") + " (default: " + (preference.defaultValue ? "yes" : "no") + ")").TrimStart(' '),
                     colorEdge = val ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey
@@ -92,21 +101,6 @@ namespace MapExporter.Tabs
 
                 return checkbox;
             }
-        }
-
-        private void DeleteScreenshots_OnPressDone(UIfocusable trigger)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void DeleteOutput_OnPressDone(UIfocusable trigger)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void DeleteAll_OnPressDone(UIfocusable trigger)
-        {
-            throw new NotImplementedException();
         }
 
         public override void Update() { }

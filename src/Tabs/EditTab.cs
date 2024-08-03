@@ -31,7 +31,6 @@ namespace MapExporter.Tabs
             dataVersion = Data.Version;
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
-            const float MENU_SIZE = 600f;
             var regionList = Data.RenderedRegions.Keys.ToList();
             if (regionList.Count == 0)
                 regionList.Add(""); // dummy placeholder

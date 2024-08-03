@@ -58,13 +58,6 @@ namespace MapExporter.Generation
                 {
                     Texture2D tile = null;
 
-                    // Get file path and see if we can skip it
-                    string filePath = Path.Combine(outputPath, $"{tileX}_{-1 - tileY}.png");
-                    if (owner.skipExistingTiles && File.Exists(filePath))
-                    {
-                        continue;
-                    }
-
                     // Build tile
                     var tileCoords = new Vector2(tileX, tileY) * tileSize;
                     var tileRect = new Rect(tileCoords, tileSize);

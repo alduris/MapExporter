@@ -233,7 +233,6 @@ namespace MapExporter
         public static readonly Preference EditorShowCameras = new("editor/cameras", false);
 
         public static readonly Preference GeneratorLessInsense = new("generator/lessintensive", false);
-        public static readonly Preference GeneratorSkipTiles = new("generator/skipexisting", false);
 
         public readonly struct Preference(string key, bool defaultValue)
         {
