@@ -18,6 +18,9 @@ namespace MapExporter.Tabs
         private bool renderedDirty = true;
         private bool processedDirty = true;
 
+        private Stack<FileSizeReader> renderedStack = [];
+        private Stack<FileSizeReader> generatedStack = [];
+
         public override void Initialize()
         {
             const float SIDE_PADDING = 10f;
@@ -46,7 +49,7 @@ namespace MapExporter.Tabs
                 { verticalAlignment = OpLabel.LabelVAlignment.Center },
                 new OpLabel(new Vector2(processedList.pos.x, processedList.pos.y + processedList.size.y), new Vector2(processedList.size.x, 30f), "GENERATED", FLabelAlignment.Left, true)
                 { verticalAlignment = OpLabel.LabelVAlignment.Center },
-                new OpImage(new Vector2(299f, BOTTOM_GAP), "pixel") { scale = new Vector2(2f, SCROLLBOX_HEIGHT + 30f) }
+                new OpImage(new Vector2(299f, BOTTOM_GAP), "pixel") { scale = new Vector2(2f, SCROLLBOX_HEIGHT + 30f), color = MenuColorEffect.rgbMediumGrey }
             );
         }
 
@@ -75,6 +78,8 @@ namespace MapExporter.Tabs
                 renderedList.items.Clear();
                 renderedList.SetContentSize(0f);
 
+                renderedStack.Clear();
+
                 // Get file list
                 var dir = Directory.CreateDirectory(Data.RenderDir);
                 if (dir.GetDirectories().Length == 0)
@@ -84,7 +89,7 @@ namespace MapExporter.Tabs
                 else
                 {
                     float y = renderedList.size.y - INNER_PAD;
-                    GenerateDirectoryBox(renderedList, dir, () => renderedDirty = true, INNER_PAD, ref y, true);
+                    GenerateDirectoryBox(renderedList, dir, () => renderedDirty = true, INNER_PAD, ref y, true, renderedStack);
                     renderedList.SetContentSize(renderedList.size.y - y + INNER_PAD);
                 }
             }
@@ -100,6 +105,8 @@ namespace MapExporter.Tabs
                 }
                 processedList.items.Clear();
                 processedList.SetContentSize(0f);
+                
+                generatedStack.Clear();
 
                 // Get file list
                 var dir = Directory.CreateDirectory(Data.FinalDir);
@@ -110,16 +117,27 @@ namespace MapExporter.Tabs
                 else
                 {
                     float y = processedList.size.y - INNER_PAD;
-                    GenerateDirectoryBox(processedList, dir, () => processedDirty = true, INNER_PAD, ref y, true);
+                    GenerateDirectoryBox(processedList, dir, () => processedDirty = true, INNER_PAD, ref y, true, generatedStack);
                     processedList.SetContentSize(processedList.size.y - y + INNER_PAD);
                 }
             }
+
+            // Update file size stacks
+            if (renderedStack.Count > 0)
+            {
+                renderedStack.Pop().Read();
+            }
+            if (generatedStack.Count > 0)
+            {
+                generatedStack.Pop().Read();
+            }
         }
 
-        private long GenerateDirectoryBox(OpScrollBox box, DirectoryInfo dir, Action markDirty, float x, ref float y, bool isRoot)
+        private void GenerateDirectoryBox(OpScrollBox box, DirectoryInfo dir, Action markDirty, float x, ref float y, bool isRoot, Stack<FileSizeReader> stack, FileSizeReader parentReader = null)
         {
-            long size = 0;
             float initialY = 0f; // we only use it if !isRoot so 0f is just a placeholder
+            var reader = new FileSizeReader(dir, parentReader);
+            stack.Push(reader);
             if (!isRoot)
             {
                 y -= 30;
@@ -154,11 +172,6 @@ namespace MapExporter.Tabs
             List<UIelement> border = [];
             try
             {
-                foreach (var item in dir.GetFiles())
-                {
-                    size += item.Length;
-                }
-
                 float lastY = y;
                 bool isFirst = true;
                 foreach (var item in dir.GetDirectories())
@@ -175,7 +188,7 @@ namespace MapExporter.Tabs
 
                     // New subchildren
                     lastY = y;
-                    size += GenerateDirectoryBox(box, item, markDirty, x + (isRoot ? 0f : 30f), ref y, false);
+                    GenerateDirectoryBox(box, item, markDirty, x + (isRoot ? 0f : 30f), ref y, false, stack, reader);
                     isFirst = false;
                 }
             }
@@ -196,16 +209,24 @@ namespace MapExporter.Tabs
             if (isRoot)
             {
                 y -= LabelTest.LineHeight(false) * 2;
-                box.AddItems(new OpLabel(x, y, "Total size: " + FileSizeToString(size), false));
+                var label = new OpLabel(x, y, "Total size: <calculating>", false);
+                reader.OnRead += (size) => label.text = "Total size: " + FileSizeToString(size);
+                box.AddItems(label);
             }
             else
             {
-                string text = FileSizeToString(size);
-                float textWidth = LabelTest.GetWidth(text);
-                box.AddItems(new OpLabel(box.size.x - SCROLLBAR_WIDTH - textWidth - 2f, initialY, text, false));
+                const string PLACEHOLDER = "???";
+                var placeholderWidth = LabelTest.GetWidth(PLACEHOLDER);
+                var label = new OpLabel(box.size.x - SCROLLBAR_WIDTH - placeholderWidth - 2f, initialY, PLACEHOLDER, false);
+                reader.OnRead += (size) =>
+                {
+                    string text = FileSizeToString(size);
+                    float textWidth = LabelTest.GetWidth(text);
+                    label.PosX = box.size.x - SCROLLBAR_WIDTH - textWidth - 2f;
+                    label.text = text;
+                };
+                box.AddItems(label);
             }
-
-            return size;
         }
 
         private string FileSizeToString(long size)
@@ -222,6 +243,34 @@ namespace MapExporter.Tabs
             if (size >= 1000) size -= size % 10L; // no decimal on triple digit things
             decimal dec = size / 10.0m;
             return dec + " " + suffix;
+        }
+
+        private class FileSizeReader(DirectoryInfo dir, FileSizeReader parent)
+        {
+            private readonly DirectoryInfo directory = dir;
+            private readonly FileSizeReader parent = parent;
+
+            private long size = 0;
+            private bool updated = false;
+
+            public event Action<long> OnRead;
+
+            public void Read()
+            {
+                if (updated) return;
+                updated = true;
+                foreach (var file in directory.GetFiles())
+                {
+                    size += file.Length;
+                }
+                parent?.Update(size);
+                OnRead?.Invoke(size);
+            }
+
+            protected void Update(long size)
+            {
+                this.size += size;
+            }
         }
     }
 }
