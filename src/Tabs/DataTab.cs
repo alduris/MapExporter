@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using MapExporter.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
 using UnityEngine;
+using ResetSeverity = MapExporter.Resources.ResetSeverity;
 
 namespace MapExporter.Tabs
 {
@@ -25,31 +27,43 @@ namespace MapExporter.Tabs
         {
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
-            const string TUTORIAL = "Shown here is not what is processed but what is present in the mod's data folder,"
+            const string TUTORIAL = "Shown here is not what is processed but what is present in the mod's data folder, "
                 + "and thus may not accurately represent what regions it recognizes as rendered or processed.";
             dataVersion = Data.Version;
 
             // Controls
+            var openFolderButton = new OpSimpleButton(new Vector2(SIDE_PADDING, SIDE_PADDING), new Vector2(160f, 24f), "OPEN DATA FOLDER");
+            openFolderButton.OnClick += OpenFolderButton_OnClick;
+            var deleteEverythingButton = new OpHoldButton(new Vector2(MENU_SIZE - SIDE_PADDING - 120f, SIDE_PADDING), new Vector2(120f, 24f), "DELETE ALL", 400) // 10 seconds
+            { colorEdge = RedColor };
+            deleteEverythingButton.OnPressDone += DeleteEverythingButton_OnPressDone;
 
             // Scrollboxes
-            const float TOP_GAP = SIDE_PADDING + 70f + ITEM_GAP;
+            const float TOP_GAP = SIDE_PADDING + 60f + ITEM_GAP;
             const float BOTTOM_GAP = SIDE_PADDING + 24f + ITEM_GAP * 2 + 2f;
             const float SCROLLBOX_HEIGHT = MENU_SIZE - TOP_GAP - BOTTOM_GAP - 30f;
             renderedList = new OpScrollBox(new Vector2(299f - ITEM_GAP - 200f, BOTTOM_GAP), new Vector2(200f, SCROLLBOX_HEIGHT), 0f, false, true, true);
             processedList = new OpScrollBox(new Vector2(301f + ITEM_GAP, BOTTOM_GAP), new Vector2(200f, SCROLLBOX_HEIGHT), 0f, false, true, true);
 
             AddItems(
+                // top
                 new OpShinyLabel(new Vector2(0f, MENU_SIZE - SIDE_PADDING - 30f), new Vector2(600f, 30f), "DATA MANAGEMENT", FLabelAlignment.Center, true),
                 new OpLabelLong(new Vector2(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 70), new Vector2(MENU_SIZE - SIDE_PADDING * 2, 40), TUTORIAL, true, FLabelAlignment.Center)
                 { verticalAlignment = OpLabel.LabelVAlignment.Top },
 
+                // middle
                 renderedList,
                 processedList,
-                new OpLabel(new Vector2(renderedList.pos.x, renderedList.pos.y + renderedList.size.y), new Vector2(renderedList.size.x, 30f), "RENDERED", FLabelAlignment.Right, true)
+                new OpLabel(new Vector2(renderedList.pos.x, renderedList.pos.y + renderedList.size.y), new Vector2(renderedList.size.x, 30f), "SCREENSHOTTED", FLabelAlignment.Right, true)
                 { verticalAlignment = OpLabel.LabelVAlignment.Center },
                 new OpLabel(new Vector2(processedList.pos.x, processedList.pos.y + processedList.size.y), new Vector2(processedList.size.x, 30f), "GENERATED", FLabelAlignment.Left, true)
                 { verticalAlignment = OpLabel.LabelVAlignment.Center },
-                new OpImage(new Vector2(299f, BOTTOM_GAP), "pixel") { scale = new Vector2(2f, SCROLLBOX_HEIGHT + 30f), color = MenuColorEffect.rgbMediumGrey }
+                new OpImage(new Vector2(299f, BOTTOM_GAP), "pixel") { scale = new Vector2(2f, SCROLLBOX_HEIGHT + 30f), color = MenuColorEffect.rgbMediumGrey },
+
+                // bottom
+                new OpImage(new Vector2(SIDE_PADDING, BOTTOM_GAP - ITEM_GAP - 2f), "pixel") { scale = new Vector2(MENU_SIZE - 2 * SIDE_PADDING, 2f), color = MenuColorEffect.rgbMediumGrey },
+                openFolderButton,
+                deleteEverythingButton
             );
         }
 
@@ -89,7 +103,7 @@ namespace MapExporter.Tabs
                 else
                 {
                     float y = renderedList.size.y - INNER_PAD;
-                    GenerateDirectoryBox(renderedList, dir, () => renderedDirty = true, INNER_PAD, ref y, true, renderedStack);
+                    GenerateDirectoryBox(renderedList, dir, () => renderedDirty = true, INNER_PAD, ref y, true, Resources.ResetSeverity.InputOnly, renderedStack);
                     renderedList.SetContentSize(renderedList.size.y - y + INNER_PAD);
                 }
             }
@@ -117,7 +131,7 @@ namespace MapExporter.Tabs
                 else
                 {
                     float y = processedList.size.y - INNER_PAD;
-                    GenerateDirectoryBox(processedList, dir, () => processedDirty = true, INNER_PAD, ref y, true, generatedStack);
+                    GenerateDirectoryBox(processedList, dir, () => processedDirty = true, INNER_PAD, ref y, true, Resources.ResetSeverity.OutputOnly, generatedStack);
                     processedList.SetContentSize(processedList.size.y - y + INNER_PAD);
                 }
             }
@@ -133,7 +147,7 @@ namespace MapExporter.Tabs
             }
         }
 
-        private void GenerateDirectoryBox(OpScrollBox box, DirectoryInfo dir, Action markDirty, float x, ref float y, bool isRoot, Stack<FileSizeReader> stack, FileSizeReader parentReader = null)
+        private void GenerateDirectoryBox(OpScrollBox box, DirectoryInfo dir, Action markDirty, float x, ref float y, bool isRoot, Resources.ResetSeverity resetSeverity, Stack<FileSizeReader> stack, FileSizeReader parentReader = null)
         {
             float initialY = 0f; // we only use it if !isRoot so 0f is just a placeholder
             var reader = new FileSizeReader(dir, parentReader);
@@ -188,7 +202,7 @@ namespace MapExporter.Tabs
 
                     // New subchildren
                     lastY = y;
-                    GenerateDirectoryBox(box, item, markDirty, x + (isRoot ? 0f : 30f), ref y, false, stack, reader);
+                    GenerateDirectoryBox(box, item, markDirty, x + (isRoot ? 0f : 30f), ref y, false, resetSeverity, stack, reader);
                     isFirst = false;
                 }
             }
@@ -211,7 +225,12 @@ namespace MapExporter.Tabs
                 y -= LabelTest.LineHeight(false) * 2;
                 var label = new OpLabel(x, y, "Total size: <calculating>", false);
                 reader.OnRead += (size) => label.text = "Total size: " + FileSizeToString(size);
-                box.AddItems(label);
+
+                y -= 30f;
+                var deleteFolderButton = new OpHoldButton(new Vector2(x, y), new Vector2(120f, 24f), "DELETE ALL", 200) // 5 sec
+                { colorEdge = RedColor };
+                deleteFolderButton.OnPressDone += (_) => DeleteFolderButton_OnPressDone(deleteFolderButton, resetSeverity);
+                box.AddItems(label, deleteFolderButton);
             }
             else
             {
@@ -271,6 +290,30 @@ namespace MapExporter.Tabs
             {
                 this.size += size;
             }
+        }
+
+        private void DeleteEverythingButton_OnPressDone(UIfocusable trigger)
+        {
+            Resources.Reset(ResetSeverity.Everything);
+            ModdingMenu.instance.cfgContainer._SwitchMode(Menu.Remix.ConfigContainer.Mode.ModView);
+            trigger.held = false;
+        }
+
+        private void DeleteFolderButton_OnPressDone(OpHoldButton deleteFolderButton, ResetSeverity resetSeverity)
+        {
+            Resources.Reset(resetSeverity);
+            renderedDirty = true;
+            processedDirty = true;
+        }
+
+        private void OpenFolderButton_OnClick(UIfocusable trigger)
+        {
+            var path = Data.DataDirectory;
+            if (!path.EndsWith(Path.DirectorySeparatorChar.ToString()) && !path.EndsWith(Path.AltDirectorySeparatorChar.ToString()))
+            {
+                path += Path.DirectorySeparatorChar.ToString();
+            }
+            using (Process.Start(path)) { }
         }
     }
 }
