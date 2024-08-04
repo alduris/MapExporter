@@ -9,6 +9,7 @@ internal class UI : OptionInterface
 
         Tabs = [
             new MainMenuTab(this),
+            new DataTab(this),
             new ScreenshotTab(this),
             new EditTab(this),
             new GenerateTab(this),
