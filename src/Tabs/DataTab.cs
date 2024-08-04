@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using MapExporter.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
@@ -117,11 +116,14 @@ namespace MapExporter.Tabs
             }
         }
 
-        private void GenerateDirectoryBox(OpScrollBox box, DirectoryInfo dir, Action markDirty, float x, ref float y, bool isRoot)
+        private long GenerateDirectoryBox(OpScrollBox box, DirectoryInfo dir, Action markDirty, float x, ref float y, bool isRoot)
         {
+            long size = 0;
+            float initialY = 0f; // we only use it if !isRoot so 0f is just a placeholder
             if (!isRoot)
             {
                 y -= 30;
+                initialY = y;
 
                 // Delete button and directory name
                 var button = new OpHoldButton(new Vector2(x, y), new Vector2(24f, 24f), "\xd7", 40) { colorEdge = RedColor, colorFill = RedColor };
@@ -143,7 +145,7 @@ namespace MapExporter.Tabs
                         }
                     }
                 };
-                box.AddItems(button, new OpLabel(x + 30f, y + (24f - LabelTest.LineHeight(false)) / 2f, dir.Name));
+                box.AddItems(button, new OpLabel(x + 30f, y + (12f - LabelTest.LineHalfHeight(false)), dir.Name));
             }
 
             // Children and fancy side thingy
@@ -152,6 +154,11 @@ namespace MapExporter.Tabs
             List<UIelement> border = [];
             try
             {
+                foreach (var item in dir.GetFiles())
+                {
+                    size += item.Length;
+                }
+
                 float lastY = y;
                 bool isFirst = true;
                 foreach (var item in dir.GetDirectories())
@@ -168,7 +175,7 @@ namespace MapExporter.Tabs
 
                     // New subchildren
                     lastY = y;
-                    GenerateDirectoryBox(box, item, markDirty, x + (isRoot ? 0f : 30f), ref y, false);
+                    size += GenerateDirectoryBox(box, item, markDirty, x + (isRoot ? 0f : 30f), ref y, false);
                     isFirst = false;
                 }
             }
@@ -184,6 +191,37 @@ namespace MapExporter.Tabs
                     box.AddItems(item);
                 }
             }
+
+            // Size text
+            if (isRoot)
+            {
+                y -= LabelTest.LineHeight(false) * 2;
+                box.AddItems(new OpLabel(x, y, "Total size: " + FileSizeToString(size), false));
+            }
+            else
+            {
+                string text = FileSizeToString(size);
+                float textWidth = LabelTest.GetWidth(text);
+                box.AddItems(new OpLabel(box.size.x - SCROLLBAR_WIDTH - textWidth - 2f, initialY, text, false));
+            }
+
+            return size;
+        }
+
+        private string FileSizeToString(long size)
+        {
+            var (suffix, divisor) = size switch
+            {
+                >= 1_000_000_000L => ("GB", 100_000_000L),
+                >= 1_000_000L     => ("MB", 100_000L),
+                >= 1_000L         => ("KB", 100L),
+                _                 => ("B",  1L)
+            };
+
+            size /= divisor;
+            if (size >= 1000) size -= size % 10L; // no decimal on triple digit things
+            decimal dec = size / 10.0m;
+            return dec + " " + suffix;
         }
     }
 }
