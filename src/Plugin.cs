@@ -86,6 +86,7 @@ sealed class Plugin : BaseUnityPlugin
                 On.SeedCob.FreezingPaletteUpdate += SeedCob_FreezingPaletteUpdate;
                 On.InsectCoordinator.CreateInsect += InsectCoordinator_CreateInsect;
                 IL.WorldLoader.MappingRooms += WorldLoader_MappingRooms;
+                IL.WorldLoader.CreatingAbstractRooms += WorldLoader_CreatingAbstractRooms;
                 On.AbstractRoom.AddTag += AbstractRoom_AddTag;
                 IL.WorldLoader.NextActivity += WorldLoader_NextActivity;
                 On.WorldLoader.FindingCreaturesThread += WorldLoader_FindingCreaturesThread;
@@ -155,10 +156,27 @@ sealed class Plugin : BaseUnityPlugin
         }
     }
 
+    // Add the tags, skipping the exceptions (SWARMROOM, GATE, SHELTER)
+    private void WorldLoader_CreatingAbstractRooms(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        // Find location where we want to go and grab it
+        c.GotoNext(x => x.MatchLdstr("SWARMROOM"));
+        c.GotoNext(MoveType.Before, x => x.MatchLdfld<WorldLoader>(nameof(WorldLoader.abstractRooms)));
+        var match = c.Prev;
+
+        // Go back to where we want the break to be
+        c.GotoPrev(x => x.MatchLdstr("SWARMROOM"));
+        c.GotoPrev(MoveType.After, x => x.MatchBrfalse(out _));
+
+        // Create the break
+        c.Emit(OpCodes.Br, match);
+    }
+
+    // Always put room tags in the WorldLoader roomTags array so they get added to the room
     private void WorldLoader_MappingRooms(ILContext il)
     {
-        // Always put room tags in the WorldLoader roomTags array so they get added to the room
-#warning NOT ALL TAGS GET SAVED!! FIX THIS CODE
         try
         {
             var c = new ILCursor(il);

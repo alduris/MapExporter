@@ -73,7 +73,7 @@ namespace MapExporter
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;
 
         public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> RenderedRegions = [];
-        public static readonly Dictionary<string, List<SlugcatStats.Name>> FinishedRegions = [];
+        public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> FinishedRegions = [];
 
         public static void GetData()
         {
@@ -137,7 +137,7 @@ namespace MapExporter
                         var savedList = ((List<object>)finishedRegion.Value).Select(x => new SlugcatStats.Name((string)x)).ToList();
 
                         // Make sure the regions still exist in our file system
-                        var scugList = new List<SlugcatStats.Name>();
+                        var scugList = new HashSet<SlugcatStats.Name>();
                         foreach (var scug in savedList)
                         {
                             if (Directory.Exists(FinalOutputDir(scug.value, region)))

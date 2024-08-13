@@ -32,7 +32,7 @@ namespace MapExporter.Tabs
         {
             const float PADDING = 10f;
             const float MARGIN = 6f;
-            const float BOX_HEIGHT = (MENU_SIZE - 4 * PADDING - 3 * BIG_LINE_HEIGHT - 3 * MARGIN - 24f) / 2;
+            const float BOX_HEIGHT = (MENU_SIZE - PADDING * 4 - BIG_LINE_HEIGHT * 3 - MARGIN * 4 - 24f * 2) / 2;
 
             var allRegions = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToList();
             if (allRegions.Count == 0)
@@ -50,7 +50,7 @@ namespace MapExporter.Tabs
                 0f, true, true, true);
             currentBox = new OpScrollBox(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, BOX_HEIGHT), BOX_HEIGHT, false, true, false);
 
-            var startButton = new OpSimpleButton(new Vector2(), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
+            var startButton = new OpSimpleButton(new Vector2(PADDING, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
             startButton.OnClick += StartButton_OnClick;
 
             AddItems(
@@ -183,12 +183,7 @@ namespace MapExporter.Tabs
                         {
                             if (Data.FinishedRegions.TryGetValue(current, out var slugcats))
                             {
-                                if (slugcats.Any(x => x.value.Equals(slugQueue.Peek().value, StringComparison.InvariantCultureIgnoreCase)))
-                                {
-                                    // Guarantee unique so you don't get repetitions in the list
-#warning actually this doesn't really work why not
-                                    Data.FinishedRegions[current].Add(slugQueue.Peek());
-                                }
+                                Data.FinishedRegions[current].Add(slugQueue.Peek());
                             }
                             else
                             {
