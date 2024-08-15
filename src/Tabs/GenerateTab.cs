@@ -43,7 +43,10 @@ namespace MapExporter.Tabs
                 allRegions.Add(new ListItem("", ""));
             }
 
-            regionSelector = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT - MARGIN - 24f), 200f, allRegions);
+            regionSelector = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT - MARGIN - 24f), 200f, allRegions)
+            {
+                listHeight = 20
+            };
             regionAdd = new OpSimpleButton(new Vector2(regionSelector.pos.x + regionSelector.size.x + MARGIN, regionSelector.pos.y), new Vector2(60f, 24f), "ADD");
             regionAdd.OnClick += RegionAdd_OnClick;
 
@@ -58,12 +61,14 @@ namespace MapExporter.Tabs
 
             AddItems(
                 new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "GENERATE", true),
-                regionSelector, regionAdd,
                 new OpLabel(PADDING, regionSelector.pos.y - PADDING - BIG_LINE_HEIGHT, "QUEUE", true),
                 queueBox,
                 new OpLabel(PADDING, queueBox.pos.y - PADDING - BIG_LINE_HEIGHT, "CURRENT", true),
                 currentBox,
-                startButton
+                startButton,
+
+                // for z-index ordering reasons
+                regionSelector, regionAdd
             );
         }
 

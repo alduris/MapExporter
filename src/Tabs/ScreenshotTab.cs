@@ -62,7 +62,7 @@ namespace MapExporter.Tabs
                 .ToList(); // OpComboBox wants it as a list
             comboRegions = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(10f, 530f), 175f, regionList)
             {
-                listHeight = (ushort)Math.Min(20, RegionNames.Count)
+                listHeight = 20
             };
             var addButton = new OpSimpleButton(new Vector2(195f, 530f), new Vector2(40f, 24f), "ADD");
             var addAllButton = new OpSimpleButton(new Vector2(245f, 530f), new Vector2(40f, 24f), "ALL");

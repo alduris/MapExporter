@@ -40,9 +40,15 @@ namespace MapExporter.Tabs
             regionSelector = new OpComboBox(OIUtil.CosmeticBind(""),
                 new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f),
                 TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP,
-                regionList.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToList());
+                regionList.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToList())
+            {
+                listHeight = 20
+            };
             regionSelector.OnValueChanged += RegionSelector_OnValueChanged;
-            scugSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP * 2, regionSelector.pos.y), TOPBAR_UNIT_WIDTH, [""]);
+            scugSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP * 2, regionSelector.pos.y), TOPBAR_UNIT_WIDTH, [""])
+            {
+                listHeight = 10
+            };
             scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
             var saveButton = new OpSimpleButton(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 24f), "SAVE")
             {
@@ -53,7 +59,10 @@ namespace MapExporter.Tabs
             // Bottom of menu
             const string IMPORT_TEXT = "Import from: ";
             var importLabel = new OpLabel(SIDE_PADDING, SIDE_PADDING + (12f - LabelTest.LineHeight(false) / 2f), IMPORT_TEXT, false);
-            importSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(importLabel.pos.x + LabelTest.GetWidth(IMPORT_TEXT, false) + 6f, importLabel.pos.y), TOPBAR_UNIT_WIDTH, [""]);
+            importSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(importLabel.pos.x + LabelTest.GetWidth(IMPORT_TEXT, false) + 6f, importLabel.pos.y), TOPBAR_UNIT_WIDTH, [""])
+            {
+                listHeight = 10
+            };
             var importButton = new OpSimpleButton(new(importSelector.pos.x + importSelector.size.x + 6f, importSelector.pos.y), new Vector2(80f, 24f), "IMPORT");
             importButton.OnClick += ImportButton_OnClick;
 
