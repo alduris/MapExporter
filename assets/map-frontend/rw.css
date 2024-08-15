@@ -7,6 +7,7 @@
 :root {
     --font-body: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     --font-title: "Rodondo", sans-serif;
+    --region-btn-width: 240px;
 }
 
 .rw-title {

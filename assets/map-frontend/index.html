@@ -74,7 +74,7 @@
 
         button.region-button {
             position: relative;
-            width: 200px;
+            width: var(--region-btn-width);
             height: 40px;
             background: black;
         }
@@ -139,8 +139,9 @@ Ideal number of columns: ${idealColumns}`);
                 console.log(json);
                 regions = json;
                 let html = "";
-                for (const r in regions) {
-                    html += '<button class="region-button rw-ui rw-text" name="region" value="' + r + '">' + regions[r]["name"].toUpperCase() + '</button>';
+                const regionListSorted = Object.keys(regions).sort((a, b) => regions[a]["name"].toLowerCase().localeCompare(regions[b]["name"].toLowerCase()));
+                for (const r of regionListSorted) {
+                    html += '<button class="region-button rw-ui rw-text" name="region" value="' + r + '">' + regions[r]["name"].toUpperCase() + ' (' + r + ')</button>';
                 }
                 document.getElementById('regionlist').innerHTML = html;
                 organizeColumns();

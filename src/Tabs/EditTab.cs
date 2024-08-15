@@ -70,7 +70,7 @@ namespace MapExporter.Tabs
             mapBox = new OpMapBox(new(BODY_LEFT_WIDTH + ITEM_GAP / 2, roomSelector.pos.y), new(mapWidth, roomSelector.size.y));
 
             // Add the items
-            const string MOUSE_MODE_TEXT = "Left click + drag to move, right click to pick room (or use list on left), right click picked room to toggle hidden";
+            const string MOUSE_MODE_TEXT = "Left + drag to move, right click to pick room (or use list on left), right click picked room to toggle hidden";
             const string CONTROLLER_TEXT = "<pickup> to move fast, <jump> to pick room (or use list on left), <map> to toggle hidden";
             AddItems(
                 // Input boxes and such

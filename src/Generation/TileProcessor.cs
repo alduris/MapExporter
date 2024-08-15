@@ -65,7 +65,7 @@ namespace MapExporter.Generation
                     foreach (var room in regionInfo.rooms.Values)
                     {
                         // Skip rooms with no cameras
-                        if (room.cameras == null || room.cameras.Length == 0) continue;
+                        if (room.cameras == null || room.cameras.Length == 0 || room.hidden) continue;
 
                         for (int camNo = 0; camNo < room.cameras.Length; camNo++)
                         {
@@ -92,7 +92,7 @@ namespace MapExporter.Generation
                                 // Open the camera so we can use it
                                 camTexture.LoadImage(File.ReadAllBytes(Path.Combine(owner.inputDir, fileName)), false);
 
-                                if (zoom != 0) // No need to scale to the same resolution
+                                if (zoom != 0 || camTexture.width != screenSize.x || camTexture.height != screenSize.y) // Don't need to rescale to same resolution
                                     ScaleTexture(camTexture, (int)(screenSize.x * multFac), (int)(screenSize.y * multFac));
 
                                 // Copy pixels
@@ -155,8 +155,9 @@ namespace MapExporter.Generation
 
                 texture.SetPixelData(pixels, 0);
             }
-            catch
+            catch (System.Exception e)
             {
+                Plugin.Logger.LogError(e);
                 throw; // rethrow error so we know something went wrong
             }
             finally

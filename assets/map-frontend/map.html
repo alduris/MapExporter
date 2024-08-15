@@ -255,93 +255,6 @@
 
     <script>
         'use strict';
-        // misc iconography but mostly Spawns
-
-        var regions = {};
-        var slugcats = [];
-
-        getJsonObject("regions.json", function (json) { regions = json; }, false);
-        getJsonObject("slugcats.json", function (json) { slugcats = json; }, false);
-
-        var html = "";
-        for (const r in regions) {
-            html += `
-<label>
-    <div class="region-btn">
-        <input type="radio" class="rw-ui" name="regions" onclick="selectRegion(this.value);" value="${r}"${r == region ? ' checked="checked"' : ''} autocomplete = "off">
-        <span>${regions[r]["name"].toUpperCase()} (${r})</span>
-    </div>
-</label>`
-            document.getElementById('region-select').innerHTML = html;
-        }
-        
-        html = "";
-        for (const slugcatName of slugcats) {
-            html += `
-<label class="difficulty-btn" id="scug-${slugcatName}">
-    <input type="radio" class="rw-ui" name="difficulties" onclick="selectDifficulty('${slugcatName}');" value="${slugcatName}" autocomplete="off">
-    <img src="./resources/slugcats/${slugcatName}.png">
-</label>`;
-            document.getElementById('scug-selector').innerHTML = html;
-        }
-
-        function selectRegion(value) {
-            if (region != value) {
-                room = null;
-                region = value;
-                if (regions[region]["slugcats"].indexOf(difficulty) == -1) {
-                    difficulty = regions[region]["slugcats"][0];
-                }
-                pushState();
-            }
-        }
-
-        function selectDifficulty(n) {
-            for (var i = 0; i < document.difficulty.difficulties.length; i++) {
-                if (document.difficulty.difficulties[i].value == n) {
-                    document.difficulty.difficulties[i].checked = true;
-                }
-            }
-            if (difficulty != n) {
-                difficulty = n;
-                pushState();
-            }
-        }
-
-        // Control with poor control options, whodvathot
-        // layer control with control over the classnames
-        L.Control.Layers.UnstupidLayer = L.Control.Layers.extend(
-            {
-                options: {
-                    collapsed: false,
-                    containerClass: "",
-                    sectionClass: "",
-                    overlaysListClass: "",
-                    overlayInputClass: "",
-                    overlayInputDivClass: "",
-                    overlayInputLabelClass: "",
-                    hideBaseLayers: true
-                },
-                _addItem: function (obj) {
-                    let h = L.Control.Layers.prototype._addItem.call(this, obj);
-                    h.className = this.options.overlayInputDivClass;
-                    h.children[0].className = this.options.overlayInputLabelClass;
-                    h.children[0].children[0].className = this.options.overlayInputClass;
-                    return h;
-                },
-                _initLayout: function () {
-                    L.Control.Layers.prototype._initLayout.call(this);
-                    this._container.className = this.options.containerClass;
-                    this._section.className = this.options.sectionClass;
-                    if (this.options.hideBaseLayers) {
-                        this._baseLayersList.style.display = "none";
-                        this._layersLink.style.display = "none";
-                    }
-                    this._overlaysList.className = this.options.overlaysListClass;
-                },
-                expand: function () { }
-            }
-        );
 
         // Dynamic navigation
         var dynamicNavigation; // Stupid browsers
@@ -429,6 +342,95 @@
 
         window.onpopstate = newState;
         window.onload = newState;
+
+
+        // Setup or something like that
+        var regions = {};
+        var slugcats = [];
+
+        getJsonObject("regions.json", function (json) { regions = json; }, false);
+        getJsonObject("slugcats.json", function (json) { slugcats = json; }, false);
+
+        var html = "";
+        var regionListSorted = Object.keys(regions).sort((a, b) => regions[a]["name"].toUpperCase().localeCompare(regions[b]["name"].toUpperCase()));
+        for (const r of regionListSorted) {
+            html += `
+<label>
+    <div class="region-btn">
+        <input type="radio" class="rw-ui" name="regions" onclick="selectRegion(this.value);" value="${r}"${r == region ? ' checked' : ''} autocomplete = "off">
+        <span>${regions[r]["name"].toUpperCase()} (${r})</span>
+    </div>
+</label>`
+            document.getElementById('region-select').innerHTML = html;
+        }
+        
+        html = "";
+        for (const slugcatName of slugcats) {
+            html += `
+<label class="difficulty-btn" id="scug-${slugcatName}">
+    <input type="radio" class="rw-ui" name="difficulties" onclick="selectDifficulty('${slugcatName}');" value="${slugcatName}" autocomplete="off">
+    <img src="./resources/slugcats/${slugcatName}.png">
+</label>`;
+            document.getElementById('scug-selector').innerHTML = html;
+        }
+
+        function selectRegion(value) {
+            if (region != value) {
+                room = null;
+                region = value;
+                if (regions[region]["slugcats"].indexOf(difficulty) == -1) {
+                    difficulty = regions[region]["slugcats"][0];
+                }
+                pushState();
+            }
+        }
+
+        function selectDifficulty(n) {
+            for (var i = 0; i < document.difficulty.difficulties.length; i++) {
+                if (document.difficulty.difficulties[i].value == n) {
+                    document.difficulty.difficulties[i].checked = true;
+                }
+            }
+            if (difficulty != n) {
+                difficulty = n;
+                pushState();
+            }
+        }
+
+        // Control with poor control options, whodvathot
+        // layer control with control over the classnames
+        L.Control.Layers.UnstupidLayer = L.Control.Layers.extend(
+            {
+                options: {
+                    collapsed: false,
+                    containerClass: "",
+                    sectionClass: "",
+                    overlaysListClass: "",
+                    overlayInputClass: "",
+                    overlayInputDivClass: "",
+                    overlayInputLabelClass: "",
+                    hideBaseLayers: true
+                },
+                _addItem: function (obj) {
+                    let h = L.Control.Layers.prototype._addItem.call(this, obj);
+                    h.className = this.options.overlayInputDivClass;
+                    h.children[0].className = this.options.overlayInputLabelClass;
+                    h.children[0].children[0].className = this.options.overlayInputClass;
+                    return h;
+                },
+                _initLayout: function () {
+                    L.Control.Layers.prototype._initLayout.call(this);
+                    this._container.className = this.options.containerClass;
+                    this._section.className = this.options.sectionClass;
+                    if (this.options.hideBaseLayers) {
+                        this._baseLayersList.style.display = "none";
+                        this._layersLink.style.display = "none";
+                    }
+                    this._overlaysList.className = this.options.overlaysListClass;
+                },
+                expand: function () { }
+            }
+        );
 
         // Room hover & select stuff
         var hilightedRoom;
