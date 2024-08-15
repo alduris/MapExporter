@@ -31,7 +31,7 @@ namespace MapExporter.Tabs
             dataVersion = Data.Version;
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
-            var regionList = Data.RenderedRegions.Keys.ToList();
+            var regionList = Data.RenderedRegions.Keys.OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase).ToList();
             if (regionList.Count == 0)
                 regionList.Add(""); // dummy placeholder
 
@@ -103,7 +103,7 @@ namespace MapExporter.Tabs
                 dataVersion = Data.Version;
 
                 // Update region list
-                var regionList = Data.RenderedRegions.Keys.ToList();
+                var regionList = Data.RenderedRegions.Keys.OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase).ToList();
                 if (regionList.Count == 0)
                     regionList.Add(""); // dummy placeholder
                 regionSelector._itemList = regionList.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToArray();

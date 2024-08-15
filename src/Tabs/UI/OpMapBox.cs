@@ -239,8 +239,8 @@ namespace MapExporter.Tabs.UI
                 int startY = Mathf.RoundToInt(room.devPos.y);
 
                 // Draw the pixels of the room geometry
-                int sizeX = room.tiles != null ? room.size.x : GenUtil.offscreenSizeInt.x / 20;
-                int sizeY = room.tiles != null ? room.size.y : GenUtil.offscreenSizeInt.y / 20;
+                int sizeX = room.size.x; // room.tiles != null ? room.size.x : GenUtil.offscreenSizeInt.x / 20;
+                int sizeY = room.size.y; // room.tiles != null ? room.size.y : GenUtil.offscreenSizeInt.y / 20;
                 for (int i = 0; i < sizeX; i++)
                 {
                     if (startX + i < drawArea.xMin || startX + i > drawArea.xMax)

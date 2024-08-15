@@ -34,7 +34,10 @@ namespace MapExporter.Tabs
             const float MARGIN = 6f;
             const float BOX_HEIGHT = (MENU_SIZE - PADDING * 4 - BIG_LINE_HEIGHT * 3 - MARGIN * 4 - 24f * 2) / 2;
 
-            var allRegions = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToList();
+            var allRegions = Data.RenderedRegions.Keys
+                .OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase)
+                .Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i))
+                .ToList();
             if (allRegions.Count == 0)
             {
                 allRegions.Add(new ListItem("", ""));
@@ -107,7 +110,7 @@ namespace MapExporter.Tabs
                 {
                     string name = Data.RegionNameFor(item, null);
                     float namewidth = LabelTest.GetWidth(name);
-                    float boxwidth = namewidth + 24f + ITEM_PAD * 3;
+                    float boxwidth = namewidth + 30f + ITEM_PAD * 3;
                     float boxtop = queueBox.size.y - Q_SPACING - ITEM_PAD;
 
                     var delButton = new OpSimpleButton(
@@ -120,14 +123,14 @@ namespace MapExporter.Tabs
 
                     queueBox.AddItems(
                         new OpRect(new Vector2(x, SCROLLBAR_WIDTH + Q_SPACING), new Vector2(boxwidth, queueBox.size.y - SCROLLBAR_WIDTH - Q_SPACING * 2)),
-                        new OpLabel(x, boxtop - 22f, name, false),
+                        new OpLabel(x + ITEM_PAD, boxtop - 22f, name, false),
                         delButton
                     );
 
                     x += boxwidth + Q_SPACING;
                 }
 
-                queueBox.SetContentSize(x);
+                queueBox.SetContentSize(x, false);
             }
 
             // Update current box
@@ -208,7 +211,10 @@ namespace MapExporter.Tabs
             {
                 dataVersion = Data.Version;
 
-                regionSelector._itemList = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToArray();
+                regionSelector._itemList = Data.RenderedRegions.Keys
+                    .OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase)
+                    .Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i))
+                    .ToArray();
                 regionSelector._ResetIndex();
                 regionSelector.value = null;
                 regionSelector.Change();

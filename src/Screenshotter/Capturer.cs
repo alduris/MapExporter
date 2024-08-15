@@ -64,7 +64,7 @@ namespace MapExporter.Screenshotter
         }
 
         private static int screens = 0;
-        private const int THRESHOLD = 500;
+        private const int THRESHOLD = 300;
         public System.Collections.IEnumerator CaptureTask(RainWorldGame game)
         {
             // Task start
