@@ -93,6 +93,7 @@ sealed class Plugin : BaseUnityPlugin
                 On.Lightning.LightningSource.Update += LightningSource_Update;
                 On.Oracle.Update += Oracle_Update;
                 On.TempleGuard.Update += TempleGuard_Update;
+                _ = new ILHook(typeof(HUD.Map).GetProperty(nameof(HUD.Map.discoverTexture)).GetSetMethod(), Map_discoverTexture_set);
 
                 Logger.LogDebug("Finished start thingy");
             }
@@ -102,9 +103,15 @@ sealed class Plugin : BaseUnityPlugin
                 Logger.LogDebug("Normal game instance, don't run hooks");
 
                 // Register UI
+                bool isInit = false;
                 On.RainWorld.OnModsInit += (orig, self) =>
                 {
                     orig(self);
+                    Data.CheckData();
+                    if (isInit) return;
+
+                    isInit = true;
+
                     MachineConnector.SetRegisteredOI(MOD_ID, new UI());
 
                     static float OpScrollBox_MaxScroll_get(Func<OpScrollBox, float> orig, OpScrollBox self) => self.horizontal ? -Mathf.Max(self.contentSize - self.size.x, 0f) : orig(self);
@@ -121,6 +128,21 @@ sealed class Plugin : BaseUnityPlugin
         }
 
         orig(self);
+    }
+
+    // Mem leak fixer
+    private void Map_discoverTexture_set(ILContext il)
+    {
+        // You'd think I could just use a normal Hook, not an ILHook. Unfortunately fuck you, the Hook implementation is broken for property setters.
+        var c = new ILCursor(il);
+        c.Emit(OpCodes.Ldarg_0);
+        c.EmitDelegate((HUD.Map self) =>
+        {
+            if (self.hud.rainWorld.progression.mapDiscoveryTextures.TryGetValue(self.mapData.regionName, out var oldTex))
+            {
+                Destroy(oldTex);
+            }
+        });
     }
 
     // Save and remove spawns

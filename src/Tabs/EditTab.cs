@@ -40,7 +40,7 @@ namespace MapExporter.Tabs
             regionSelector = new OpComboBox(OIUtil.CosmeticBind(""),
                 new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f),
                 TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP,
-                regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToList());
+                regionList.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToList());
             regionSelector.OnValueChanged += RegionSelector_OnValueChanged;
             scugSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP * 2, regionSelector.pos.y), TOPBAR_UNIT_WIDTH, [""]);
             scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
@@ -106,7 +106,7 @@ namespace MapExporter.Tabs
                 var regionList = Data.RenderedRegions.Keys.ToList();
                 if (regionList.Count == 0)
                     regionList.Add(""); // dummy placeholder
-                regionSelector._itemList = regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToArray();
+                regionSelector._itemList = regionList.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToArray();
                 regionSelector._ResetIndex();
                 regionSelector.Change();
                 RegionSelector_OnValueChanged(null, regionSelector.value, null);

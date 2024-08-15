@@ -24,7 +24,7 @@ namespace MapExporter.Tabs
         private int dataVersion = 0;
         private bool running = false;
 
-        private readonly Queue<string> queue = [];
+        private readonly LinkedList<string> queue = [];
         private string current;
         private readonly Queue<SlugcatStats.Name> slugQueue = [];
 
@@ -34,7 +34,7 @@ namespace MapExporter.Tabs
             const float MARGIN = 6f;
             const float BOX_HEIGHT = (MENU_SIZE - PADDING * 4 - BIG_LINE_HEIGHT * 3 - MARGIN * 4 - 24f * 2) / 2;
 
-            var allRegions = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToList();
+            var allRegions = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToList();
             if (allRegions.Count == 0)
             {
                 allRegions.Add(new ListItem("", ""));
@@ -71,7 +71,8 @@ namespace MapExporter.Tabs
             {
                 if (current == null)
                 {
-                    current = queue.Dequeue();
+                    current = queue.First();
+                    queue.RemoveFirst();
 
                     var scugs = Data.RenderedRegions[current];
                     slugQueue.Clear(); // there should be nothing in it but just as a safety
@@ -104,7 +105,7 @@ namespace MapExporter.Tabs
                 float x = Q_SPACING;
                 foreach (var item in queue)
                 {
-                    string name = Region.GetRegionFullName(item, null);
+                    string name = Data.RegionNameFor(item, null);
                     float namewidth = LabelTest.GetWidth(name);
                     float boxwidth = namewidth + 24f + ITEM_PAD * 3;
                     float boxtop = queueBox.size.y - Q_SPACING - ITEM_PAD;
@@ -115,6 +116,7 @@ namespace MapExporter.Tabs
                     {
                         colorEdge = RedColor, colorFill = RedColor
                     };
+                    delButton.OnClick += (_) => queue.Remove(item);
 
                     queueBox.AddItems(
                         new OpRect(new Vector2(x, SCROLLBAR_WIDTH + Q_SPACING), new Vector2(boxwidth, queueBox.size.y - SCROLLBAR_WIDTH - Q_SPACING * 2)),
@@ -147,7 +149,7 @@ namespace MapExporter.Tabs
                     string text = generator != null ? "Processing..." : "Generator missing!";
                     if (generator?.Failed ?? false) text = "Error detected!";
                     progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, text, false);
-                    var displayText = slugQueue.Peek().value + " - " + Region.GetRegionFullName(current, slugQueue.Peek());
+                    var displayText = slugQueue.Peek().value + " - " + Data.RegionNameFor(current, slugQueue.Peek());
 
                     currentBox.AddItems(
                         new OpLabel(C_SPACING, currentBox.size.y - C_SPACING - BIG_LINE_HEIGHT, displayText, true),
@@ -206,7 +208,7 @@ namespace MapExporter.Tabs
             {
                 dataVersion = Data.Version;
 
-                regionSelector._itemList = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToArray();
+                regionSelector._itemList = Data.RenderedRegions.Keys.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToArray();
                 regionSelector._ResetIndex();
                 regionSelector.value = null;
                 regionSelector.Change();
@@ -222,8 +224,9 @@ namespace MapExporter.Tabs
                 return;
             }
 
-            queue.Enqueue(regionSelector.value);
+            queue.AddLast(regionSelector.value);
             regionSelector.value = null;
+            queueDirty = true;
         }
 
         private void StartButton_OnClick(UIfocusable trigger)

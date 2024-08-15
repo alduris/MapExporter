@@ -72,34 +72,61 @@ namespace MapExporter.Tabs
             static float Column(int c, bool label = false) => ((MENU_SIZE - 10f * 2 - (COLUMN_COUNT - c + 1) * COLUMN_GAP) / COLUMN_COUNT) * c + COLUMN_GAP * c + (label ? 30 : 0);
             static float Row(int r) => 355 - 30 * r;
 
-            static UIelement MapToPreference(Preferences.Preference preference, int c, int r, string description = null)
+            static UIelement MapToPreference<T>(Preferences.Preference<T> preference, int c, int r, string description = null)
             {
                 // Create the OpCheckBox
-                if (!Data.UserPreferences.TryGetValue(preference.key, out bool val))
+                var val = preference.GetValue();
+                if (!Data.UserPreferences.ContainsKey(preference.key))
                 {
-                    val = preference.defaultValue;
                     Data.UserPreferences.Add(preference.key, preference.defaultValue);
                 }
 
-                var checkbox = new OpCheckBox(OIUtil.CosmeticBind(val), new Vector2(Column(c), Row(r)))
+                if (val is bool bV && preference.defaultValue is bool bDV)
                 {
-                    description = ((description ?? "") + " (default: " + (preference.defaultValue ? "yes" : "no") + ")").TrimStart(' '),
-                    colorEdge = val ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey
-                };
-
-                // Change when element changes
-                checkbox.OnValueChanged += (_, v, ov) =>
-                {
-                    if (v != ov)
+                    var checkbox = new OpCheckBox(OIUtil.CosmeticBind(bV), new Vector2(Column(c), Row(r)))
                     {
-                        bool b = ValueConverter.ConvertToValue<bool>(v);
-                        Data.UserPreferences[preference.key] = b;
-                        Data.SaveData();
-                        checkbox.colorEdge = b ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey;
-                    }
-                };
+                        description = ((description ?? "") + " (default: " + (bDV ? "yes" : "no") + ")").TrimStart(' '),
+                        colorEdge = bV ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey
+                    };
 
-                return checkbox;
+                    // Change when element changes
+                    checkbox.OnValueChanged += (_, v, ov) =>
+                    {
+                        if (v != ov)
+                        {
+                            bool b = ValueConverter.ConvertToValue<bool>(v);
+                            Data.UserPreferences[preference.key] = b;
+                            Data.SaveData();
+                            checkbox.colorEdge = b ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey;
+                        }
+                    };
+
+                    return checkbox;
+                }
+                else if (val is int iV && preference.defaultValue is int iDV && preference.minRange is int iMin && preference.maxRange is int iMax)
+                {
+                    var dragger = new OpDragger(preference.hasRange ? OIUtil.CosmeticRange(iV, iMin, iMax) : OIUtil.CosmeticBind(iV), new Vector2(Column(c), Row(r)))
+                    {
+                        description = ((description ?? "") + " (default: " + iDV + (preference.hasRange ? $", [{iMin}, {iMax}]" : "") + ")").TrimStart(' ')
+                    };
+
+                    // Change when element changes
+                    dragger.OnValueChanged += (_, v, ov) =>
+                    {
+                        if (v != ov)
+                        {
+                            int i = ValueConverter.ConvertToValue<int>(v);
+                            Data.UserPreferences[preference.key] = i;
+                            Data.SaveData();
+                        }
+                    };
+
+                    return dragger;
+                }
+                else
+                {
+                    throw new ArgumentException("Preference is unsupported type!");
+                }
             }
         }
 

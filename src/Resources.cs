@@ -56,10 +56,22 @@ namespace MapExporter
                 Dictionary<string, Dictionary<string, object>> finished = [];
                 foreach (var kv in Data.FinishedRegions)
                 {
+                    bool hasRegionName = Data.RegionNames.TryGetValue(kv.Key, out var regionName);
                     finished.Add(kv.Key, new() {
-                        {"slugcats", kv.Value.Select(x => x.value.ToLowerInvariant()).ToArray()},
-                        {"name", Region.GetRegionFullName(kv.Key, null)},
-                        {"specificNames", kv.Value.Select(x => Region.GetRegionFullName(kv.Key, x)).ToArray()}
+                        {
+                            "slugcats",
+                            kv.Value.Select(x => x.value.ToLowerInvariant()).ToArray()
+                        },
+                        {
+                            "name",
+                            hasRegionName ? regionName.name : Region.GetRegionFullName(kv.Key, null)
+                        },
+                        {
+                            "specificNames",
+                            kv.Value.Select(
+                                x => (hasRegionName && regionName.personalNames.TryGetValue(x, out var name)) ? name : Region.GetRegionFullName(kv.Key, x))
+                            .ToArray()
+                        }
                     });
                 }
                 res = Encoding.UTF8.GetBytes(Json.Serialize(finished));

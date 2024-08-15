@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MoreSlugcats;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -63,7 +64,7 @@ namespace MapExporter.Screenshotter
         }
 
         private static int screens = 0;
-        private const int THRESHOLD = 300;
+        private const int THRESHOLD = 500;
         public System.Collections.IEnumerator CaptureTask(RainWorldGame game)
         {
             // Task start
@@ -129,6 +130,28 @@ namespace MapExporter.Screenshotter
                 Data.SaveData();
             }
 
+            // Add region name
+            if (Data.RegionNames.ContainsKey(regionRendering))
+            {
+                Data.RegionNames.Remove(regionRendering);
+            }
+            List<SlugcatStats.Name> scugList = [];
+            for (int i = 0; i < SlugcatStats.Name.values.Count; i++)
+            {
+                var scug = new SlugcatStats.Name(SlugcatStats.Name.values.GetEntry(i), false);
+                if (!SlugcatStats.HiddenOrUnplayableSlugcat(scug) || (ModManager.MSC && scug == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel))
+                {
+                    scugList.Add(scug);
+                }
+            }
+            var nameStorage = new Data.RegionName(Region.GetRegionFullName(regionRendering, null));
+            foreach (var name in scugList)
+            {
+                nameStorage.personalNames.Add(name, Region.GetRegionFullName(regionRendering, name));
+            }
+            Data.RegionNames.Add(regionRendering, nameStorage);
+
+            // Mark that we finished, save data, and quit
             Data.ScreenshotterStatus = Data.SSStatus.Finished;
             Data.SaveData();
             Application.Quit();
