@@ -184,6 +184,10 @@
             margin-bottom: 8px;
         }
 
+        a {
+            color: #999;
+        }
+
         input[type='radio'].rw-ui + span {
             top: calc(50% - 10px);
             /* proof that CSS is stupid, cant fucking vertical center text */
@@ -238,6 +242,8 @@
 
     <div class="side-panel left-panel rw-text">
         <div style="padding-left: 8px; padding-bottom: 8px;">
+            <a href="./" class="rw-text">&lt; Back to Index</a>
+            <hr />
             <span>Regions</span>
         </div>
 
@@ -368,7 +374,7 @@
         for (const slugcatName of slugcats) {
             html += `
 <label class="difficulty-btn" id="scug-${slugcatName}">
-    <input type="radio" class="rw-ui" name="difficulties" onclick="selectDifficulty('${slugcatName}');" value="${slugcatName}" autocomplete="off">
+    <input type="radio" class="rw-ui" name="difficulties" onclick="selectDifficulty('${slugcatName}');" value="${slugcatName}"${slugcatName == difficulty ? ' checked' : ''} autocomplete="off">
     <img src="./resources/slugcats/${slugcatName}.png">
 </label>`;
             document.getElementById('scug-selector').innerHTML = html;
@@ -579,6 +585,16 @@
             }
             region = pregion; // chaos
             console.log("Loading: region {" + region + "} on slugcat {" + pdifficulty + "}");
+            try {
+                if (regions[region]["slugcats"].indexOf(pdifficulty) == -1) {
+                    console.warn(pdifficulty + " does not exist for region! Picking first available slugcat for region.");
+                    if (regions[region]["slugcats"].length > 0) {
+                        pdifficulty = regions[region]["slugcats"][0];
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
             var region_url = region.toLowerCase();
             var roompath = `./slugcats/${pdifficulty}/${region_url}`;
             getJsonObject(`${roompath}/region.json`, function (json) {

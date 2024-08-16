@@ -82,7 +82,7 @@ namespace MapExporter.Tabs
                     current = queue.First();
                     queue.RemoveFirst();
 
-                    var scugs = Data.RenderedRegions[current];
+                    var scugs = Data.RenderedRegions[current].OrderBy(s => s.Index);
                     slugQueue.Clear(); // there should be nothing in it but just as a safety
                     foreach (var scug in scugs) slugQueue.Enqueue(scug);
                 }
