@@ -416,8 +416,9 @@ namespace MapExporter.Tabs
         private void AddButton_OnClick(UIfocusable trigger)
         {
             // If option is invalid, don't do anything
-            if (comboRegions.value == null || !RegionNames.ContainsKey(comboRegions.value))
+            if (comboRegions.value == null || !RegionNames.ContainsKey(comboRegions.value) || WaitingRegions.ContainsKey(comboRegions.value))
             {
+                trigger.PlaySound(SoundID.MENU_Error_Ping);
                 return;
             }
 

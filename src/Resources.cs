@@ -16,7 +16,7 @@ namespace MapExporter
         public static string FEPathTo(params string[] path) => path.Aggregate(Path.Combine(Data.ModDirectory, "map-frontend"), Path.Combine);
         public static string TilePathTo(params string[] path) => path.Aggregate(Data.FinalDir, Path.Combine);
         private static string CreatureIconPath(string item = null) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
-        private static string ObjectIconPath(string scug = null) => scug == null ? FEPathTo("resources", "objects") : FEPathTo("resources", "objects", scug + ".png");
+        private static string ObjectIconPath(string item = null) => item == null ? FEPathTo("resources", "objects") : FEPathTo("resources", "objects", item + ".png");
         private static string SlugcatIconPath(string scug = null) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
 
         public static bool TryGetActualPath(string req, out string path)
@@ -221,6 +221,12 @@ namespace MapExporter
                     };
                     if (!File.Exists(ObjectIconPath(name)) || replaceAll)
                     {
+                        // Create the directory if it doesn't exist
+                        if (!Directory.Exists(ObjectIconPath()))
+                        {
+                            Directory.CreateDirectory(ObjectIconPath());
+                        }
+
                         var type = new AbstractPhysicalObject.AbstractObjectType(item, false);
                         var spriteName = ItemSymbol.SpriteNameForItem(type, 0);
                         if (spriteName == "Futile_White") continue;

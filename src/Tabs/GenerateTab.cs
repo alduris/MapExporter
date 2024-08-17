@@ -124,7 +124,11 @@ namespace MapExporter.Tabs
                     {
                         colorEdge = RedColor, colorFill = RedColor
                     };
-                    delButton.OnClick += (_) => queue.Remove(item);
+                    delButton.OnClick += (_) =>
+                    {
+                        queue.Remove(item);
+                        queueDirty = true;
+                    };
 
                     queueBox.AddItems(
                         new OpRect(new Vector2(x, SCROLLBAR_WIDTH + Q_SPACING), new Vector2(boxwidth, queueBox.size.y - SCROLLBAR_WIDTH - Q_SPACING * 2)),
