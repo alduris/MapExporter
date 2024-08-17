@@ -155,11 +155,6 @@ namespace MapExporter.Generation
 
                 texture.SetPixelData(pixels, 0);
             }
-            catch (System.Exception e)
-            {
-                Plugin.Logger.LogError(e);
-                throw; // rethrow error so we know something went wrong
-            }
             finally
             {
                 // No memory leaks today!
@@ -186,10 +181,6 @@ namespace MapExporter.Generation
                 }
 
                 destination.SetPixelData(dp, 0);
-            }
-            catch
-            {
-                throw; // rethrow error so we know something went wrong
             }
             finally
             {
