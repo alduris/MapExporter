@@ -94,6 +94,11 @@ sealed class Plugin : BaseUnityPlugin
                 On.Oracle.Update += Oracle_Update;
                 On.TempleGuard.Update += TempleGuard_Update;
                 _ = new ILHook(typeof(HUD.Map).GetProperty(nameof(HUD.Map.discoverTexture)).GetSetMethod(), Map_discoverTexture_set);
+                On.PlayerProgression.GetOrInitiateSaveState += PlayerProgression_GetOrInitiateSaveState;
+                On.SaveState.setDenPosition += SaveState_setDenPosition;
+                On.RoomRealizer.RemoveNotVisitedRooms += RoomRealizer_RemoveNotVisitedRooms;
+                On.ProcessManager.CreateValidationLabel += ProcessManager_CreateValidationLabel;
+                On.OracleBehavior.FindPlayer += OracleBehavior_FindPlayer;
 
                 Logger.LogDebug("Finished start thingy");
             }
@@ -130,7 +135,7 @@ sealed class Plugin : BaseUnityPlugin
         orig(self);
     }
 
-    // Mem leak fixer
+    // Mem leak fixer (?)
     private void Map_discoverTexture_set(ILContext il)
     {
         // You'd think I could just use a normal Hook, not an ILHook. Unfortunately fuck you, the Hook implementation is broken for property setters.
@@ -257,6 +262,36 @@ sealed class Plugin : BaseUnityPlugin
     }
 
     #region fixes
+    // No looking for player while screenshotting, will crash I think
+    private void OracleBehavior_FindPlayer(On.OracleBehavior.orig_FindPlayer orig, OracleBehavior self)
+    {
+        orig(self);
+    }
+
+    // No validation label while screenshotting. Womp womp.
+    private void ProcessManager_CreateValidationLabel(On.ProcessManager.orig_CreateValidationLabel orig, ProcessManager self)
+    {
+        self.validationLabel = null;
+    }
+
+    // Assume safari
+    private void RoomRealizer_RemoveNotVisitedRooms(On.RoomRealizer.orig_RemoveNotVisitedRooms orig, RoomRealizer self)
+    {
+        // no call orig to act like safari
+    }
+
+    // Assume safari
+    private void SaveState_setDenPosition(On.SaveState.orig_setDenPosition orig, SaveState self)
+    {
+        self.SetDenPositionForSafari();
+    }
+
+    // Assume safari
+
+    private SaveState PlayerProgression_GetOrInitiateSaveState(On.PlayerProgression.orig_GetOrInitiateSaveState orig, PlayerProgression self, SlugcatStats.Name saveStateNumber, RainWorldGame game, ProcessManager.MenuSetup setup, bool saveAsDeathOrQuit)
+    {
+        return orig(self, saveStateNumber, game, setup, false);
+    }
 
     // Only show guardians if user wants to
     private void TempleGuard_Update(On.TempleGuard.orig_Update orig, TempleGuard self, bool eu)
@@ -533,6 +568,7 @@ sealed class Plugin : BaseUnityPlugin
 
         setup.cycleTimeMax = 10000;
         setup.cycleTimeMin = 10000;
+        setup.disableRain = true;
 
         setup.gravityFlickerCycleMin = 10000;
         setup.gravityFlickerCycleMax = 10000;
@@ -666,7 +702,14 @@ sealed class Plugin : BaseUnityPlugin
         manager.rainWorld.safariSlugcat = SlugcatStats.Name.White;
         manager.rainWorld.safariRegion = "SU";
 
+        // Unfortunately safari mode also assumes we have MSC enabled so... just play pretend :3 (it'll throw exceptions otherwise)
+        bool oldmsc = ModManager.MSC;
+        ModManager.MSC = true;
+
         orig(self, manager);
+
+        ModManager.MSC = oldmsc;
+        RainWorld.lockGameTimer = true;
 
         // No safari overseers
         if (self.cameras[0].followAbstractCreature != null)
