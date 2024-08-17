@@ -88,10 +88,10 @@ namespace MapExporter.Server
                 output.Close(); // You must close the output stream.
                 output = null;
             }
-            catch (IOException ex)
+            catch (IOException)
             {
-                Plugin.Logger.LogError("IO error while handling request " + req.RawUrl + " (requested by " + req.RemoteEndPoint + "); likely connection interrupted. Ignored.");
-                Plugin.Logger.LogError(ex);
+                // Plugin.Logger.LogError("IO error while handling request " + req.RawUrl + " (requested by " + req.RemoteEndPoint + "); likely connection interrupted. Ignored.");
+                // Plugin.Logger.LogError(ex);
             }
             catch (Exception ex)
             {
