@@ -138,7 +138,8 @@
             display: flex;
             flex-direction: column;
             padding: 8px;
-            background: #0c0c0c;
+            background: #0c0c0ccc;
+            backdrop-filter: blur(4px);
             z-index: 1000;
             color: #cccccc;
         }
@@ -208,6 +209,54 @@
         .hidden {
             display: none !important;
         }
+
+        .collapse-tab {
+            display: none;
+            width: 30px;
+            height: 30px;
+            user-select: none;
+            background: #0c0c0ccc;
+            backdrop-filter: blur(4px);
+            background-image: url(./resources/hamburger.png);
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        @media (max-width: 899px) {
+            .side-panel {
+                transition: left ease 0.3s, right ease 0.3s;
+            }
+            .collapse-tab {
+                display: block;
+                cursor: pointer;
+            }
+
+            .left-panel.collapsed {
+                left: var(--hide-pos);
+            }
+
+            .right-panel.collapsed {
+                right: var(--hide-pos);
+            }
+
+            .left-panel .collapse-tab {
+                position: absolute;
+                right: -30px;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
+            }
+
+            .right-panel .collapse-tab {
+                position: absolute;
+                left: -30px;
+                border-top-left-radius: 4px;
+                border-bottom-left-radius: 4px;
+            }
+
+            .collapsed .scroll-ish {
+                overflow-y: hidden;
+            }
+        }
     </style>
 
 
@@ -240,7 +289,7 @@
 <body>
     <div id="mapid"></div>
 
-    <div class="side-panel left-panel rw-text">
+    <div class="side-panel left-panel rw-text collapsible collapsed">
         <div style="padding-left: 8px; padding-bottom: 8px;">
             <a href="./" class="rw-text">&lt; Back to Index</a>
             <hr />
@@ -248,15 +297,19 @@
         </div>
 
         <form name="regionselect" id="region-select" class="scroll-ish"></form>
+
+        <div class="collapse-tab"></div>
     </div>
 
-    <div class="side-panel right-panel rw-text">
+    <div class="side-panel right-panel rw-text collapsible collapsed">
         <div>Slugcat</div>
         <form name="difficulty" class="difficulty-select" id="scug-selector">
         </form>
 
         <div>Layers</div>
         <div id="layer-content" class="scroll-ish"></div>
+
+        <div class="collapse-tab"></div>
     </div>
 
     <script>
@@ -857,6 +910,25 @@
                     document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
                 }
             }
+        }
+
+        // Collapseable things
+        var uncollapsed = null;
+        var collapsible = document.querySelectorAll(".collapsible");
+        for (const el of collapsible) {
+            el.style.setProperty("--hide-pos", "-" + (el.getBoundingClientRect().width) + "px");
+            var button = el.querySelector(".collapse-tab");
+            button.addEventListener("click", (e) => {
+                if (uncollapsed != null) {
+                    uncollapsed.classList.add("collapsed");
+                }
+                if (uncollapsed == el) {
+                    uncollapsed = null;
+                } else {
+                    uncollapsed = el;
+                    el.classList.remove("collapsed");
+                }
+            });
         }
 
     </script>
