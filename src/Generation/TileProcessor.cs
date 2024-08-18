@@ -131,7 +131,6 @@ namespace MapExporter.Generation
             var oldPixels = texture.GetRawTextureData<Color32>();
 
             // Create the new texture
-            texture.Resize(width, height);
             var pixels = new NativeArray<Color32>(width * height, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
             // Set the new texture's content
@@ -153,6 +152,7 @@ namespace MapExporter.Generation
                     }
                 }
 
+                texture.Resize(width, height);
                 texture.SetPixelData(pixels, 0);
             }
             finally
