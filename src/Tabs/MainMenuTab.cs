@@ -12,8 +12,8 @@ namespace MapExporter.Tabs
         const string HOW_TO_STRING = "1. Run screenshotter on region\n2. Edit layout\n3. Finalize in generator tab\n4. Test interactive map\n5. Export";
         const string CREDITS_STRING =
             "Made by Henpemaz, Dual-Iron, Noblecat57, & Alduris\n" +
-            "with help from Bro748, Vigaro, BensoneWhite, & iwantbread\n" +
-            "\n" +
+            "with help from Bro748, Vigaro, BensoneWhite, &\n" +
+            "iwantbread\n" +
             "\n" +
             "";
         public override void Initialize()
