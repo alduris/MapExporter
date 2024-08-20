@@ -220,10 +220,16 @@ namespace MapExporter.Tabs
             {
                 dataVersion = Data.Version;
 
-                regionSelector._itemList = Data.RenderedRegions.Keys
+                var itemList = Data.RenderedRegions.Keys
                     .OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase)
                     .Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i))
-                    .ToArray();
+                    .ToList();
+                if (itemList.Count == 0)
+                {
+                    itemList.Add(new ListItem("", ""));
+                }
+
+                regionSelector._itemList = [.. itemList];
                 regionSelector._ResetIndex();
                 regionSelector.value = null;
                 regionSelector.Change();

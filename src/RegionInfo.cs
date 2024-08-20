@@ -312,7 +312,6 @@ namespace MapExporter
                     }
 
                     int nodeIndex = room.shortcuts.Select(x => x.destNode).ToList().IndexOf(aRoom.ExitIndex(other.index));
-                    Plugin.Logger.LogInfo(nodeIndex);
                     if (conn == null)
                     {
                         conn = new ConnectionEntry()

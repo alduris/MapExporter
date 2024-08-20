@@ -59,6 +59,7 @@ sealed class Plugin : BaseUnityPlugin
                 On.RainWorld.LoadSetupValues += RainWorld_LoadSetupValues;
                 On.RainWorld.Update += RainWorld_Update;
                 On.World.SpawnGhost += World_SpawnGhost;
+                IL.World.SpawnGhost += World_SpawnGhost1;
                 On.GhostWorldPresence.SpawnGhost += GhostWorldPresence_SpawnGhost;
                 On.GhostWorldPresence.GhostMode_AbstractRoom_Vector2 += GhostWorldPresence_GhostMode_AbstractRoom_Vector2;
                 On.Ghost.Update += Ghost_Update;
@@ -532,6 +533,24 @@ sealed class Plugin : BaseUnityPlugin
             self.game.rainWorld.safariMode = false;
             orig(self);
             self.game.rainWorld.safariMode = true;
+        }
+    }
+
+    // fix custom ghosts overriding my evil nefarious plans (setting things to always be true or false)
+    private void World_SpawnGhost1(ILContext il)
+    {
+        try
+        {
+            var c = new ILCursor(il);
+
+            c.GotoNext(MoveType.AfterLabel, x => x.MatchStloc(2));
+            c.Emit(OpCodes.Pop);
+            c.EmitDelegate(Preferences.ShowGhosts.GetValue); // force to value
+        }
+        catch (Exception e)
+        {
+            Logger.LogError("Cannot IL Hook World.SpawnGhost!");
+            Logger.LogError(e);
         }
     }
 
