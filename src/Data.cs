@@ -1,9 +1,9 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MonoMod.Utils;
+using MoreSlugcats;
 using RWCustom;
 
 namespace MapExporter
@@ -33,6 +33,44 @@ namespace MapExporter
                 Directory.CreateDirectory(DataDirectory);
             }
             GetData();
+        }
+
+        public static void CheckData()
+        {
+            // Get missing region names
+            List<SlugcatStats.Name> scugList = [];
+            for (int i = 0; i < SlugcatStats.Name.values.Count; i++)
+            {
+                var scug = new SlugcatStats.Name(SlugcatStats.Name.values.GetEntry(i), false);
+                if (!SlugcatStats.HiddenOrUnplayableSlugcat(scug) || (ModManager.MSC && scug == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel))
+                {
+                    scugList.Add(scug);
+                }
+            }
+            var regionList = Region.GetFullRegionOrder().ToHashSet();
+
+            foreach (var item in RenderedRegions.Keys)
+            {
+                if (RegionNames.ContainsKey(item) || !regionList.Contains(item)) continue;
+                var nameStorage = new RegionName(Region.GetRegionFullName(item, null));
+                foreach (var scug in scugList)
+                {
+                    nameStorage.personalNames.Add(scug, Region.GetRegionFullName(item, scug));
+                }
+                RegionNames.Add(item, nameStorage);
+            }
+
+            foreach (var item in FinishedRegions.Keys)
+            {
+                // Same code as before
+                if (RegionNames.ContainsKey(item) || !regionList.Contains(item)) continue;
+                var nameStorage = new RegionName(Region.GetRegionFullName(item, null));
+                foreach (var scug in scugList)
+                {
+                    nameStorage.personalNames.Add(scug, Region.GetRegionFullName(item, scug));
+                }
+                RegionNames.Add(item, nameStorage);
+            }
         }
 
         public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs) : IEquatable<QueueData>, IEquatable<string>
@@ -67,12 +105,31 @@ namespace MapExporter
             Inactive,
             Unfinished,
             Errored,
+            Relaunch,
             Finished
         }
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;
 
-        public static readonly Dictionary<SlugcatStats.Name, List<string>> RenderedRegions = [];
-        public static readonly Dictionary<string, List<SlugcatStats.Name>> FinishedRegions = [];
+        public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> RenderedRegions = [];
+        public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> FinishedRegions = [];
+
+        public readonly struct RegionName(string name)
+        {
+            public readonly string name = name;
+            public readonly Dictionary<SlugcatStats.Name, string> personalNames = [];
+        }
+        public static readonly Dictionary<string, RegionName> RegionNames = [];
+        public static string RegionNameFor(string acronym, SlugcatStats.Name name)
+        {
+            if (RegionNames.TryGetValue(acronym, out RegionName regionName))
+            {
+                if (name == null || !regionName.personalNames.TryGetValue(name, out string personalName))
+                    return regionName.name;
+                else
+                    return personalName;
+            }
+            return Region.GetRegionFullName(acronym, name);
+        }
 
         public static void GetData()
         {
@@ -105,23 +162,23 @@ namespace MapExporter
                     var regions = (Dictionary<string, object>)json["rendered"];
                     foreach (var scugRegions in regions)
                     {
-                        var scug = new SlugcatStats.Name(scugRegions.Key, false);
-                        var savedList = ((List<object>)scugRegions.Value).Cast<string>().ToList();
+                        var region = scugRegions.Key;
+                        var scugs = ((List<object>)scugRegions.Value).Select(x => new SlugcatStats.Name((string)x, false)).ToList();
 
                         // Make sure the regions still exist in our file system
-                        var foundList = new List<string>();
-                        foreach (var region in savedList)
+                        var foundList = new HashSet<SlugcatStats.Name>();
+                        foreach (var scug in scugs)
                         {
-                            if (Directory.Exists(RenderOutputDir(scugRegions.Key, region)))
+                            if (Directory.Exists(RenderOutputDir(scug.value, region)))
                             {
-                                foundList.Add(region);
+                                foundList.Add(scug);
                             }
                         }
 
                         // Don't add the scug to the list if they have no rendered regions in the file system
                         if (foundList.Count > 0)
                         {
-                            RenderedRegions.Add(scug, foundList);
+                            RenderedRegions.Add(region, foundList);
                         }
                     }
                 }
@@ -136,7 +193,7 @@ namespace MapExporter
                         var savedList = ((List<object>)finishedRegion.Value).Select(x => new SlugcatStats.Name((string)x)).ToList();
 
                         // Make sure the regions still exist in our file system
-                        var scugList = new List<SlugcatStats.Name>();
+                        var scugList = new HashSet<SlugcatStats.Name>();
                         foreach (var scug in savedList)
                         {
                             if (Directory.Exists(FinalOutputDir(scug.value, region)))
@@ -157,7 +214,26 @@ namespace MapExporter
                 UserPreferences.Clear();
                 if (json.ContainsKey("preferences"))
                 {
-                    UserPreferences.AddRange(((Dictionary<string, object>)json["preferences"]).ToDictionary(x => new KeyValuePair<string, bool>(x.Key, (bool)x.Value)));
+                    UserPreferences.AddRange((Dictionary<string, object>)json["preferences"]);
+                }
+
+                // Region names
+                if (json.TryGetValue("regionnames", out object nameObj) && nameObj is Dictionary<string, object> nameDict)
+                {
+                    RegionNames.Clear();
+                    foreach (var kv in nameDict)
+                    {
+                        var subnames = (Dictionary<string, object>)kv.Value;
+                        if (subnames.ContainsKey("*"))
+                        {
+                            var name = new RegionName((string)subnames["*"]);
+                            foreach (var subname in subnames)
+                            {
+                                if (subname.Key == "*") continue;
+                                name.personalNames[new SlugcatStats.Name(subname.Key, false)] = (string)subname.Value;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -184,14 +260,27 @@ namespace MapExporter
             Dictionary<string, string[]> rendered = [];
             foreach (var kv in RenderedRegions)
             {
-                rendered.Add(kv.Key.value, [.. kv.Value]);
+                rendered.Add(kv.Key, [.. kv.Value.Select(x => x.value)]);
             }
             Dictionary<string, string[]> finished = [];
             foreach (var kv in FinishedRegions)
             {
                 finished.Add(kv.Key, [.. kv.Value.Select(x => x.value)]);
             }
-            Dictionary<string, object> dict = new()
+            Dictionary<string, Dictionary<string, string>> names = [];
+            foreach (var kv in RegionNames)
+            {
+                var dict = new Dictionary<string, string>
+                {
+                    { "*", kv.Value.name }
+                };
+                foreach (var scug in kv.Value.personalNames)
+                {
+                    dict.Add(scug.Key.value, scug.Value);
+                }
+                names.Add(kv.Key, dict);
+            }
+            Dictionary<string, object> save = new()
             {
                 {
                     "queue",
@@ -201,40 +290,48 @@ namespace MapExporter
                 { "rendered", rendered },
                 { "finished", finished },
                 { "preferences", UserPreferences },
+                { "regionnames", names },
             };
-            File.WriteAllText(DataFileDir, Json.Serialize(dict));
+            File.WriteAllText(DataFileDir, Json.Serialize(save));
         }
 
-        public static Dictionary<string, bool> UserPreferences = [];
-
-        public static bool GetPreference(Preferences.Preference pref)
-        {
-            if (UserPreferences.TryGetValue(pref.key, out var value))
-            {
-                return value;
-            }
-            return pref.defaultValue;
-        }
+        public static Dictionary<string, object> UserPreferences = [];
     }
 
     public static class Preferences
     {
-        public static readonly Preference ShowCreatures = new("show/creatures", false);
-        public static readonly Preference ShowGhosts = new("show/ghosts", true);
-        public static readonly Preference ShowGuardians = new("show/guadians", true);
-        public static readonly Preference ShowInsects = new("show/insects", false);
-        public static readonly Preference ShowOracles = new("show/oracles", true);
+        public static readonly Preference<bool> ShowCreatures = new("show/creatures", false);
+        public static readonly Preference<bool> ShowGhosts = new("show/ghosts", true);
+        public static readonly Preference<bool> ShowGuardians = new("show/guadians", true);
+        public static readonly Preference<bool> ShowInsects = new("show/insects", false);
+        public static readonly Preference<bool> ShowOracles = new("show/oracles", true);
 
-        public static readonly Preference ScreenshotterAutoFill = new("screenshotter/autofill", true);
-        public static readonly Preference ScreenshotterSkipExisting = new("screenshotter/skipexisting", false);
+        public static readonly Preference<bool> ScreenshotterAutoFill = new("screenshotter/autofill", true);
+        public static readonly Preference<bool> ScreenshotterSkipExisting = new("screenshotter/skipexisting", false);
 
-        public static readonly Preference GeneratorLessInsense = new("generator/lessintensive", false);
-        public static readonly Preference GeneratorSkipTiles = new("generator/skipexisting", false);
+        public static readonly Preference<bool> EditorCheckOverlap = new("editor/overlap", false);
+        public static readonly Preference<bool> EditorShowCameras = new("editor/cameras", false);
 
-        public readonly struct Preference(string key, bool defaultValue)
+        public static readonly Preference<bool> GeneratorLessInsense = new("generator/lessintensive", false);
+        public static readonly Preference<int> GeneratorTileThreads = new("generator/threads", 4, 1, int.MaxValue);
+
+        public readonly struct Preference<T>(string key, T defaultValue)
         {
             public readonly string key = key;
-            public readonly bool defaultValue = defaultValue;
+            public readonly T defaultValue = defaultValue;
+
+            public readonly bool hasRange = false;
+            public readonly T minRange;
+            public readonly T maxRange;
+
+            public Preference(string key, T defaultValue, T min, T max) : this(key, defaultValue)
+            {
+                hasRange = true;
+                minRange = min;
+                maxRange = max;
+            }
+
+            public readonly T GetValue() => Data.UserPreferences.TryGetValue(key, out var obj) && obj is T val ? val : defaultValue;
         }
     }
 

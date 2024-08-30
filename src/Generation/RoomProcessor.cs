@@ -6,15 +6,18 @@ namespace MapExporter.Generation
 {
     internal class RoomProcessor(Generator owner) : Processor(owner)
     {
-        public override string ProcessName => "Room outlines";
+        public override string ProcessName => "Rooms";
 
         protected override IEnumerator<float> Process()
         {
             var regionInfo = owner.regionInfo;
-            List<RoomBoxInfo> boxes = [];
+            List<RoomBoxInfo> roomBoxes = [];
+            List<RoomTagInfo> roomTags = [];
+
             int i = 0;
             foreach (var room in regionInfo.rooms.Values)
             {
+                // Room boxes
                 Rect borderRect;
                 Vector2 namePos;
                 if (room.cameras == null || room.cameras.Length == 0)
@@ -35,18 +38,30 @@ namespace MapExporter.Generation
                     borderRect = new Rect(blPos, trPos - blPos);
                     namePos = trPos + Vector2.left * ((trPos.x - blPos.x) / 2f);
                 }
-                boxes.Add(new RoomBoxInfo
+                roomBoxes.Add(new RoomBoxInfo
                 {
                     name = room.roomName,
                     box = borderRect,
                     namePos = namePos
                 });
 
+                // Room tags
+                if (room.tags?.Length > 0)
+                {
+                    roomTags.Add(new RoomTagInfo
+                    {
+                        name = room.roomName,
+                        tags = room.tags,
+                        pos = namePos + Vector2.down * 30f
+                    });
+                }
+
                 i++;
                 // yield return (float)i / regionInfo.rooms.Count;
             }
 
-            owner.metadata["room_features"] = boxes;
+            owner.metadata["room_features"] = roomBoxes;
+            owner.metadata["roomtag_features"] = roomTags;
             yield return 1f;
             yield break;
         }
@@ -76,6 +91,37 @@ namespace MapExporter.Generation
                         {
                             { "name", name },
                             { "popupcoords", Vec2arr(namePos) },
+                        }
+                    }
+                };
+            }
+        }
+
+        private struct RoomTagInfo : IJsonObject
+        {
+            public string name;
+            public Vector2 pos;
+            public string[] tags;
+
+            public Dictionary<string, object> ToJson()
+            {
+                return new Dictionary<string, object>()
+                {
+                    { "type", "Feature" },
+                    {
+                        "geometry",
+                        new Dictionary<string, object>()
+                        {
+                            {"type", "Point" },
+                            { "coordinates", Vec2arr(pos) }
+                        }
+                    },
+                    {
+                        "properties",
+                        new Dictionary<string, object>()
+                        {
+                            { "room", name },
+                            { "tags", tags }
                         }
                     }
                 };

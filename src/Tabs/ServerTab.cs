@@ -110,7 +110,7 @@ namespace MapExporter.Tabs
                 string text = undisplayedMessages.Dequeue().Trim();
                 text = LabelTest.WrapText(text, false, width, true);
                 int lines = text.Split('\n').Length;
-                float height = LabelTest._lineHeight * lines;
+                float height = LabelTest.LineHeight(false) * lines;
                 messageBoxTotalHeight += height;
 
                 messageBox.AddItems(

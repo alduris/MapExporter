@@ -9,7 +9,6 @@ namespace MapExporter.Generation
         internal readonly string inputDir;
         internal readonly string outputDir;
         internal readonly RegionInfo regionInfo;
-        public readonly bool skipExistingTiles = false;
         public readonly bool lessResourceIntensive = false;
 
         public bool Done { get; private set; } = false;
@@ -31,10 +30,19 @@ namespace MapExporter.Generation
                 throw new ArgumentException("Input directory does not exist!");
             }
 
+            // Load region data and adapt it to our needs (we can do this because we're not re-saving the changes)
             regionInfo = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(Path.Combine(inputDir, "metadata.json"))));
+            List<string> hiddenRooms = [];
             foreach (var room in regionInfo.rooms.Values)
             {
                 room.devPos *= 20; // convert to room pixel coordinates
+                if (room.hidden) hiddenRooms.Add(room.roomName); // don't render room if hidden
+            }
+            foreach (var room in hiddenRooms)
+            {
+                regionInfo.rooms.Remove(room);
+                regionInfo.connections.RemoveAll(x => x.roomA == room || x.roomB == room);
+                if (room == regionInfo.echoRoom) regionInfo.echoRoom = null;
             }
 
             // Enqueue processes
@@ -50,8 +58,7 @@ namespace MapExporter.Generation
             processes.Enqueue(new MiscProcessor(this));
 
             // Preferences
-            skipExistingTiles = Data.GetPreference(Preferences.GeneratorSkipTiles);
-            lessResourceIntensive = Data.GetPreference(Preferences.GeneratorLessInsense);
+            lessResourceIntensive = Preferences.GeneratorLessInsense.GetValue();
         }
 
         public void Update()

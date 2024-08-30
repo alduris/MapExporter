@@ -15,8 +15,9 @@ namespace MapExporter
         /// </summary>
         public static string FEPathTo(params string[] path) => path.Aggregate(Path.Combine(Data.ModDirectory, "map-frontend"), Path.Combine);
         public static string TilePathTo(params string[] path) => path.Aggregate(Data.FinalDir, Path.Combine);
-        private static string CreatureIconPath(string item) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
-        private static string SlugcatIconPath(string scug) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
+        private static string CreatureIconPath(string item = null) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
+        private static string ObjectIconPath(string item = null) => item == null ? FEPathTo("resources", "objects") : FEPathTo("resources", "objects", item + ".png");
+        private static string SlugcatIconPath(string scug = null) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
 
         public static bool TryGetActualPath(string req, out string path)
         {
@@ -55,10 +56,22 @@ namespace MapExporter
                 Dictionary<string, Dictionary<string, object>> finished = [];
                 foreach (var kv in Data.FinishedRegions)
                 {
+                    bool hasRegionName = Data.RegionNames.TryGetValue(kv.Key, out var regionName);
                     finished.Add(kv.Key, new() {
-                        {"slugcats", kv.Value.Select(x => x.value.ToLowerInvariant()).ToArray()},
-                        {"name", Region.GetRegionFullName(kv.Key, null)},
-                        {"specificNames", kv.Value.Select(x => Region.GetRegionFullName(kv.Key, x)).ToArray()}
+                        {
+                            "slugcats",
+                            kv.Value.Select(x => x.value.ToLowerInvariant()).ToArray()
+                        },
+                        {
+                            "name",
+                            hasRegionName ? regionName.name : Region.GetRegionFullName(kv.Key, null)
+                        },
+                        {
+                            "specificNames",
+                            kv.Value.Select(
+                                x => (hasRegionName && regionName.personalNames.TryGetValue(x, out var name)) ? name : Region.GetRegionFullName(kv.Key, x))
+                            .ToArray()
+                        }
                     });
                 }
                 res = Encoding.UTF8.GetBytes(Json.Serialize(finished));
@@ -161,6 +174,68 @@ namespace MapExporter
                         Iconify(tex);
                         tex.Apply();
                         File.WriteAllBytes(CreatureIconPath(item.ToLower()), tex.EncodeToPNG());
+                        UnityEngine.Object.Destroy(tex);
+                    }
+                }
+            }
+
+            // Get object icons
+            foreach (var item in PlacedObject.Type.values.entries.ToArray()) // the ToArray is just to create a copy of it because it fails for some reason
+            {
+                if (
+                    item == nameof(PlacedObject.Type.Hazer)
+                    || item == nameof(PlacedObject.Type.DeadHazer)
+                    || item == nameof(PlacedObject.Type.VultureGrub)
+                    || item == nameof(PlacedObject.Type.DeadVultureGrub)
+                    || item == nameof(MoreSlugcatsEnums.PlacedObjectType.Stowaway)
+                    || item == nameof(MoreSlugcatsEnums.PlacedObjectType.BigJellyFish)
+                )
+                {
+                    var name = item switch
+                    {
+                        nameof(PlacedObject.Type.DeadHazer) => nameof(PlacedObject.Type.Hazer),
+                        nameof(PlacedObject.Type.DeadVultureGrub) => nameof(PlacedObject.Type.VultureGrub),
+                        _ => item
+                    };
+                    var iconData = new IconSymbol.IconSymbolData
+                    {
+                        critType = new CreatureTemplate.Type(name, false)
+                    };
+                    var spriteName = CreatureSymbol.SpriteNameOfCreature(iconData);
+                    if (spriteName == "Futile_White") continue;
+                    var sprite = new FSprite(spriteName, true);
+                    var color = CreatureSymbol.ColorOfCreature(iconData);
+                    var tex = SpriteColor(sprite, color);
+                    Iconify(tex);
+                    tex.Apply();
+                    File.WriteAllBytes(CreatureIconPath(item.ToLower()), tex.EncodeToPNG());
+                    UnityEngine.Object.Destroy(tex);
+                }
+                else
+                {
+                    string name = item switch
+                    {
+                        nameof(PlacedObject.Type.ReliableSpear) => "spear",
+                        nameof(PlacedObject.Type.UniqueDataPearl) => "datapearl",
+                        _ => item.ToLower()
+                    };
+                    if (!File.Exists(ObjectIconPath(name)) || replaceAll)
+                    {
+                        // Create the directory if it doesn't exist
+                        if (!Directory.Exists(ObjectIconPath()))
+                        {
+                            Directory.CreateDirectory(ObjectIconPath());
+                        }
+
+                        var type = new AbstractPhysicalObject.AbstractObjectType(item, false);
+                        var spriteName = ItemSymbol.SpriteNameForItem(type, 0);
+                        if (spriteName == "Futile_White") continue;
+                        var sprite = new FSprite(spriteName, true);
+                        var color = ItemSymbol.ColorForItem(type, 0);
+                        var tex = SpriteColor(sprite, color);
+                        Iconify(tex);
+                        tex.Apply();
+                        File.WriteAllBytes(ObjectIconPath(item.ToLower()), tex.EncodeToPNG());
                         UnityEngine.Object.Destroy(tex);
                     }
                 }

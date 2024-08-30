@@ -7,10 +7,10 @@
     <title>Rain World Map</title>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 
-    <meta property="og:image" content="https://alduris.github.io/rw-mod-map/embed.jpg" />
+    <meta property="og:image" content="https://alduris.github.io/mod-map/embed.jpg" />
     <meta property="og:type" content="object" />
     <meta property="og:title" content="Rain World Map" />
-    <meta property="og:url" content="https://alduris.github.io/rw-mod-map/" />
+    <meta property="og:url" content="https://alduris.github.io/mod-map/" />
     <meta property="og:description" content="A custom, online interactive map for regions, vanilla or modded, in Rain World." />
     <link rel="stylesheet" href="./rw.css" />
     <link rel="stylesheet" href="./leaflet/leaflet.css" />
@@ -60,6 +60,38 @@
             height: 24px;
         }
 
+        .roomtag-divs {
+            display: flex;
+            justify-content: center;
+        }
+
+        .roomtag-entry {
+            display: none;
+            /* to be overwritten */
+            margin-left: 16px;
+            margin-right: 16px;
+        }
+
+        .roomtag-label {
+            position: absolute;
+            margin-left: 0px;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 125%;
+            color: white;
+            -webkit-text-fill-color: white;
+            /* Will override color (regardless of order) */
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: black;
+            font-family: var(--font-body);
+        }
+
+        .roomtag-image {
+            position: absolute;
+            margin-left: -45px;
+            margin-top: 0px;
+        }
+
         .icon-image {
             position: absolute;
             margin-left: -25px;
@@ -105,9 +137,9 @@
             max-height: calc(100vh - 54px);
             display: flex;
             flex-direction: column;
-
             padding: 8px;
-            background: #0c0c0c;
+            background: #0c0c0ccc;
+            backdrop-filter: blur(4px);
             z-index: 1000;
             color: #cccccc;
         }
@@ -153,7 +185,11 @@
             margin-bottom: 8px;
         }
 
-        input[type='radio'].rw-ui+span {
+        a {
+            color: #999;
+        }
+
+        input[type='radio'].rw-ui + span {
             top: calc(50% - 10px);
             /* proof that CSS is stupid, cant fucking vertical center text */
         }
@@ -169,11 +205,58 @@
             padding-right: 24px !important;
             margin-right: -16px !important;
         }
-		
-		.hidden {
-			display: none !important;
-		}
 
+        .hidden {
+            display: none !important;
+        }
+
+        .collapse-tab {
+            display: none;
+            width: 30px;
+            height: 30px;
+            user-select: none;
+            background: #0c0c0ccc;
+            backdrop-filter: blur(4px);
+            background-image: url(./resources/hamburger.png);
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        @media (max-width: 899px) {
+            .side-panel {
+                transition: left ease 0.3s, right ease 0.3s;
+            }
+            .collapse-tab {
+                display: block;
+                cursor: pointer;
+            }
+
+            .left-panel.collapsed {
+                left: var(--hide-pos);
+            }
+
+            .right-panel.collapsed {
+                right: var(--hide-pos);
+            }
+
+            .left-panel .collapse-tab {
+                position: absolute;
+                right: -30px;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
+            }
+
+            .right-panel .collapse-tab {
+                position: absolute;
+                left: -30px;
+                border-top-left-radius: 4px;
+                border-bottom-left-radius: 4px;
+            }
+
+            .collapsed .scroll-ish {
+                overflow-y: hidden;
+            }
+        }
     </style>
 
 
@@ -181,14 +264,24 @@
         .spawn-filter {
             display: initial
         }
+    </style>
 
+    <style id="objectfilters">
+        .object-filter {
+            display: initial
+        }
+    </style>
+
+    <style id="roomtagfilters">
+        .roomtag-filter {
+            display: initial
+        }
     </style>
 
     <style id="hoverlabels">
         .hover-label {
             display: none;
         }
-
     </style>
 
 </head>
@@ -196,115 +289,31 @@
 <body>
     <div id="mapid"></div>
 
-    <div class="side-panel left-panel rw-text">
+    <div class="side-panel left-panel rw-text collapsible collapsed">
         <div style="padding-left: 8px; padding-bottom: 8px;">
+            <a href="./" class="rw-text">&lt; Back to Index</a>
+            <hr />
             <span>Regions</span>
         </div>
 
         <form name="regionselect" id="region-select" class="scroll-ish"></form>
+
+        <div class="collapse-tab"></div>
     </div>
 
-    <div class="side-panel right-panel rw-text">
+    <div class="side-panel right-panel rw-text collapsible collapsed">
         <div>Slugcat</div>
         <form name="difficulty" class="difficulty-select" id="scug-selector">
         </form>
 
         <div>Layers</div>
         <div id="layer-content" class="scroll-ish"></div>
+
+        <div class="collapse-tab"></div>
     </div>
 
     <script>
         'use strict';
-        // misc iconography but mostly Spawns
-
-        var regions = {};
-        var slugcats = [];
-
-        getJsonObject("regions.json", function (json) { regions = json; }, false);
-        getJsonObject("slugcats.json", function (json) { slugcats = json; }, false);
-
-        var html = "";
-        for (const r in regions) {
-            html += `
-<label>
-    <div class="region-btn">
-        <input type="radio" class="rw-ui" name="regions" onclick="selectRegion(this.value);" value="${r}"${r == region ? ' checked="checked"' : ''} autocomplete = "off">
-        <span>${regions[r]["name"].toUpperCase()} (${r})</span>
-    </div>
-</label>`
-            document.getElementById('region-select').innerHTML = html;
-        }
-        
-        html = "";
-        for (const slugcatName of slugcats) {
-            html += `
-<label class="difficulty-btn" id="scug-${slugcatName}">
-    <input type="radio" class="rw-ui" name="difficulties" onclick="selectDifficulty('${slugcatName}');" value="${slugcatName}" autocomplete="off">
-    <img src="./resources/slugcats/${slugcatName}.png">
-</label>`;
-            document.getElementById('scug-selector').innerHTML = html;
-        }
-
-        function selectRegion(value) {
-            if (region != value) {
-                room = null;
-                region = value;
-                if (regions[region]["slugcats"].indexOf(difficulty) == -1) {
-                    difficulty = regions[region]["slugcats"][0];
-                }
-                for (let i = 0; i < slugcats.length; i++) {
-                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(difficulty) == -1);
-                }
-                pushState();
-            }
-        }
-
-        function selectDifficulty(n) {
-            for (var i = 0; i < document.difficulty.difficulties.length; i++) {
-                if (document.difficulty.difficulties[i].value == n) {
-                    document.difficulty.difficulties[i].checked = true;
-                }
-            }
-            if (difficulty != n) {
-                difficulty = n;
-                pushState();
-            }
-        }
-
-        // Control with poor control options, whodvathot
-        // layer control with control over the classnames
-        L.Control.Layers.UnstupidLayer = L.Control.Layers.extend(
-            {
-                options: {
-                    collapsed: false,
-                    containerClass: "",
-                    sectionClass: "",
-                    overlaysListClass: "",
-                    overlayInputClass: "",
-                    overlayInputDivClass: "",
-                    overlayInputLabelClass: "",
-                    hideBaseLayers: true
-                },
-                _addItem: function (obj) {
-                    let h = L.Control.Layers.prototype._addItem.call(this, obj);
-                    h.className = this.options.overlayInputDivClass;
-                    h.children[0].className = this.options.overlayInputLabelClass;
-                    h.children[0].children[0].className = this.options.overlayInputClass;
-                    return h;
-                },
-                _initLayout: function () {
-                    L.Control.Layers.prototype._initLayout.call(this);
-                    this._container.className = this.options.containerClass;
-                    this._section.className = this.options.sectionClass;
-                    if (this.options.hideBaseLayers) {
-                        this._baseLayersList.style.display = "none";
-                        this._layersLink.style.display = "none";
-                    }
-                    this._overlaysList.className = this.options.overlaysListClass;
-                },
-                expand: function () { }
-            }
-        );
 
         // Dynamic navigation
         var dynamicNavigation; // Stupid browsers
@@ -369,6 +378,12 @@
                 } else if (!noNavigation) document.location.search = newstr;
                 if (!noNavigation) newState();
             }
+
+            if (region != region_param) {
+                for (let i = 0; i < slugcats.length; i++) {
+                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
+                }
+            }
         }
         function newState() {
             //console.log("newState");
@@ -386,6 +401,95 @@
 
         window.onpopstate = newState;
         window.onload = newState;
+
+
+        // Setup or something like that
+        var regions = {};
+        var slugcats = [];
+
+        getJsonObject("regions.json", function (json) { regions = json; }, false);
+        getJsonObject("slugcats.json", function (json) { slugcats = json; }, false);
+
+        var html = "";
+        var regionListSorted = Object.keys(regions).sort((a, b) => regions[a]["name"].toUpperCase().localeCompare(regions[b]["name"].toUpperCase()));
+        for (const r of regionListSorted) {
+            html += `
+<label>
+    <div class="region-btn">
+        <input type="radio" class="rw-ui" name="regions" onclick="selectRegion(this.value);" value="${r}"${r == region ? ' checked' : ''} autocomplete = "off">
+        <span>${regions[r]["name"].toUpperCase()} (${r})</span>
+    </div>
+</label>`
+            document.getElementById('region-select').innerHTML = html;
+        }
+        
+        html = "";
+        for (const slugcatName of slugcats) {
+            html += `
+<label class="difficulty-btn" id="scug-${slugcatName}">
+    <input type="radio" class="rw-ui" name="difficulties" onclick="selectDifficulty('${slugcatName}');" value="${slugcatName}"${slugcatName == difficulty ? ' checked' : ''} autocomplete="off">
+    <img src="./resources/slugcats/${slugcatName}.png">
+</label>`;
+            document.getElementById('scug-selector').innerHTML = html;
+        }
+
+        function selectRegion(value) {
+            if (region != value) {
+                room = null;
+                region = value;
+                if (regions[region]["slugcats"].indexOf(difficulty) == -1) {
+                    difficulty = regions[region]["slugcats"][0];
+                }
+                pushState();
+            }
+        }
+
+        function selectDifficulty(n) {
+            for (var i = 0; i < document.difficulty.difficulties.length; i++) {
+                if (document.difficulty.difficulties[i].value == n) {
+                    document.difficulty.difficulties[i].checked = true;
+                }
+            }
+            if (difficulty != n) {
+                difficulty = n;
+                pushState();
+            }
+        }
+
+        // Control with poor control options, whodvathot
+        // layer control with control over the classnames
+        L.Control.Layers.UnstupidLayer = L.Control.Layers.extend(
+            {
+                options: {
+                    collapsed: false,
+                    containerClass: "",
+                    sectionClass: "",
+                    overlaysListClass: "",
+                    overlayInputClass: "",
+                    overlayInputDivClass: "",
+                    overlayInputLabelClass: "",
+                    hideBaseLayers: true
+                },
+                _addItem: function (obj) {
+                    let h = L.Control.Layers.prototype._addItem.call(this, obj);
+                    h.className = this.options.overlayInputDivClass;
+                    h.children[0].className = this.options.overlayInputLabelClass;
+                    h.children[0].children[0].className = this.options.overlayInputClass;
+                    return h;
+                },
+                _initLayout: function () {
+                    L.Control.Layers.prototype._initLayout.call(this);
+                    this._container.className = this.options.containerClass;
+                    this._section.className = this.options.sectionClass;
+                    if (this.options.hideBaseLayers) {
+                        this._baseLayersList.style.display = "none";
+                        this._layersLink.style.display = "none";
+                    }
+                    this._overlaysList.className = this.options.overlaysListClass;
+                },
+                expand: function () { }
+            }
+        );
 
         // Room hover & select stuff
         var hilightedRoom;
@@ -468,7 +572,7 @@
             crs: L.CRS.Simple,
             zoomControl: false,
         });
-        map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &amp <a href="https://github.com/henpemaz" title="Gamedev &amp associated arts enthusiast">Henpemaz</a>')
+        map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>, <a href="https://github.com/henpemaz" title="Gamedev &amp; associated arts enthusiast">Henpemaz</a>, &amp; <a href="https://github.com/alduris" title="Some kind of programmer I think">Alduris</a> | Join the <a href="https://discord.gg/kPGJNhrnu2">Rain World Modding Server</a>')
         map.setView([0, 0], -5);
 
         // Events
@@ -507,6 +611,8 @@
         var connectionsLayer;
         var geometryLayer;
         var densLayer;
+        var placedObjectsLayer;
+        var roomTagsLayer;
         var loadedDifficulty = null;
         var loadedRegion = null;
         function loadRegion(pdifficulty, pregion) {
@@ -532,24 +638,24 @@
             }
             region = pregion; // chaos
             console.log("Loading: region {" + region + "} on slugcat {" + pdifficulty + "}");
-            var slugcat_url = {
-                "artificer": "./slugcats/artificer",
-                "gourmand": "./slugcats/gourmand",
-                "rivulet": "./slugcats/rivulet",
-                "saint": "./slugcats/saint",
-                "spear": "./slugcats/spear",
-                "white": "./slugcats/white",
-                "yellow": "./slugcats/yellow",
-                "red": "./slugcats/red",
-            };
+            try {
+                if (regions[region]["slugcats"].indexOf(pdifficulty) == -1) {
+                    console.warn(pdifficulty + " does not exist for region! Picking first available slugcat for region.");
+                    if (regions[region]["slugcats"].length > 0) {
+                        pdifficulty = regions[region]["slugcats"][0];
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
             var region_url = region.toLowerCase();
             var roompath = `./slugcats/${pdifficulty}/${region_url}`;
             getJsonObject(`${roompath}/region.json`, function (json) {
                 var roomjson = json;
                 if ('copyingrooms' in json) {
-                    getJsonObject(`${slugcat_url[json['copyingrooms']]}/${region_url}/region.json`, function (copyjson) {
+                    getJsonObject(`${roompath}/${region_url}/region.json`, function (copyjson) {
                         roomjson = copyjson;
-                        roompath = `${slugcat_url[json['copyingrooms']]}/${region_url}`;
+                        roompath = `${roompath}/${region_url}`;
                     }, false);
                 }
 
@@ -698,6 +804,75 @@
                 if (hadSpawns) densLayer.addTo(map);
                 overlays.addOverlay(densLayer, "Spawns");
 
+                // Placed Objects
+                // todo
+
+                // Room Tags
+                let hadRoomTags = map.hasLayer(roomTagsLayer) || loadedRegion == null;
+                if (roomTagsLayer != null) {
+                    overlays.removeLayer(roomTagsLayer);
+                    map.removeLayer(roomTagsLayer);
+                }
+                roomTagsLayer = L.geoJSON(json["roomtag_features"], {
+                    pointToLayer: function (feature, latlng) {
+                        let taghtml = "";
+                        let roomtag = feature.properties;
+                        let icons = [];
+                        let tooltips = [];
+
+                        for (const tag of roomtag.tags) {
+                            if (tag == "SHELTER") {
+                                tooltips.push("Shelter");
+                                icons.push("Shelter_icon");
+                            } else if (tag == "ANCIENTSHELTER") {
+                                tooltips.push("Ancient Shelter");
+                                icons.push("AncientShelter_icon");
+                            } else if (tag == "GATE") {
+                                tooltips.push("Gate");
+                                icons.push("Gate_icon");
+                            } else if (tag == "SWARMROOM") {
+                                tooltips.push("Swarm Room");
+                                icons.push("SwarmRoom_icon");
+                            } else if (tag == "PERF_HEAVY") {
+                                tooltips.push("Performance Heavy");
+                            } else if (tag == "SCAVOUTPOST") {
+                                tooltips.push("Scavenger Toll");
+                                icons.push("ScavOutpost_icon");
+                            } else if (tag == "SCAVTRADER") {
+                                tooltips.push("Scavenger Merchant");
+                                icons.push("ScavTrader_icon");
+                            } else if (tag == "NOTRACKERS") {
+                                tooltips.push("No Trackers");
+                            } else if (tag == "ARENA") {
+                                tooltips.push("Arena");
+                            } else {
+                                tooltips.push(tag);
+                                icons.push("unknown-white");
+                            }
+                        }
+
+                        // Put together the HTML
+                        taghtml += "<div class=\"roomtag-entry roomtag-filter\">";
+                        for (const icon of icons) {
+                            taghtml += `<img class="roomtag-image" src="./resources/${icon}.png"/>`;
+                        }
+                        for (const tooltip of tooltips) {
+                            taghtml += `<div class="roomtag-label">${tooltip}</div>`;
+                        }
+                        taghtml += "</div>";
+
+                        return L.marker(latlng, {
+                            icon: L.divIcon({
+                                className: 'roomtag-divs',
+                                html: taghtml,
+                            }),
+                            interactive: false,
+                        });
+                    },
+                });
+                if (hadRoomTags) roomTagsLayer.addTo(map);
+                overlays.addOverlay(roomTagsLayer, "Room Tags");
+
                 // Zoom to room on rooms loaded
                 let foundRoom = false;
                 if (room != null && roomsLayer != null) {
@@ -722,7 +897,38 @@
 
                 loadedDifficulty = pdifficulty;
                 loadedRegion = pregion;
+
+                // Don't enable certain layers when loaded for the first time
+                if (loadedCount == 1) {
+                    map.removeLayer(placedObjectsLayer);
+                    map.removeLayer(roomTagsLayer);
+                };
             }, true);
+
+            if (Object.keys(regions).indexOf(region) != -1) {
+                for (let i = 0; i < slugcats.length; i++) {
+                    document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
+                }
+            }
+        }
+
+        // Collapseable things
+        var uncollapsed = null;
+        var collapsible = document.querySelectorAll(".collapsible");
+        for (const el of collapsible) {
+            el.style.setProperty("--hide-pos", "-" + (el.getBoundingClientRect().width) + "px");
+            var button = el.querySelector(".collapse-tab");
+            button.addEventListener("click", (e) => {
+                if (uncollapsed != null) {
+                    uncollapsed.classList.add("collapsed");
+                }
+                if (uncollapsed == el) {
+                    uncollapsed = null;
+                } else {
+                    uncollapsed = el;
+                    el.classList.remove("collapsed");
+                }
+            });
         }
 
     </script>

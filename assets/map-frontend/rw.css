@@ -4,21 +4,27 @@
     src: url(resources/Rodondo.otf) format("OpenType");
 }
 
+:root {
+    --font-body: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    --font-title: "Rodondo", sans-serif;
+    --region-btn-width: 260px;
+}
+
 .rw-title {
-    font-family: "Rodondo", sans-serif;
+    font-family: var(--font-title);
     font-size: 6rem;
     text-align: center;
     line-height: 75%;
 }
 
 .rw-bigtext {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: var(--font-body);
     font-size: 1.3125rem;
     font-weight: 600;
 }
 
 .rw-text {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: var(--font-body);
     font-size: 1rem;
     font-weight: 600;
 }

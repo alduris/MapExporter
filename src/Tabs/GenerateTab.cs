@@ -22,8 +22,9 @@ namespace MapExporter.Tabs
 
         private Generator generator;
         private int dataVersion = 0;
+        private bool running = false;
 
-        private readonly Queue<string> queue = [];
+        private readonly LinkedList<string> queue = [];
         private string current;
         private readonly Queue<SlugcatStats.Name> slugQueue = [];
 
@@ -31,17 +32,21 @@ namespace MapExporter.Tabs
         {
             const float PADDING = 10f;
             const float MARGIN = 6f;
-            const float BOX_HEIGHT = (MENU_SIZE - 4 * PADDING - 3 * BIG_LINE_HEIGHT - 3 * MARGIN - 24f) / 2;
+            const float BOX_HEIGHT = (MENU_SIZE - PADDING * 4 - BIG_LINE_HEIGHT * 3 - MARGIN * 4 - 24f * 2) / 2;
 
-            var allRegions = new HashSet<string>(Data.RenderedRegions.Values.SelectMany(x => x))
-                .Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i))
+            var allRegions = Data.RenderedRegions.Keys
+                .OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase)
+                .Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i))
                 .ToList();
             if (allRegions.Count == 0)
             {
                 allRegions.Add(new ListItem("", ""));
             }
 
-            regionSelector = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT - MARGIN - 24f), 200f, allRegions);
+            regionSelector = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT - MARGIN - 24f), 200f, allRegions)
+            {
+                listHeight = 20
+            };
             regionAdd = new OpSimpleButton(new Vector2(regionSelector.pos.x + regionSelector.size.x + MARGIN, regionSelector.pos.y), new Vector2(60f, 24f), "ADD");
             regionAdd.OnClick += RegionAdd_OnClick;
 
@@ -51,26 +56,33 @@ namespace MapExporter.Tabs
                 0f, true, true, true);
             currentBox = new OpScrollBox(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, BOX_HEIGHT), BOX_HEIGHT, false, true, false);
 
+            var startButton = new OpSimpleButton(new Vector2(PADDING, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
+            startButton.OnClick += StartButton_OnClick;
+
             AddItems(
                 new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "GENERATE", true),
-                regionSelector, regionAdd,
                 new OpLabel(PADDING, regionSelector.pos.y - PADDING - BIG_LINE_HEIGHT, "QUEUE", true),
                 queueBox,
                 new OpLabel(PADDING, queueBox.pos.y - PADDING - BIG_LINE_HEIGHT, "CURRENT", true),
-                currentBox
+                currentBox,
+                startButton,
+
+                // for z-index ordering reasons
+                regionSelector, regionAdd
             );
         }
 
         public override void Update()
         {
             // Update queue
-            if (generator == null && (queue.Count > 0 || current != null))
+            if (generator == null && (queue.Count > 0 || current != null) && running)
             {
                 if (current == null)
                 {
-                    current = queue.Dequeue();
+                    current = queue.First();
+                    queue.RemoveFirst();
 
-                    var scugs = Data.RenderedRegions.Select(x => x.Value.Any(x => x == current) ? x.Key : null).Where(x => x != null);
+                    var scugs = Data.RenderedRegions[current].OrderBy(s => s.Index);
                     slugQueue.Clear(); // there should be nothing in it but just as a safety
                     foreach (var scug in scugs) slugQueue.Enqueue(scug);
                 }
@@ -78,6 +90,10 @@ namespace MapExporter.Tabs
 
                 queueDirty = true;
                 currentDirty = true;
+            }
+            else if (queue.Count == 0 && current == null)
+            {
+                running = false;
             }
 
             // Update queuebox
@@ -97,9 +113,9 @@ namespace MapExporter.Tabs
                 float x = Q_SPACING;
                 foreach (var item in queue)
                 {
-                    string name = Region.GetRegionFullName(item, null);
+                    string name = Data.RegionNameFor(item, null);
                     float namewidth = LabelTest.GetWidth(name);
-                    float boxwidth = namewidth + 24f + ITEM_PAD * 3;
+                    float boxwidth = namewidth + 30f + ITEM_PAD * 3;
                     float boxtop = queueBox.size.y - Q_SPACING - ITEM_PAD;
 
                     var delButton = new OpSimpleButton(
@@ -108,17 +124,22 @@ namespace MapExporter.Tabs
                     {
                         colorEdge = RedColor, colorFill = RedColor
                     };
+                    delButton.OnClick += (_) =>
+                    {
+                        queue.Remove(item);
+                        queueDirty = true;
+                    };
 
                     queueBox.AddItems(
                         new OpRect(new Vector2(x, SCROLLBAR_WIDTH + Q_SPACING), new Vector2(boxwidth, queueBox.size.y - SCROLLBAR_WIDTH - Q_SPACING * 2)),
-                        new OpLabel(x, boxtop - 22f, name, false),
+                        new OpLabel(x + ITEM_PAD, boxtop - 22f, name, false),
                         delButton
                     );
 
                     x += boxwidth + Q_SPACING;
                 }
 
-                queueBox.SetContentSize(x);
+                queueBox.SetContentSize(x, false);
             }
 
             // Update current box
@@ -140,7 +161,7 @@ namespace MapExporter.Tabs
                     string text = generator != null ? "Processing..." : "Generator missing!";
                     if (generator?.Failed ?? false) text = "Error detected!";
                     progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, text, false);
-                    var displayText = slugQueue.Peek().value + " - " + Region.GetRegionFullName(current, slugQueue.Peek());
+                    var displayText = slugQueue.Peek().value + " - " + Data.RegionNameFor(current, slugQueue.Peek());
 
                     currentBox.AddItems(
                         new OpLabel(C_SPACING, currentBox.size.y - C_SPACING - BIG_LINE_HEIGHT, displayText, true),
@@ -199,20 +220,16 @@ namespace MapExporter.Tabs
             {
                 dataVersion = Data.Version;
 
-                // Update slugcat list
-                var regionListList = Data.RenderedRegions.Values.ToList();
-                if (regionListList.Count == 0)
-                    regionListList.Add([""]); // dummy placeholder
-
-                var regionList = new HashSet<string>();
-                foreach (var list in regionListList)
+                var itemList = Data.RenderedRegions.Keys
+                    .OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase)
+                    .Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i))
+                    .ToList();
+                if (itemList.Count == 0)
                 {
-                    foreach (var region in list)
-                    {
-                        regionList.Add(region);
-                    }
+                    itemList.Add(new ListItem("", ""));
                 }
-                regionSelector._itemList = regionList.Select((x, i) => new ListItem(x, $"({x}) {Region.GetRegionFullName(x, null)}", i)).ToArray();
+
+                regionSelector._itemList = [.. itemList];
                 regionSelector._ResetIndex();
                 regionSelector.value = null;
                 regionSelector.Change();
@@ -228,8 +245,14 @@ namespace MapExporter.Tabs
                 return;
             }
 
-            queue.Enqueue(regionSelector.value);
+            queue.AddLast(regionSelector.value);
             regionSelector.value = null;
+            queueDirty = true;
+        }
+
+        private void StartButton_OnClick(UIfocusable trigger)
+        {
+            running = true;
         }
     }
 }

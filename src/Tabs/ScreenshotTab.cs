@@ -62,7 +62,7 @@ namespace MapExporter.Tabs
                 .ToList(); // OpComboBox wants it as a list
             comboRegions = new OpComboBox(OIUtil.CosmeticBind(""), new Vector2(10f, 530f), 175f, regionList)
             {
-                listHeight = (ushort)Math.Min(20, RegionNames.Count)
+                listHeight = 20
             };
             var addButton = new OpSimpleButton(new Vector2(195f, 530f), new Vector2(40f, 24f), "ADD");
             var addAllButton = new OpSimpleButton(new Vector2(245f, 530f), new Vector2(40f, 24f), "ALL");
@@ -74,6 +74,7 @@ namespace MapExporter.Tabs
 
             var abortButton = new OpSimpleButton(new Vector2(315f, 530f), new Vector2(80f, 24f), "ABORT") { colorEdge = RedColor };
             var skipButton = new OpSimpleButton(new Vector2(405f, 530f), new Vector2(80f, 24f), "SKIP");
+            var retryButton = new OpSimpleButton(new Vector2(495f, 530f), new Vector2(80f, 24f), "RETRY");
 
             // Event listeners
             addButton.OnClick += AddButton_OnClick;
@@ -83,6 +84,7 @@ namespace MapExporter.Tabs
 
             abortButton.OnClick += AbortButton_OnClick;
             skipButton.OnClick += SkipButton_OnClick;
+            retryButton.OnClick += RetryButton_OnClick;
 
             // Add UI to UI
             AddItems([
@@ -101,6 +103,7 @@ namespace MapExporter.Tabs
                 new OpShinyLabel(315f, 560f, "SCREENSHOTTING", true),
                 abortButton,
                 skipButton,
+                retryButton,
                 queueBox,
 
                 // For z-index ordering reasons
@@ -367,21 +370,26 @@ namespace MapExporter.Tabs
                     var data = Data.QueuedRegions.Dequeue();
                     QueueDirty = true;
                     Data.ScreenshotterStatus = SSStatus.Inactive;
-                    foreach (var scug in data.scugs)
+                    if (!Data.RenderedRegions.TryGetValue(data.acronym, out var scugs))
                     {
-                        if (Data.RenderedRegions.TryGetValue(scug, out var list))
+                        Data.RenderedRegions.Add(data.acronym, data.scugs);
+                    }
+                    else
+                    {
+                        foreach (var scug in data.scugs)
                         {
-                            if (!list.Contains(data.acronym))
-                            {
-                                // Don't add duplicate acronyms (oops)
-                                list.Add(data.acronym);
-                            }
-                        }
-                        else
-                        {
-                            Data.RenderedRegions.Add(scug, [data.acronym]);
+                            scugs.Add(scug);
                         }
                     }
+                    Data.SaveData();
+                    RetryAttempts = 0;
+                }
+                else if (Data.ScreenshotterStatus == SSStatus.Relaunch)
+                {
+                    Data.GetData();
+                    QueueDirty = true;
+                    Data.ScreenshotterStatus = SSStatus.Inactive;
+                    var data = Data.QueuedRegions.Peek();
                     Data.SaveData();
                     RetryAttempts = 0;
                 }
@@ -408,15 +416,16 @@ namespace MapExporter.Tabs
         private void AddButton_OnClick(UIfocusable trigger)
         {
             // If option is invalid, don't do anything
-            if (comboRegions.value == null || !RegionNames.ContainsKey(comboRegions.value))
+            if (comboRegions.value == null || !RegionNames.ContainsKey(comboRegions.value) || WaitingRegions.ContainsKey(comboRegions.value))
             {
+                trigger.PlaySound(SoundID.MENU_Error_Ping);
                 return;
             }
 
             // Add values
             var acronym = comboRegions.value;
             WaitingRegions[acronym] = [];
-            if (Data.GetPreference(Preferences.ScreenshotterAutoFill))
+            if (Preferences.ScreenshotterAutoFill.GetValue())
             {
                 foreach (var scug in Slugcats)
                 {
@@ -438,7 +447,7 @@ namespace MapExporter.Tabs
                 {
                     HashSet<SlugcatStats.Name> scugs = [];
                     WaitingRegions.Add(region.Key, scugs);
-                    if (Data.GetPreference(Preferences.ScreenshotterAutoFill))
+                    if (Preferences.ScreenshotterAutoFill.GetValue())
                     {
                         foreach (var scug in Slugcats)
                         {
@@ -515,6 +524,29 @@ namespace MapExporter.Tabs
             RetryAttempts = 0;
             Data.QueuedRegions.Dequeue();
             QueueDirty = true;
+            Data.ScreenshotterStatus = SSStatus.Inactive;
+            Data.SaveData();
+        }
+
+        private void RetryButton_OnClick(UIfocusable trigger)
+        {
+            if (Data.QueuedRegions.Count == 0)
+            {
+                trigger.PlaySound(SoundID.MENU_Error_Ping);
+                return;
+            }
+
+            if (ScreenshotProcess != null)
+            {
+                ScreenshotProcess.Kill();
+                ScreenshotProcess.Close();
+                ScreenshotProcess.Dispose();
+                ScreenshotProcess = null;
+            }
+            RetryAttempts = 0;
+
+            QueueDirty = true;
+            Data.GetData();
             Data.ScreenshotterStatus = SSStatus.Inactive;
             Data.SaveData();
         }

@@ -192,6 +192,7 @@ namespace MapExporter
             public string roomName;
             public string subregion;
             public Vector2 devPos;
+            public bool hidden = false;
 
             public Vector2[] cameras;
             public IntVector2 size = new(0, 0);
@@ -282,8 +283,19 @@ namespace MapExporter
                         //terain, vb+hb, sc
                     }
                 }
-                // nodes = room.exitAndDenIndex;
-                nodes = [.. aRoom.nodes.Select((_, i) => room.LocalCoordinateOfNode(i).Tile)];
+                nodes = new IntVector2[aRoom.nodes.Length];
+                for (int i = 0; i < nodes.Length; i++)
+                {
+                    try
+                    {
+                        nodes[i] = room.LocalCoordinateOfNode(i).Tile;
+                    }
+                    catch (IndexOutOfRangeException) // die
+                    {
+                        nodes[i] = new IntVector2(-1, -1);
+                    }
+                }
+                // nodes = [.. aRoom.nodes.Select((_, i) => room.LocalCoordinateOfNode(i).Tile)];
 
                 // Initialize connections
                 for (int i = 0; i < aRoom.connections.Length; i++)
@@ -332,6 +344,7 @@ namespace MapExporter
                     { "name", roomName },
                     { "subregion", subregion },
                     { "pos", Vec2arr(devPos) },
+                    { "hidden", hidden },
 
                     { "cameras", cameras?.Select(Vec2arr).ToList() },
                     { "size", size != null ? Intvec2arr(size) : null },
@@ -351,6 +364,7 @@ namespace MapExporter
                     roomName = (string)json["name"],
                     subregion = (string)json["subregion"],
                     devPos = Arr2Vec2((List<object>)json["pos"]),
+                    hidden = json.TryGetValue("hidden", out var hidden) && (bool)hidden,
 
                     spawns = ((List<object>)json["spawns"]).Cast<List<object>>().Select(x =>
                     {

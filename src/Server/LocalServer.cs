@@ -46,7 +46,6 @@ namespace MapExporter.Server
             Stream output = null;
             try
             {
-                bool print = !(req.Url.AbsolutePath.StartsWith("/slugcats/") && req.Url.AbsolutePath.EndsWith(".png")); // don't spam the print thingy with tile requests
                 string message = req.RemoteEndPoint + " requested " + req.RawUrl + " - ";
                 if (req.Url.AbsolutePath == "/")
                 {
@@ -62,7 +61,7 @@ namespace MapExporter.Server
                 }
                 else if (Resources.TryGetTile(req.Url.AbsolutePath, out buffer))
                 {
-                    res.ContentType = "image/png";
+                    res.ContentType = GetMimeType(req.Url.AbsolutePath);
                     message += "tile. (200)";
                 }
                 else if (Resources.TryGetActualPath(req.Url.AbsolutePath, out string path))
@@ -88,15 +87,11 @@ namespace MapExporter.Server
                 output.Write(buffer, 0, buffer.Length);
                 output.Close(); // You must close the output stream.
                 output = null;
-
-                // Message
-                if (print) // tile requests spam the console, we don't care about that
-                    Message(message);
             }
-            catch (IOException ex)
+            catch (IOException)
             {
-                Message("IO error while handling request " + req.RawUrl + " (requested by " + req.RemoteEndPoint + "); likely connection interrupted. Ignored.");
-                Plugin.Logger.LogError(ex);
+                // Plugin.Logger.LogError("IO error while handling request " + req.RawUrl + " (requested by " + req.RemoteEndPoint + "); likely connection interrupted. Ignored.");
+                // Plugin.Logger.LogError(ex);
             }
             catch (Exception ex)
             {

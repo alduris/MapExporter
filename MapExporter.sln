@@ -5,6 +5,15 @@ VisualStudioVersion = 17.9.34616.47
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapExporter", "src\MapExporter.csproj", "{B38F93B1-AFFB-45AA-A1C4-CAF41A5F57A2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FrontEnd", "FrontEnd", "{F5CAA416-F67E-4463-8411-8D063E56A67B}"
+	ProjectSection(SolutionItems) = preProject
+		assets\map-frontend\beziero.js = assets\map-frontend\beziero.js
+		assets\map-frontend\global.js = assets\map-frontend\global.js
+		assets\map-frontend\index.html = assets\map-frontend\index.html
+		assets\map-frontend\map.html = assets\map-frontend\map.html
+		assets\map-frontend\rw.css = assets\map-frontend\rw.css
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

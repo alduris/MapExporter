@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MoreSlugcats;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -62,6 +63,8 @@ namespace MapExporter.Screenshotter
             return $"{Path.Combine(PathOfRegion(slugcat, region), room.ToLower())}_{num}.png";
         }
 
+        private static int screens = 0;
+        private const int THRESHOLD = 300;
         public System.Collections.IEnumerator CaptureTask(RainWorldGame game)
         {
             // Task start
@@ -92,6 +95,15 @@ namespace MapExporter.Screenshotter
             // Recreate scuglat list from last time if needed
             while (slugsRendering.Count > 0)
             {
+                if (screens > THRESHOLD)
+                {
+                    // Save the memory!
+                    Data.ScreenshotterStatus = Data.SSStatus.Relaunch;
+                    Data.SaveData();
+                    Application.Quit();
+                    yield break;
+                }
+
                 SlugcatStats.Name slugcat = new(slugsRendering.Dequeue());
 
                 game.GetStorySession.saveStateNumber = slugcat;
@@ -99,8 +111,47 @@ namespace MapExporter.Screenshotter
 
                 foreach (var step in CaptureRegion(game, regionRendering))
                     yield return step;
+
+                if (Data.QueuedRegions.Count > 0 && Data.QueuedRegions.Peek().acronym == regionRendering)
+                {
+                    // Save new progress in case of bad thing
+                    Data.QueuedRegions.Peek().scugs.Remove(slugcat);
+                }
+
+                if (!Data.RenderedRegions.TryGetValue(regionRendering, out var scugs))
+                {
+                    Data.RenderedRegions.Add(regionRendering, [slugcat]);
+                }
+                else
+                {
+                    scugs.Add(slugcat);
+                }
+
+                Data.SaveData();
             }
 
+            // Add region name
+            if (Data.RegionNames.ContainsKey(regionRendering))
+            {
+                Data.RegionNames.Remove(regionRendering);
+            }
+            List<SlugcatStats.Name> scugList = [];
+            for (int i = 0; i < SlugcatStats.Name.values.Count; i++)
+            {
+                var scug = new SlugcatStats.Name(SlugcatStats.Name.values.GetEntry(i), false);
+                if (!SlugcatStats.HiddenOrUnplayableSlugcat(scug) || (ModManager.MSC && scug == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel))
+                {
+                    scugList.Add(scug);
+                }
+            }
+            var nameStorage = new Data.RegionName(Region.GetRegionFullName(regionRendering, null));
+            foreach (var name in scugList)
+            {
+                nameStorage.personalNames.Add(name, Region.GetRegionFullName(regionRendering, name));
+            }
+            Data.RegionNames.Add(regionRendering, nameStorage);
+
+            // Mark that we finished, save data, and quit
             Data.ScreenshotterStatus = Data.SSStatus.Finished;
             Data.SaveData();
             Application.Quit();
@@ -190,7 +241,7 @@ namespace MapExporter.Screenshotter
 
             regionContent.UpdateRoom(room.realizedRoom);
 
-            if (Data.GetPreference(Preferences.ShowCreatures))
+            if (Preferences.ShowCreatures.GetValue())
             {
                 // wait a bit so creatures can more interesting stuff
                 for (int i = 0; i < 6; i++) yield return null;
@@ -206,8 +257,10 @@ namespace MapExporter.Screenshotter
                 yield return new WaitForEndOfFrame(); // wait an extra frame or two so objects can render, why not
                 yield return null;
 
+                screens++;
+
                 string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
-                if (!Data.GetPreference(Preferences.ScreenshotterSkipExisting) || !File.Exists(filename)) // does the user want to skip existing tiles
+                if (!Preferences.ScreenshotterSkipExisting.GetValue() || !File.Exists(filename)) // does the user want to skip existing tiles
                 {
                     ScreenCapture.CaptureScreenshot(filename);
                 }

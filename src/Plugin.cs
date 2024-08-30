@@ -1,19 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Permissions;
 using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Logging;
+using MapExporter.Screenshotter;
+using Menu.Remix.MixedUI;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using Mono.Cecil.Cil;
-using UnityEngine;
 using MoreSlugcats;
-using RWCustom;
-using MapExporter.Screenshotter;
+using UnityEngine;
 using Random = UnityEngine.Random;
-using Menu.Remix.MixedUI;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -59,6 +59,7 @@ sealed class Plugin : BaseUnityPlugin
                 On.RainWorld.LoadSetupValues += RainWorld_LoadSetupValues;
                 On.RainWorld.Update += RainWorld_Update;
                 On.World.SpawnGhost += World_SpawnGhost;
+                IL.World.SpawnGhost += World_SpawnGhost1;
                 On.GhostWorldPresence.SpawnGhost += GhostWorldPresence_SpawnGhost;
                 On.GhostWorldPresence.GhostMode_AbstractRoom_Vector2 += GhostWorldPresence_GhostMode_AbstractRoom_Vector2;
                 On.Ghost.Update += Ghost_Update;
@@ -86,12 +87,19 @@ sealed class Plugin : BaseUnityPlugin
                 On.SeedCob.FreezingPaletteUpdate += SeedCob_FreezingPaletteUpdate;
                 On.InsectCoordinator.CreateInsect += InsectCoordinator_CreateInsect;
                 IL.WorldLoader.MappingRooms += WorldLoader_MappingRooms;
+                IL.WorldLoader.CreatingAbstractRooms += WorldLoader_CreatingAbstractRooms;
                 On.AbstractRoom.AddTag += AbstractRoom_AddTag;
                 IL.WorldLoader.NextActivity += WorldLoader_NextActivity;
                 On.WorldLoader.FindingCreaturesThread += WorldLoader_FindingCreaturesThread;
                 On.Lightning.LightningSource.Update += LightningSource_Update;
                 On.Oracle.Update += Oracle_Update;
                 On.TempleGuard.Update += TempleGuard_Update;
+                _ = new ILHook(typeof(HUD.Map).GetProperty(nameof(HUD.Map.discoverTexture)).GetSetMethod(), Map_discoverTexture_set);
+                On.PlayerProgression.GetOrInitiateSaveState += PlayerProgression_GetOrInitiateSaveState;
+                On.SaveState.setDenPosition += SaveState_setDenPosition;
+                On.RoomRealizer.RemoveNotVisitedRooms += RoomRealizer_RemoveNotVisitedRooms;
+                On.ProcessManager.CreateValidationLabel += ProcessManager_CreateValidationLabel;
+                On.OracleBehavior.FindPlayer += OracleBehavior_FindPlayer;
 
                 Logger.LogDebug("Finished start thingy");
             }
@@ -101,9 +109,15 @@ sealed class Plugin : BaseUnityPlugin
                 Logger.LogDebug("Normal game instance, don't run hooks");
 
                 // Register UI
+                bool isInit = false;
                 On.RainWorld.OnModsInit += (orig, self) =>
                 {
                     orig(self);
+                    Data.CheckData();
+                    if (isInit) return;
+
+                    isInit = true;
+
                     MachineConnector.SetRegisteredOI(MOD_ID, new UI());
 
                     static float OpScrollBox_MaxScroll_get(Func<OpScrollBox, float> orig, OpScrollBox self) => self.horizontal ? -Mathf.Max(self.contentSize - self.size.x, 0f) : orig(self);
@@ -120,6 +134,21 @@ sealed class Plugin : BaseUnityPlugin
         }
 
         orig(self);
+    }
+
+    // Mem leak fixer (?)
+    private void Map_discoverTexture_set(ILContext il)
+    {
+        // You'd think I could just use a normal Hook, not an ILHook. Unfortunately fuck you, the Hook implementation is broken for property setters.
+        var c = new ILCursor(il);
+        c.Emit(OpCodes.Ldarg_0);
+        c.EmitDelegate((HUD.Map self) =>
+        {
+            if (self.hud.rainWorld.progression.mapDiscoveryTextures.TryGetValue(self.mapData.regionName, out var oldTex))
+            {
+                Destroy(oldTex);
+            }
+        });
     }
 
     // Save and remove spawns
@@ -155,9 +184,27 @@ sealed class Plugin : BaseUnityPlugin
         }
     }
 
+    // Add the tags, skipping the exceptions (SWARMROOM, GATE, SHELTER)
+    private void WorldLoader_CreatingAbstractRooms(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        // Find location where we want to go and grab it
+        c.GotoNext(x => x.MatchLdstr("SWARMROOM"));
+        c.GotoNext(MoveType.Before, x => x.MatchLdfld<WorldLoader>(nameof(WorldLoader.abstractRooms)));
+        var match = c.Prev;
+
+        // Go back to where we want the break to be
+        c.GotoPrev(x => x.MatchLdstr("SWARMROOM"));
+        c.GotoPrev(MoveType.After, x => x.MatchBrfalse(out _));
+
+        // Create the break
+        c.Emit(OpCodes.Br, match);
+    }
+
+    // Always put room tags in the WorldLoader roomTags array so they get added to the room
     private void WorldLoader_MappingRooms(ILContext il)
     {
-        // Always put room tags in the WorldLoader roomTags array so they get added to the room
         try
         {
             var c = new ILCursor(il);
@@ -216,13 +263,43 @@ sealed class Plugin : BaseUnityPlugin
     }
 
     #region fixes
+    // No looking for player while screenshotting, will crash I think
+    private void OracleBehavior_FindPlayer(On.OracleBehavior.orig_FindPlayer orig, OracleBehavior self)
+    {
+        orig(self);
+    }
+
+    // No validation label while screenshotting. Womp womp.
+    private void ProcessManager_CreateValidationLabel(On.ProcessManager.orig_CreateValidationLabel orig, ProcessManager self)
+    {
+        self.validationLabel = null;
+    }
+
+    // Assume safari
+    private void RoomRealizer_RemoveNotVisitedRooms(On.RoomRealizer.orig_RemoveNotVisitedRooms orig, RoomRealizer self)
+    {
+        // no call orig to act like safari
+    }
+
+    // Assume safari
+    private void SaveState_setDenPosition(On.SaveState.orig_setDenPosition orig, SaveState self)
+    {
+        self.SetDenPositionForSafari();
+    }
+
+    // Assume safari
+
+    private SaveState PlayerProgression_GetOrInitiateSaveState(On.PlayerProgression.orig_GetOrInitiateSaveState orig, PlayerProgression self, SlugcatStats.Name saveStateNumber, RainWorldGame game, ProcessManager.MenuSetup setup, bool saveAsDeathOrQuit)
+    {
+        return orig(self, saveStateNumber, game, setup, false);
+    }
 
     // Only show guardians if user wants to
     private void TempleGuard_Update(On.TempleGuard.orig_Update orig, TempleGuard self, bool eu)
     {
         // Only call orig if user wants to spawn iteratosr
         orig(self, eu);
-        bool value = Data.GetPreference(Preferences.ShowGuardians);
+        bool value = Preferences.ShowGuardians.GetValue();
         if (!value)
         {
             self.Destroy();
@@ -246,7 +323,7 @@ sealed class Plugin : BaseUnityPlugin
     {
         // Only call orig if user wants to spawn iteratosr
         orig(self, eu);
-        bool value = Data.GetPreference(Preferences.ShowOracles);
+        bool value = Preferences.ShowOracles.GetValue();
         if (!value)
         {
             self.Destroy();
@@ -258,7 +335,7 @@ sealed class Plugin : BaseUnityPlugin
     private void InsectCoordinator_CreateInsect(On.InsectCoordinator.orig_CreateInsect orig, InsectCoordinator self, CosmeticInsect.Type type, Vector2 pos, InsectCoordinator.Swarm swarm)
     {
         // Only call orig if user wants to spawn insects
-        bool value = Data.GetPreference(Preferences.ShowInsects);
+        bool value = Preferences.ShowInsects.GetValue();
 
         if (value)
         {
@@ -451,7 +528,7 @@ sealed class Plugin : BaseUnityPlugin
     private void World_SpawnGhost(On.World.orig_SpawnGhost orig, World self)
     {
         // true by default
-        if (Data.GetPreference(Preferences.ShowGhosts))
+        if (Preferences.ShowGhosts.GetValue())
         {
             self.game.rainWorld.safariMode = false;
             orig(self);
@@ -459,10 +536,28 @@ sealed class Plugin : BaseUnityPlugin
         }
     }
 
+    // fix custom ghosts overriding my evil nefarious plans (setting things to always be true or false)
+    private void World_SpawnGhost1(ILContext il)
+    {
+        try
+        {
+            var c = new ILCursor(il);
+
+            c.GotoNext(MoveType.AfterLabel, x => x.MatchStloc(2));
+            c.Emit(OpCodes.Pop);
+            c.EmitDelegate(Preferences.ShowGhosts.GetValue); // force to value
+        }
+        catch (Exception e)
+        {
+            Logger.LogError("Cannot IL Hook World.SpawnGhost!");
+            Logger.LogError(e);
+        }
+    }
+
     // spawn ghosts always, to show them on the map (actually again, use player preference)
     private bool GhostWorldPresence_SpawnGhost(On.GhostWorldPresence.orig_SpawnGhost orig, GhostWorldPresence.GhostID ghostID, int karma, int karmaCap, int ghostPreviouslyEncountered, bool playingAsRed)
     {
-        return Data.GetPreference(Preferences.ShowGhosts);
+        return Preferences.ShowGhosts.GetValue();
     }
 
     // don't let them affect nearby rooms
@@ -492,6 +587,7 @@ sealed class Plugin : BaseUnityPlugin
 
         setup.cycleTimeMax = 10000;
         setup.cycleTimeMin = 10000;
+        setup.disableRain = true;
 
         setup.gravityFlickerCycleMin = 10000;
         setup.gravityFlickerCycleMax = 10000;
@@ -500,7 +596,7 @@ sealed class Plugin : BaseUnityPlugin
         setup.cycleStartUp = false;
 
         setup.player1 = false;
-        setup.worldCreaturesSpawn = Data.GetPreference(Preferences.ShowCreatures);
+        setup.worldCreaturesSpawn = Preferences.ShowCreatures.GetValue();
         setup.singlePlayerChar = 0;
 
         return setup;
@@ -532,6 +628,7 @@ sealed class Plugin : BaseUnityPlugin
             if (self.roomSettings.effects[i].type == RoomSettings.RoomEffect.Type.VoidSea) self.roomSettings.effects.RemoveAt(i); // breaks with no player
             else if (self.roomSettings.effects[i].type.ToString() == "CGCameraZoom") self.roomSettings.effects.RemoveAt(i); // bad for screenies
         }
+        List<PlacedObject> reactivateLater = [];
         foreach (var item in self.roomSettings.placedObjects)
         {
             // if (item.type == PlacedObject.Type.InsectGroup) item.active = false;
@@ -565,8 +662,24 @@ sealed class Plugin : BaseUnityPlugin
             )
                 self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 20);
 
+            // Fuck you
+            if (item.active)
+            {
+                if (ModManager.MSC && item.type == MoreSlugcatsEnums.PlacedObjectType.Stowaway)
+                {
+                    item.active = false;
+                    reactivateLater.Add(item);
+                }
+            }
+
         }
+
         orig(self);
+
+        foreach (var item in reactivateLater)
+        {
+            item.active = true;
+        }
     }
 
     private void WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues(On.WorldLoader.orig_ctor_RainWorldGame_Name_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game, SlugcatStats.Name playerCharacter, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)
@@ -608,7 +721,14 @@ sealed class Plugin : BaseUnityPlugin
         manager.rainWorld.safariSlugcat = SlugcatStats.Name.White;
         manager.rainWorld.safariRegion = "SU";
 
+        // Unfortunately safari mode also assumes we have MSC enabled so... just play pretend :3 (it'll throw exceptions otherwise)
+        bool oldmsc = ModManager.MSC;
+        ModManager.MSC = true;
+
         orig(self, manager);
+
+        ModManager.MSC = oldmsc;
+        RainWorld.lockGameTimer = true;
 
         // No safari overseers
         if (self.cameras[0].followAbstractCreature != null)
