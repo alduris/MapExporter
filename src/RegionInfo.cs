@@ -334,7 +334,12 @@ namespace MapExporter
                 }
 
                 // Get placed objects
-                placedObjects = [.. room.roomSettings.placedObjects.Select(x => new PlacedObjectData(x))];
+                placedObjects = [.. room.roomSettings.placedObjects
+                    .Where(x => x.data is PlacedObject.ConsumableObjectData
+                        || x.data is PlacedObject.MultiplayerItemData
+                        || x.data is CollectToken.CollectTokenData
+                        )
+                    .Select(x => new PlacedObjectData(x))];
             }
 
             public Dictionary<string, object> ToJson()
@@ -436,16 +441,10 @@ namespace MapExporter
                 }
             }
 
-            public struct PlacedObjectData : IJsonObject
+            public struct PlacedObjectData(PlacedObject obj) : IJsonObject
             {
-                public PlacedObjectData(PlacedObject obj)
-                {
-                    pos = obj.pos;
-                    data = [.. obj.data.ToString().Split('~')]; // this is an awful way to do it but it should work with every built-in placed object data type
-                }
-
-                public Vector2 pos;
-                public List<string> data;
+                public Vector2 pos = obj.pos;
+                public List<string> data = [.. obj.data.ToString().Split('~')];
 
                 public readonly Dictionary<string, object> ToJson()
                 {
