@@ -131,7 +131,6 @@ namespace MapExporter
                         pixels[i] *= color;
                     }
                     tex.SetPixels(pixels);
-                    tex.Apply();
                     File.WriteAllBytes(SlugcatIconPath(item.ToLower()), tex.EncodeToPNG());
                     UnityEngine.Object.Destroy(tex);
                 }
@@ -155,7 +154,6 @@ namespace MapExporter
                             var color = CreatureSymbol.ColorOfCreature(iconData);
                             var tex = SpriteColor(sprite, color);
                             Iconify(tex);
-                            tex.Apply();
                             string name = i switch { 1 => "smallcentipede", 2 => "centipede", 3 => "bigcentipede", _ => throw new NotImplementedException() };
                             File.WriteAllBytes(CreatureIconPath(name), tex.EncodeToPNG());
                             UnityEngine.Object.Destroy(tex);
@@ -172,7 +170,6 @@ namespace MapExporter
                         var color = CreatureSymbol.ColorOfCreature(iconData);
                         var tex = SpriteColor(sprite, color);
                         Iconify(tex);
-                        tex.Apply();
                         File.WriteAllBytes(CreatureIconPath(item.ToLower()), tex.EncodeToPNG());
                         UnityEngine.Object.Destroy(tex);
                     }
@@ -207,7 +204,6 @@ namespace MapExporter
                     var color = CreatureSymbol.ColorOfCreature(iconData);
                     var tex = SpriteColor(sprite, color);
                     Iconify(tex);
-                    tex.Apply();
                     File.WriteAllBytes(CreatureIconPath(item.ToLower()), tex.EncodeToPNG());
                     UnityEngine.Object.Destroy(tex);
                 }
@@ -234,7 +230,6 @@ namespace MapExporter
                         var color = ItemSymbol.ColorForItem(type, 0);
                         var tex = SpriteColor(sprite, color);
                         Iconify(tex);
-                        tex.Apply();
                         File.WriteAllBytes(ObjectIconPath(item.ToLower()), tex.EncodeToPNG());
                         UnityEngine.Object.Destroy(tex);
                     }
