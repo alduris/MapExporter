@@ -51,8 +51,9 @@ namespace MapExporter.Tabs.UI
                     Data.PlacedObjectIcons[name] = (combo.value, check.GetValueBool());
                     Data.SaveData();
                 };
-                combo.OnValueChanged += (_, _, _) =>
+                combo.OnValueChanged += (_, n, o) =>
                 {
+                    if (n == o) return;
                     Data.PlacedObjectIcons[name] = (combo.value, check.GetValueBool());
                 };
                 combo.OnListOpen += (_) =>
@@ -73,13 +74,6 @@ namespace MapExporter.Tabs.UI
      */
     public class OpComboBox2(Configurable<string> config, Vector2 pos, float width, string[] array) : OpComboBox(config, pos, width, array)
     {
-        public override void Change()
-        {
-            base.Change();
-            OnChanged?.Invoke();
-        }
-        public event Action OnChanged;
-
         public override void GrafUpdate(float timeStacker)
         {
             base.GrafUpdate(timeStacker);
