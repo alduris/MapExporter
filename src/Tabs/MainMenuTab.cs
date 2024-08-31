@@ -18,11 +18,12 @@ namespace MapExporter.Tabs
             "";
         public override void Initialize()
         {
-            const int COLUMN_COUNT = 3; // can probably do up to 4 if labels are short n' sweet
+            const int COLUMN_COUNT = 4;
             const float COLUMN_GAP = 20f;
             static float Column(int c, bool label = false) => ((MENU_SIZE - 10f * 2 - (COLUMN_COUNT - c + 1) * COLUMN_GAP) / COLUMN_COUNT) * c + COLUMN_GAP * c + (label ? 30 : 0);
             static float Row(int r) => 355 - 30 * r;
 
+            OpPOIconManager iconManager = null;
             AddItems(
                 // Title
                 new OpShinyLabel(new Vector2(0f, 570f), new Vector2(600f, 30f), "MAP EXPORTER", FLabelAlignment.Center, true),
@@ -72,8 +73,9 @@ namespace MapExporter.Tabs
                 new OpLabel(Column(1, true), Row(7), "Less intensive"),
 
                 new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),
-                //
+                iconManager = new OpPOIconManager(new Vector2(Column(2), 10f), new Vector2(Column(2) - Column(0) - COLUMN_GAP, Row(0) - 10f))
             );
+            iconManager.Initialize();
 
             static UIelement MapToPreference<T>(Preferences.Preference<T> preference, int c, int r, string description = null)
             {

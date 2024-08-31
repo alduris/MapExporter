@@ -98,8 +98,6 @@ namespace MapExporter.Tabs
                 dirPicker,
                 new OpLabel(new(MENU_SIZE / 2f, dirPicker.pos.y + dirPicker.size.y + MARGIN), new(), "UNFINISHED - COMING SOON", FLabelAlignment.Center) // temporary
             );
-
-            Resources.CopyFrontendFiles();
         }
 
         public override void Update()

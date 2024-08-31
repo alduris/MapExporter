@@ -410,9 +410,9 @@ assets/map-frontend/resources/slugcats/*
 # Exceptions for custom art or necessary ones
 !assets/map-frontend/resources/creatures/hoverfly.png
 
+!assets/map-frontend/resources/objects/unknown.png
 !assets/map-frontend/resources/objects/ghostspot.png
 !assets/map-frontend/resources/objects/eeghostspot.png
-
 !assets/map-frontend/resources/objects/bluetoken.png
 !assets/map-frontend/resources/objects/devtoken.png
 !assets/map-frontend/resources/objects/goldtoken.png

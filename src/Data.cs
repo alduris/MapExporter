@@ -5,6 +5,7 @@ using System.Linq;
 using MonoMod.Utils;
 using MoreSlugcats;
 using RWCustom;
+using UnityEngine;
 
 namespace MapExporter
 {
@@ -131,6 +132,8 @@ namespace MapExporter
             return Region.GetRegionFullName(acronym, name);
         }
 
+        public static Dictionary<string, (string fileName, bool enabled)> PlacedObjectIcons = [];
+
         public static void GetData()
         {
             // Misc stuff
@@ -235,6 +238,25 @@ namespace MapExporter
                         }
                     }
                 }
+
+                // Placed object icons
+                if (json.TryGetValue("poicons", out var iconObj) && iconObj is Dictionary<string, object> iconDict)
+                {
+                    foreach (var kv in iconDict)
+                    {
+                        if (!PlacedObjectIcons.ContainsKey(kv.Key))
+                        {
+                            if (kv.Value is List<object> iconList && iconList.Count == 2 && iconList[0] is string fileName && File.Exists(Resources.ObjectIconPath(fileName)))
+                            {
+                                PlacedObjectIcons.Add(kv.Key, (fileName, (bool)iconList[1]));
+                            }
+                            else
+                            {
+                                PlacedObjectIcons.Add(kv.Key, ("unknown", true));
+                            }
+                        }
+                    }
+                }
             }
 
             Version++;
@@ -280,6 +302,11 @@ namespace MapExporter
                 }
                 names.Add(kv.Key, dict);
             }
+            Dictionary<string, List<object>> icons = [];
+            foreach (var kv in PlacedObjectIcons)
+            {
+                icons.Add(kv.Key, [kv.Value.fileName, kv.Value.enabled]);
+            }
             Dictionary<string, object> save = new()
             {
                 {
@@ -291,6 +318,7 @@ namespace MapExporter
                 { "finished", finished },
                 { "preferences", UserPreferences },
                 { "regionnames", names },
+                { "poicons", icons },
             };
             File.WriteAllText(DataFileDir, Json.Serialize(save));
         }

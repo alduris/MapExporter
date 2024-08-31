@@ -334,12 +334,7 @@ namespace MapExporter
                 }
 
                 // Get placed objects
-                placedObjects = [.. room.roomSettings.placedObjects
-                    .Where(x => x.data is PlacedObject.ConsumableObjectData
-                        || x.data is PlacedObject.MultiplayerItemData
-                        || x.data is CollectToken.CollectTokenData
-                        )
-                    .Select(x => new PlacedObjectData(x))];
+                placedObjects = [.. room.roomSettings.placedObjects.Where(Resources.AcceptablePlacedObject).Select(x => new PlacedObjectData(x))];
             }
 
             public Dictionary<string, object> ToJson()
