@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Menu;
 using Menu.Remix.MixedUI;
 using Menu.Remix.MixedUI.ValueTypes;
+using RWCustom;
 using UnityEngine;
 
 namespace MapExporter.Tabs.UI
@@ -16,7 +19,7 @@ namespace MapExporter.Tabs.UI
             const float ROWHEIGHT = BaseTab.CHECKBOX_SIZE;
 
             float y = size.y - PADDING + MARGIN;
-            float combowidth = Math.Max(80, (int)(size.x * 2 / 5));
+            float combowidth = Math.Max(80, (int)((size.x - BaseTab.SCROLLBAR_WIDTH - PADDING * 2) * 0.4f));
 
             var sortedNames = Data.PlacedObjectIcons.Keys.OrderBy(x => x).ToArray();
             var iconOptions = Directory.GetFiles(Resources.ObjectIconPath())
@@ -28,6 +31,7 @@ namespace MapExporter.Tabs.UI
                 })
                 .OrderBy(x => x)
                 .ToArray();
+            float c = 0f;
             foreach (var name in sortedNames)
             {
                 y -= ROWHEIGHT + MARGIN;
@@ -37,7 +41,10 @@ namespace MapExporter.Tabs.UI
                 AddItems(
                     check = new OpCheckBox(OIUtil.CosmeticBind(enabled), new Vector2(PADDING, y)),
                     new OpLabel(PADDING + BaseTab.CHECKBOX_SIZE + MARGIN, y, name),
-                    combo = new OpComboBox(OIUtil.CosmeticBind(fileName), new Vector2(size.x - 90f - PADDING - BaseTab.SCROLLBAR_WIDTH, y), 80f, iconOptions)
+                    combo = new OpComboBox(OIUtil.CosmeticBind(fileName), new Vector2(size.x - combowidth - PADDING - BaseTab.SCROLLBAR_WIDTH, y), combowidth, iconOptions)
+                    {
+                        listHeight = 8
+                    }
                 );
                 check.OnValueChanged += (_, _, _) =>
                 {
@@ -48,6 +55,11 @@ namespace MapExporter.Tabs.UI
                 {
                     Data.PlacedObjectIcons[name] = (combo.value, check.GetValueBool());
                 };
+                combo.OnListOpen += (_) =>
+                {
+                    combo.MoveToFront();
+                };
+                c -= 0.15f;
             }
             y -= PADDING;
             SetContentSize(size.y - y, true);
