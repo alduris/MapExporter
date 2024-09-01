@@ -74,10 +74,11 @@ namespace MapExporter
             }
         }
 
-        public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs) : IEquatable<QueueData>, IEquatable<string>
+        public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs, SSUpdateMode updateMode) : IEquatable<QueueData>, IEquatable<string>
         {
             public readonly string acronym = name;
             public readonly HashSet<SlugcatStats.Name> scugs = scugs;
+            public readonly SSUpdateMode updateMode = updateMode;
 
             public bool Equals(QueueData other)
             {
@@ -91,13 +92,14 @@ namespace MapExporter
 
             public override string ToString()
             {
-                return acronym + ";" + string.Join(",", [.. scugs.Select(x => x.value)]);
+                return acronym + ";" + string.Join(",", [.. scugs.Select(x => x.value)]) + ";" + updateMode.ToString();
             }
 
             public Dictionary<string, object> ToJSON() => new()
             {
                 {"name", acronym },
-                {"scugs", scugs.Select(x => x.value).ToArray() }
+                {"scugs", scugs.Select(x => x.value).ToArray() },
+                {"updatemode", updateMode },
             };
         }
         public static readonly Queue<QueueData> QueuedRegions = [];
@@ -110,6 +112,26 @@ namespace MapExporter
             Finished
         }
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;
+
+        public enum SSUpdateMode
+        {
+            Everything,
+            ScreenshotsOnly,
+            MetadataWithRoomPositions,
+            MetadataNoRoomPositions,
+            MergeNewRoomsOnly,
+            AllButRoomPositions, // screenshots included
+        }
+        public static bool TakeScreenshots(SSUpdateMode updateMode) => updateMode == SSUpdateMode.Everything
+            || updateMode == SSUpdateMode.ScreenshotsOnly
+            || updateMode == SSUpdateMode.MergeNewRoomsOnly
+            || updateMode == SSUpdateMode.AllButRoomPositions;
+        public static bool CollectRoomData(SSUpdateMode updateMode) => CollectRoomPositions(updateMode)
+            || updateMode == SSUpdateMode.MetadataNoRoomPositions
+            || updateMode == SSUpdateMode.AllButRoomPositions;
+        public static bool CollectRoomPositions(SSUpdateMode updateMode) => updateMode == SSUpdateMode.Everything
+            || updateMode == SSUpdateMode.MetadataWithRoomPositions
+            || updateMode == SSUpdateMode.MergeNewRoomsOnly;
 
         public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> RenderedRegions = [];
         public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> FinishedRegions = [];
@@ -148,7 +170,10 @@ namespace MapExporter
                     var regions = ((List<object>)json["queue"]).Cast<Dictionary<string, object>>();
                     foreach (var region in regions)
                     {
-                        QueuedRegions.Enqueue(new QueueData((string)region["name"], [.. ((List<object>)region["scugs"]).Select(x => new SlugcatStats.Name((string)x, false))]));
+                        SSUpdateMode updateMode = SSUpdateMode.Everything;
+                        if (region.ContainsKey("updatemode") && !Enum.TryParse((string)region["updatemode"], out updateMode))
+                            updateMode = SSUpdateMode.Everything;
+                        QueuedRegions.Enqueue(new QueueData((string)region["name"], [.. ((List<object>)region["scugs"]).Select(x => new SlugcatStats.Name((string)x, false))], updateMode));
                     }
                 }
 
@@ -246,13 +271,9 @@ namespace MapExporter
                     {
                         if (!PlacedObjectIcons.ContainsKey(kv.Key))
                         {
-                            if (kv.Value is List<object> iconList && iconList.Count == 2 && iconList[0] is string fileName && File.Exists(Resources.ObjectIconPath(fileName)))
+                            if (kv.Value is List<object> iconList && iconList.Count == 2)
                             {
-                                PlacedObjectIcons.Add(kv.Key, (fileName, (bool)iconList[1]));
-                            }
-                            else
-                            {
-                                PlacedObjectIcons.Add(kv.Key, ("unknown", true));
+                                PlacedObjectIcons.Add(kv.Key, ((string)iconList[0], (bool)iconList[1]));
                             }
                         }
                     }

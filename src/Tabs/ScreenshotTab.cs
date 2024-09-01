@@ -3,14 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using MapExporter.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
 using MoreSlugcats;
 using RWCustom;
 using UnityEngine;
-using QueueData = MapExporter.Data.QueueData;
-using SSStatus = MapExporter.Data.SSStatus;
+using static MapExporter.Data;
 
 namespace MapExporter.Tabs
 {
@@ -18,9 +18,10 @@ namespace MapExporter.Tabs
     {
         private const int MAX_RETRY_ATTEMPTS = 1; //3;
 
-        private readonly Dictionary<string, HashSet<SlugcatStats.Name>> WaitingRegions = [];
+        private readonly Dictionary<string, (HashSet<SlugcatStats.Name> scugs, SSUpdateMode updateMode)> WaitingRegions = [];
         private readonly Dictionary<string, string> RegionNames = [];
         private readonly List<SlugcatStats.Name> Slugcats;
+        private static readonly Regex PascalRegex = new(@"(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
 
         private OpComboBox comboRegions;
         private OpScrollBox waitBox;
@@ -151,7 +152,6 @@ namespace MapExporter.Tabs
                 // Calculate new size
                 if (WaitingRegions.Count > 0)
                 {
-                    var height = BIG_PAD * 2f;
                     var y = waitBox.size.y + (SEP_PAD - BIG_PAD);
 
                     foreach (var item in WaitingRegions)
@@ -168,10 +168,34 @@ namespace MapExporter.Tabs
 
                         waitBox.AddItems(delButton, regionLabel);
 
+                        // Dropdown for selection
+                        if (Data.RenderedRegions.ContainsKey(item.Key))
+                        {
+                            y -= CHECKBOX_LH;
+                            var updateCombo = new OpResourceSelector(OIUtil.CosmeticBind(item.Value.updateMode), new Vector2(EDGE_PAD, y), waitBox.size.x - 2 * EDGE_PAD - SCROLLBAR_WIDTH)
+                            {
+                                description = "Determines how much data the screenshotter captures from the region. Note that the screenshotter will still screenshot rooms for which the files are missing."
+                            };
+                            updateCombo._itemList = updateCombo._itemList.Select(x => new ListItem(x.name, PascalRegex.Replace(x.name, " "), x.value)).ToArray();
+                            updateCombo.OnValueChanged += (_, val, old) =>
+                            {
+                                if (old == val) return;
+                                if (val == null || !Enum.TryParse<SSUpdateMode>(val, out var value))
+                                {
+                                    updateCombo.value = item.Value.updateMode.ToString();
+                                    updateCombo.PlaySound(SoundID.MENU_Error_Ping);
+                                    return;
+                                }
+
+                                WaitingRegions[item.Key] = (item.Value.scugs, value);
+                            };
+                            updateCombo.OnListOpen += (_) => { updateCombo.MoveToFront(); };
+                            waitBox.AddItems(updateCombo);
+                        }
+
                         // Buttons
                         y -= CHECKBOX_LH;
                         var x = 0f;
-                        int lines = 1;
                         for (int i = 0; i < Slugcats.Count; i++)
                         {
                             // Don't go out of the area
@@ -180,12 +204,11 @@ namespace MapExporter.Tabs
                             {
                                 x = 0f;
                                 y -= CHECKBOX_LH;
-                                lines++;
                             }
 
                             // Create checkbox
                             var j = i; // needed for variable reference purposese
-                            var has = item.Value.Contains(Slugcats[i]);
+                            var has = item.Value.scugs.Contains(Slugcats[i]);
                             var checkbox = new OpCheckBox(OIUtil.CosmeticBind(has), new(EDGE_PAD + x, y))
                             {
                                 colorEdge = ScugDisplayColor(PlayerGraphics.DefaultSlugcatColor(Slugcats[i]), has),
@@ -200,14 +223,14 @@ namespace MapExporter.Tabs
                             checkbox.OnValueUpdate += (_, _, _) =>
                             {
                                 var scug = Slugcats[j];
-                                var c = item.Value.Contains(scug);
+                                var c = item.Value.scugs.Contains(scug);
                                 if (c)
                                 {
-                                    item.Value.Remove(scug);
+                                    item.Value.scugs.Remove(scug);
                                 }
                                 else
                                 {
-                                    item.Value.Add(scug);
+                                    item.Value.scugs.Add(scug);
                                 }
                                 checkbox.colorEdge = ScugDisplayColor(PlayerGraphics.DefaultSlugcatColor(Slugcats[j]), !c);
                                 scugLabel.color = checkbox.colorEdge;
@@ -218,11 +241,10 @@ namespace MapExporter.Tabs
                             waitBox.AddItems(checkbox, scugLabel);
                             x += textWidth + BIG_PAD; // extra right padding
                         }
-
-                        height += LINE_HEIGHT + SEP_PAD + CHECKBOX_LH * lines;
+                        y -= CHECKBOX_LH;
                     }
 
-                    waitBox.SetContentSize(height);
+                    waitBox.SetContentSize(waitBox.size.y - EDGE_PAD - y);
                 }
             }
 
@@ -338,9 +360,6 @@ namespace MapExporter.Tabs
                 {
                     WorkingDirectory = Custom.LegacyRootFolderDirectory(),
                     UseShellExecute = false,
-#if RELEASE
-                    WindowStyle = ProcessWindowStyle.Minimized,
-#endif
                 };
 
                 // Remove doorstop things
@@ -424,14 +443,14 @@ namespace MapExporter.Tabs
 
             // Add values
             var acronym = comboRegions.value;
-            WaitingRegions[acronym] = [];
+            WaitingRegions[acronym] = ([], SSUpdateMode.Everything);
             if (Preferences.ScreenshotterAutoFill.GetValue())
             {
                 foreach (var scug in Slugcats)
                 {
                     if (SlugcatStats.SlugcatStoryRegions(scug).Contains(acronym) || SlugcatStats.SlugcatOptionalRegions(scug).Contains(acronym))
                     {
-                        WaitingRegions[acronym].Add(scug);
+                        WaitingRegions[acronym].scugs.Add(scug);
                     }
                 }
             }
@@ -446,7 +465,7 @@ namespace MapExporter.Tabs
                 if (!WaitingRegions.ContainsKey(region.Key))
                 {
                     HashSet<SlugcatStats.Name> scugs = [];
-                    WaitingRegions.Add(region.Key, scugs);
+                    WaitingRegions.Add(region.Key, (scugs, SSUpdateMode.Everything));
                     if (Preferences.ScreenshotterAutoFill.GetValue())
                     {
                         foreach (var scug in Slugcats)
@@ -467,9 +486,9 @@ namespace MapExporter.Tabs
         {
             foreach (var region in WaitingRegions)
             {
-                if (!Data.QueuedRegions.Any(x => x.Equals(region.Key)) && region.Value.Count > 0)
+                if (!Data.QueuedRegions.Any(x => x.Equals(region.Key)) && region.Value.scugs.Count > 0)
                 {
-                    Data.QueuedRegions.Enqueue(new QueueData(region.Key, region.Value));
+                    Data.QueuedRegions.Enqueue(new QueueData(region.Key, region.Value.scugs, region.Value.updateMode));
                 }
             }
             WaitingRegions.Clear();

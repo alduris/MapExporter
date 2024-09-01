@@ -41,7 +41,7 @@ namespace MapExporter.Tabs.UI
                 AddItems(
                     check = new OpCheckBox(OIUtil.CosmeticBind(enabled), new Vector2(PADDING, y)),
                     new OpLabel(PADDING + BaseTab.CHECKBOX_SIZE + MARGIN, y, name),
-                    combo = new OpComboBox2(OIUtil.CosmeticBind(fileName), new Vector2(size.x - combowidth - PADDING - BaseTab.SCROLLBAR_WIDTH, y), combowidth, iconOptions)
+                    combo = new OpComboBox(OIUtil.CosmeticBind(fileName), new Vector2(size.x - combowidth - PADDING - BaseTab.SCROLLBAR_WIDTH, y), combowidth, iconOptions)
                     {
                         listHeight = 8
                     }
@@ -64,28 +64,6 @@ namespace MapExporter.Tabs.UI
             }
             y -= PADDING;
             SetContentSize(size.y - y, true);
-        }
-    }
-
-    /**
-     * OpComboBox that has no transparent background
-     * 
-     * Thanks Henpemaz
-     */
-    public class OpComboBox2(Configurable<string> config, Vector2 pos, float width, string[] array) : OpComboBox(config, pos, width, array)
-    {
-        public override void GrafUpdate(float timeStacker)
-        {
-            base.GrafUpdate(timeStacker);
-            if (_rectList != null && !_rectList.isHidden)
-            {
-                myContainer.MoveToFront();
-
-                for (int j = 0; j < 9; j++)
-                {
-                    _rectList.sprites[j].alpha = 1;
-                }
-            }
         }
     }
 }

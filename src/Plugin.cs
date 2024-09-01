@@ -251,13 +251,10 @@ sealed class Plugin : BaseUnityPlugin
 
         for (int i = 0; i < 2; i++)
         {
-            ILLabel brto = null;
-            if (c.TryGotoNext(x => x.MatchCall(typeof(File), nameof(File.Exists)), x => x.MatchBrfalse(out brto)))
+            if (c.TryGotoNext(MoveType.After, x => x.MatchCall(typeof(File), nameof(File.Exists))))
             {
-                c.Index--;
-                c.MoveAfterLabels();
-                c.EmitDelegate(() => FlagTriggered);
-                c.Emit(OpCodes.Brtrue, brto);
+                c.EmitDelegate(() => !FlagTriggered);
+                c.Emit(OpCodes.And);
             }
         }
     }

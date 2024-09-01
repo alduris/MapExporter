@@ -5,6 +5,7 @@ using System.Linq;
 using MoreSlugcats;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using SSUpdateMode = MapExporter.Data.SSUpdateMode;
 
 namespace MapExporter.Screenshotter
 {
@@ -19,6 +20,7 @@ namespace MapExporter.Screenshotter
         };
         public static string regionRendering = "SU"; // in case something drastic goes wrong, this is the default
         public static readonly Queue<string> slugsRendering = [];
+        public static SSUpdateMode updateMode;
 
         public static bool NotHiddenRoom(AbstractRoom room) => !HiddenRoom(room);
         public static bool HiddenRoom(AbstractRoom room)
@@ -86,6 +88,7 @@ namespace MapExporter.Screenshotter
             {
                 slugsRendering.Enqueue(str);
             }
+            updateMode = (SSUpdateMode)Enum.Parse(typeof(SSUpdateMode), split[2]);
 
             // load room
             while (game.cameras[0].room == null || !game.cameras[0].room.ReadyForPlayer) yield return null;
@@ -169,14 +172,39 @@ namespace MapExporter.Screenshotter
 
             Directory.CreateDirectory(PathOfRegion(slugcat.value, region));
 
-            RegionInfo mapContent = new(game.world);
             List<AbstractRoom> rooms = [.. game.world.abstractRooms];
+            RegionInfo mapContent;
+            var inputPath = Path.Combine(Data.RenderOutputDir(slugcat.value, region), "metadata.json");
+            if (updateMode != SSUpdateMode.Everything && updateMode != SSUpdateMode.MetadataWithRoomPositions && File.Exists(inputPath))
+            {
+                try
+                {
+                    mapContent = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(inputPath)));
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogError("Issue loading metadata file! Reverting to 'Everything' behavior");
+                    Plugin.Logger.LogError(ex);
+                    updateMode = SSUpdateMode.Everything;
+                    mapContent = new(game.world);
+                }
+            }
+            else
+            {
+                mapContent = new(game.world);
+            }
 
             // Don't image rooms not available for this slugcat
             rooms.RemoveAll(HiddenRoom);
 
             // Don't image offscreen dens
             rooms.RemoveAll(r => r.offScreenDen);
+
+            // Abide by user preferences
+            if (updateMode == SSUpdateMode.MergeNewRoomsOnly)
+            {
+                rooms.RemoveAll(x => mapContent.rooms.ContainsKey(x.name));
+            }
 
             // TODO: readd reuse rooms
 
@@ -191,7 +219,10 @@ namespace MapExporter.Screenshotter
             mapContent.TrimEntries();
 
             // Done
-            File.WriteAllText(PathOfMetadata(slugcat.value, region), Json.Serialize(mapContent));
+            if (Data.CollectRoomData(updateMode))
+            {
+                File.WriteAllText(PathOfMetadata(slugcat.value, region), Json.Serialize(mapContent));
+            }
 
             Plugin.Logger.LogDebug("capture task done with " + region);
         }
@@ -241,7 +272,7 @@ namespace MapExporter.Screenshotter
 
             regionContent.UpdateRoom(room.realizedRoom);
 
-            if (Preferences.ShowCreatures.GetValue())
+            if (Preferences.ShowCreatures.GetValue() && Data.TakeScreenshots(updateMode))
             {
                 // wait a bit so creatures can more interesting stuff
                 for (int i = 0; i < 6; i++) yield return null;
@@ -260,16 +291,19 @@ namespace MapExporter.Screenshotter
                 screens++;
 
                 string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
-                if (!Preferences.ScreenshotterSkipExisting.GetValue() || !File.Exists(filename)) // does the user want to skip existing tiles
+                if ((!Preferences.ScreenshotterSkipExisting.GetValue() && Data.TakeScreenshots(updateMode)) || !File.Exists(filename))
                 {
+                    // Only take screenshot if the user wants to ***OR*** the screenshot does not already exist, in which case it needs to exist or the program can't run
                     ScreenCapture.CaptureScreenshot(filename);
                 }
 
                 // palette and colors
-                regionContent.LogPalette(game.cameras[0].currentPalette);
+                if (Data.CollectRoomData(updateMode))
+                {
+                    regionContent.LogPalette(game.cameras[0].currentPalette);
+                }
 
                 yield return new WaitForEndOfFrame(); // extra frame or two for safety
-                yield return null;
             }
             Random.InitState(0);
             room.Abstractize();
