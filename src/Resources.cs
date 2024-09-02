@@ -237,6 +237,27 @@ namespace MapExporter
                     Data.PlacedObjectIcons.Add(item.ToLower(), (addedNames.Contains(item.ToLower()) ? item.ToLower() : "unknown", true));
                 }
             }
+
+            // Pearls
+            if (!Directory.Exists(Path.Combine(ObjectIconPath(), "pearl")))
+            {
+                Directory.CreateDirectory(Path.Combine(ObjectIconPath(), "pearl"));
+            }
+            foreach (var pearl in DataPearl.AbstractDataPearl.DataPearlType.values.entries)
+            {
+                var path = ObjectIconPath(Path.Combine("pearl", pearl.ToLower()));
+                if (!File.Exists(path) || replaceAll)
+                {
+                    var spriteName = ItemSymbol.SpriteNameForItem(AbstractPhysicalObject.AbstractObjectType.DataPearl, 0);
+                    if (spriteName == "Futile_White") continue;
+                    var sprite = new FSprite(spriteName, true);
+                    var color = DataPearl.UniquePearlMainColor(new DataPearl.AbstractDataPearl.DataPearlType(pearl, false));
+                    var tex = SpriteColor(sprite, color);
+                    Iconify(tex);
+                    File.WriteAllBytes(path, tex.EncodeToPNG());
+                    UnityEngine.Object.Destroy(tex);
+                }
+            }
         }
 
         public static bool AcceptablePlacedObject(PlacedObject obj)
