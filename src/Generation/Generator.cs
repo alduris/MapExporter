@@ -55,6 +55,7 @@ namespace MapExporter.Generation
             processes.Enqueue(new ConnectionProcessor(this));
             processes.Enqueue(new GeometryProcessor(this));
             processes.Enqueue(new SpawnProcessor(this));
+            processes.Enqueue(new PlacedObjectProcessor(this));
             processes.Enqueue(new MiscProcessor(this));
 
             // Preferences
