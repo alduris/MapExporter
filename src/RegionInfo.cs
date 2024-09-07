@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -445,7 +446,11 @@ namespace MapExporter
                         return list.ToArray();
                     }).ToArray(),
                     tags = ((List<object>)json["tags"]).Cast<string>().ToArray(),
-                    placedObjects = ((List<object>)json["objects"] ?? []).Cast<Dictionary<string, object>>().Select(PlacedObjectData.FromJson).ToArray(),
+                    placedObjects = (json.TryGetValue("objects", out var o) && o is List<object> l ? l : [])
+                        .Cast<Dictionary<string, object>>()
+                        .Select(PlacedObjectData.FromJson)
+                        .Where(x => x._valid)
+                        .ToArray(),
                 };
 
                 if (json["cameras"] != null)
@@ -510,6 +515,7 @@ namespace MapExporter
                 public string type = obj.type.ToString();
                 public Vector2 pos = obj.pos;
                 public List<string> data = [.. obj.data.ToString().Split('~')];
+                internal bool _valid = true;
 
                 public readonly Dictionary<string, object> ToJson()
                 {
@@ -523,12 +529,23 @@ namespace MapExporter
 
                 public static PlacedObjectData FromJson(Dictionary<string, object> json)
                 {
-                    return new PlacedObjectData()
+                    try
                     {
-                        type = (string)json["type"],
-                        pos = Arr2Vec2((List<object>)json["pos"]),
-                        data = ((List<object>)json["data"]).Cast<string>().ToList()
-                    };
+                        return new PlacedObjectData()
+                        {
+                            _valid = true,
+                            type = (string)json["type"],
+                            pos = Arr2Vec2((List<object>)json["pos"]),
+                            data = ((List<object>)json["data"]).Cast<string>().ToList()
+                        };
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        return new PlacedObjectData
+                        {
+                            _valid = false
+                        };
+                    }
                 }
             }
         }
