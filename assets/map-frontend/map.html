@@ -65,6 +65,48 @@
             justify-content: center;
         }
 
+        .object-divs {
+            display: flex;
+            justify-content: center;
+        }
+
+        .object-entry {
+            margin-left: 16px;
+            margin-right: 16px;
+        }
+
+        .object-label {
+            position: absolute;
+            margin-left: 0px;
+            margin-top: -5px;
+            font-weight: 900;
+            font-size: 140%;
+            color: white;
+            -webkit-text-fill-color: white;
+            /* Will override color (regardless of order) */
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: black;
+        }
+
+        .object-tooltip {
+            position: absolute;
+            margin-left: 0px;
+            margin-top: 0px;
+            font-weight: 900;
+            font-size: 150%;
+            color: white;
+            -webkit-text-fill-color: white;
+            /* Will override color (regardless of order) */
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: black;
+        }
+
+        .object-image {
+            position: absolute;
+            margin-left: -25px;
+            margin-top: -25px;
+        }
+
         .roomtag-entry {
             display: none;
             /* to be overwritten */
@@ -138,8 +180,7 @@
             display: flex;
             flex-direction: column;
             padding: 8px;
-            background: #0c0c0ccc;
-            backdrop-filter: blur(4px);
+            background: #0c0c0c;
             z-index: 1000;
             color: #cccccc;
         }
@@ -215,8 +256,7 @@
             width: 30px;
             height: 30px;
             user-select: none;
-            background: #0c0c0ccc;
-            backdrop-filter: blur(4px);
+            background: #0c0c0c;
             background-image: url(./resources/hamburger.png);
             background-repeat: no-repeat;
             background-position: center;
@@ -314,6 +354,7 @@
 
     <script>
         'use strict';
+        var loadedCount = 1;
 
         // Dynamic navigation
         var dynamicNavigation; // Stupid browsers
@@ -406,9 +447,11 @@
         // Setup or something like that
         var regions = {};
         var slugcats = [];
+        var poRules = {};
 
         getJsonObject("regions.json", function (json) { regions = json; }, false);
         getJsonObject("slugcats.json", function (json) { slugcats = json; }, false);
+        getJsonObject("placedobjectsdata.json", function (json) { poRules = json; }, false);
 
         var html = "";
         var regionListSorted = Object.keys(regions).sort((a, b) => regions[a]["name"].toUpperCase().localeCompare(regions[b]["name"].toUpperCase()));
@@ -761,10 +804,10 @@
                                 divhtml += '<div class="spawn-entry ' + spawn_filter + '">';
                                 for (let i = 0; i < spawn.lineage.length; i++) {
                                     var tooltip = "";
-                                    if (spawn.night) {
+                                    if ((spawn.spawnData?.indexOf("Night") ?? -1) > -1) {
                                         tooltip += "🌙";
                                     }
-                                    if (spawn.pre_cycle) {
+                                    if ((spawn.spawnData?.indexOf("PreCycle") ?? -1) > -1) {
                                         tooltip += "🚿";
                                     }
 
@@ -805,7 +848,76 @@
                 overlays.addOverlay(densLayer, "Spawns");
 
                 // Placed Objects
-                // todo
+                let hadPlacedObjects = map.hasLayer(placedObjectsLayer) || loadedRegion == null;
+                if (placedObjectsLayer != null) {
+                    overlays.removeLayer(placedObjectsLayer);
+                    map.removeLayer(placedObjectsLayer);
+                }
+                placedObjectsLayer = L.geoJSON(json["placedobject_features"], {
+                    pointToLayer: function (feature, latlng) {
+                        let objecthtml = "";
+                        let object = feature.properties.object;
+                        let data = feature.properties.settings;
+
+                        // Parse thingy
+                        let rules = poRules[object];
+                        rules ??= poRules[object.toLowerCase()];
+                        if (rules != undefined && "use" in rules) {
+                            console.log("Using " + rules["use"] + " for object " + object);
+                            object = rules[use];
+                        }
+
+                        // Data!
+                        let icon = "./resources/objects/" + object.toLowerCase() + ".png";
+                        let tooltip = "";
+                        let display = true;
+
+                        if (rules != undefined) {
+                            if ("icon" in rules) {
+                                let val = parseRule(rules["icon"], new Map([["default", icon], ["slugcat", pdifficulty], ["settings", data]]));
+                                if (typeof val != "string") {
+                                    throw new SyntaxError("Expected string for icon!");
+                                }
+                                icon = val;
+                            }
+                            if ("displayif" in rules) {
+                                let val = parseRule(rules["displayif"], new Map([["default", display], ["slugcat", pdifficulty], ["settings", data]]));
+                                if (typeof val != "boolean") {
+                                    throw new SyntaxError("Expected boolean for display!");
+                                }
+                                display = val;
+                            }
+                            if ("text" in rules) {
+                                let strs = [];
+                                for (const rule of rules["text"]) {
+                                    strs.push(parseRule(rule, new Map([["slugcat", pdifficulty], ["settings", data]])));
+                                }
+                                for (let i = 0; i < strs.length; i++) {
+                                    strs[i] = strs[i].replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;').replaceAll("\n", "<br/>");
+                                }
+                                tooltip = strs.join("<br/>");
+                            }
+                        }
+
+                        // The resulting HTML
+                        if (display) {
+                            objecthtml += `<div class="object-entry">
+                                        <img class="object-image" src="${icon}"/>
+                                        <div class="object-tooltip">${tooltip}</div>
+                                        </div>`;
+                        }
+
+                        return L.marker(latlng, {
+                            icon: L.divIcon({
+                                className: 'object-divs',
+                                html: objecthtml,
+                            }),
+                            interactive: false,
+                        });
+                    },
+                });
+                if (hadPlacedObjects) placedObjectsLayer.addTo(map);
+                overlays.addOverlay(placedObjectsLayer, "Placed Objects");
 
                 // Room Tags
                 let hadRoomTags = map.hasLayer(roomTagsLayer) || loadedRegion == null;
@@ -903,12 +1015,438 @@
                     map.removeLayer(placedObjectsLayer);
                     map.removeLayer(roomTagsLayer);
                 };
+                loadedCount++;
             }, true);
 
             if (Object.keys(regions).indexOf(region) != -1) {
                 for (let i = 0; i < slugcats.length; i++) {
                     document.getElementById("scug-" + slugcats[i]).classList.toggle("hidden", regions[region]["slugcats"].indexOf(slugcats[i].toLowerCase()) == -1);
                 }
+            }
+        }
+
+        // My weird lisp parsing system for the placed object data
+        /**
+         * Rule parser thingy. Secretly has very loose parsing, not that it's intended, just that I was too lazy to fill in some of it.
+         * @param {string} rule A rule parenthesis or string
+         * @param {Map<string, string>} values The values for some instructions
+         * @returns {*} Whatever the result of the rule is
+         */
+        function parseRule(rule, values) {
+            if (typeof rule != "string") {
+                throw new SyntaxError("Error parsing rule! Not of type string");
+            }
+
+            rule = rule.trim();
+            if (rule.length == 0) return "";
+            if (rule[0] == "(" && rule[rule.length - 1] == ")") {
+                // Parenthesis
+                rule = rule.substring(1, rule.length - 1);
+                let keyword = rule.indexOf(" ") != -1 ? rule.substring(0, rule.indexOf(" ")) : rule;
+                let args = [];
+
+                // Split the thingy
+                let inWhitespace = true;
+                let tempValue = "";
+                let stack = [];
+                for (let i = keyword.length + 1; i < rule.length; i++) {
+                    if (stack.length > 0) {
+                        switch (stack[0]) {
+                            case "'": {
+                                if (rule[i] == "'") {
+                                    stack.shift();
+                                    tempValue += rule[i];
+                                } else if (rule[i] == "\\") {
+                                    // Skip the next value in processing but add both to tempValue
+                                    tempValue += rule[i] + rule[i + 1];
+                                    i++;
+                                } else {
+                                    tempValue += rule[i];
+                                }
+                                break;
+                            }
+                            case "(": {
+                                if (rule[i] == "(") {
+                                    stack.unshift("(");
+                                } else if (rule[i] == "'") {
+                                    stack.unshift("'");
+                                } else if (rule[i] == ")") {
+                                    stack.shift();
+                                }
+                                tempValue += rule[i];
+                                break;
+                            }
+                            default: {
+                                throw new TypeError("Unknown string in stack! (" + stack[0] + ")");
+                            }
+                        }
+                    } else {
+                        if (rule[i] == " ") {
+                            if (!inWhitespace) {
+                                inWhitespace = true;
+                                args.push(tempValue);
+                            }
+                        } else {
+                            if (inWhitespace) {
+                                inWhitespace = false;
+                                tempValue = "";
+                            }
+
+                            if (rule[i] == "(") {
+                                stack.unshift("(");
+                            } else if (rule[i] == "'") {
+                                stack.unshift("'");
+                            }
+                            tempValue += rule[i];
+                        }
+                    }
+                }
+                args.push(tempValue);
+                if (stack.length > 0) {
+                    throw new SyntaxError("Mismatched parenthesis!");
+                }
+
+                // Parse the arguments (this will also weed out any syntax errors)
+                args = args.map(x => parseRule(x, values));
+
+                // Okay ! yippee now we can do code stuff
+                switch (keyword) {
+                    case "": {
+                        return "";
+                    }
+                    case "default": {
+                        if (!values.has("default")) {
+                            throw new SyntaxError("The use of 'default' is not allowed here!");
+                        }
+                        return values.get("default");
+                    }
+                    case "slugcat": {
+                        if (!values.has("slugcat")) {
+                            throw new SyntaxError("The use of 'slugcat' is not allowed here!");
+                        }
+                        return values.get("slugcat");
+                    }
+                    case "setting": {
+                        if (!values.has("settings")) {
+                            throw new SyntaxError("The use of 'settings' is not allowed here!");
+                        }
+                        let settings = values.get("settings");
+                        if (args.length < 1) {
+                            throw new SyntaxError("(settings num) requires at least 1 argument!");
+                        }
+                        let num = parseInt(args[0]);
+                        if (isNaN(num)) {
+                            throw new SyntaxError("(settings num) expects an integer as first argument!");
+                        } else if (num < 0 || num > settings.length) {
+                            throw new RangeError("(settings num) expects a number [0, length of settings)! (this is range syntax for you uncultured people)")
+                        }
+                        return settings[num];
+                    }
+                    case "true": return true;
+                    case "false": return false;
+                    case "array": return args; // this can return empty array. that's intended.
+                    case "string": {
+                        if (args.length == 1) return args[0].toString();
+                        else throw new SyntaxError("(string arg) expects exactly one argument!");
+                    }
+                    case "number": {
+                        if (args.length == 1) return Number(args[0]);
+                        else throw new SyntaxError("(number arg) expects exactly one argument!");
+                    }
+                    case "+": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(+ args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(+ args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev + curr);
+                    }
+                    case "-": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(- args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(- args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev - curr);
+                    }
+                    case "*": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(* args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(* args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev * curr);
+                    }
+                    case "/": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(/ args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(/ args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev / curr);
+                    }
+                    case "%": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(% args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(% args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev % curr);
+                    }
+                    case "**": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(** args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(** args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev ** curr);
+                    }
+                    case "&": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(& args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(& args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev & curr);
+                    }
+                    case "|": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(| args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(| args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev | curr);
+                    }
+                    case "^": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(^ args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(^ args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev ^ curr);
+                    }
+                    case "~": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(~ arg) expects at least one argument!");
+                        } else if (typeof args[0] != "number") {
+                            throw new SyntaxError("(~ arg) expects a number as first argument!");
+                        }
+                        return ~args[0];
+                    }
+                    case ">": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(> args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(> args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev > curr);
+                    }
+                    case "<": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(< args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(< args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev < curr);
+                    }
+                    case ">=": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(>= args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(>= args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev >= curr);
+                    }
+                    case "<=": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(<= args...) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "number")) {
+                            throw new SyntaxError("(<= args...) expects all its arguments to be numbers! Argument " + (args.findIndex(x => typeof x != "number") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev <= curr);
+                    }
+                    case "==": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(== args...) requires at least two arguments!");
+                        }
+                        return args.reduce((prev, curr) => prev == curr);
+                    }
+                    case "!=": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(!= args...) requires at least two arguments!");
+                        }
+                        return args.reduce((prev, curr) => prev != curr);
+                    }
+                    case "&&":
+                    case "and": {
+                        if (args.some(x => typeof x != "boolean")) {
+                            throw new SyntaxError("(and args...) expects all its arguments to be booleans! Argument " + (args.findIndex(x => typeof x != "boolean") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev && curr);
+                    }
+                    case "||":
+                    case "or": {
+                        if (args.some(x => typeof x != "boolean")) {
+                            throw new SyntaxError("(or args...) expects all its arguments to be booleans! Argument " + (args.findIndex(x => typeof x != "boolean") + 1) + " was not.");
+                        }
+                        return args.reduce((prev, curr) => prev || curr);
+                    }
+                    case "!":
+                    case "not": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(not arg) expects at least one argument!");
+                        } else if (typeof args[0] != "boolean") {
+                            throw new SyntaxError("(not arg) expects a boolean as first argument!");
+                        }
+                        return !args[0];
+                    }
+                    case "if": {
+                        if (typeof args[0] != "boolean") {
+                            throw new SyntaxError("(if condition valueIfTrue valueIfFalse?) expects a boolean as first argument!");
+                        } else if (args.length < 2) {
+                            throw new SyntaxError("(if condition valueIfTrue valueIfFalse?) requires at least 2 arguments!")
+                        } else {
+                            return args[0] ? args[1] : (args[2] ?? "");
+                        }
+                    }
+                    case "round": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(round arg) expects at least one argument!");
+                        } else if (typeof args[0] != "number") {
+                            throw new SyntaxError("(round arg) expects a number as first argument!");
+                        }
+                        return Math.round(args[0]);
+                    }
+                    case "floor": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(floor arg) expects at least one argument!");
+                        } else if (typeof args[0] != "number") {
+                            throw new SyntaxError("(floor arg) expects a number as first argument!");
+                        }
+                        return Math.floor(args[0]);
+                    }
+                    case "ceil": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(ceil arg) expects at least one argument!");
+                        } else if (typeof args[0] != "number") {
+                            throw new SyntaxError("(ceil arg) expects a number as first argument!");
+                        }
+                        return Math.ceil(args[0]);
+                    }
+                    case "trunc": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(trunc arg) expects at least one argument!");
+                        } else if (typeof args[0] != "number") {
+                            throw new SyntaxError("(trunc arg) expects a number as first argument!");
+                        }
+                        return Math.trunc(args[0]);
+                    }
+                    case "sqrt": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(sqrt arg) expects at least one argument!");
+                        } else if (typeof args[0] != "number") {
+                            throw new SyntaxError("(sqrt arg) expects a number as first argument!");
+                        }
+                        return Math.sqrt(args[0]);
+                    }
+                    case "lower": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(lower arg) expects at least one argument!");
+                        } else if (typeof args[0] != "string") {
+                            throw new SyntaxError("(lower arg) expects a string as first argument!");
+                        }
+                        return args[0].toLowerCase();
+                    }
+                    case "upper": {
+                        if (args.length < 1) {
+                            throw new SyntaxError("(upper arg) expects at least one argument!");
+                        } else if (typeof args[0] != "string") {
+                            throw new SyntaxError("(upper arg) expects a string as first argument!");
+                        }
+                        return args[0].toUpperCase();
+                    }
+                    case "split": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(split string delimiter) requires at least two arguments!");
+                        } else if (args.some(x => typeof x != "string")) {
+                            throw new SyntaxError("(split string delimiter) expects all its arguments to be strings! Argument " + (args.findIndex(x => typeof x != "string") + 1) + " was not.");
+                        }
+                        return args[0].split(args[1]);
+                    }
+                    case "join": {
+                        if (args.some(x => typeof x != "string")) {
+                            throw new SyntaxError("(join args...) expects all its arguments to be strings! Argument " + (args.findIndex(x => typeof x != "string") + 1) + " was not.");
+                        }
+                        return args.join("");
+                    }
+                    case "joinwith": {
+                        if (args.some(x => typeof x != "string")) {
+                            throw new SyntaxError("(joinwith separator args...) expects all its arguments to be strings! Argument " + (args.findIndex(x => typeof x != "string") + 1) + " was not.");
+                        }
+                        return args.slice(1).join(args[0]);
+                    }
+                    case "contains": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(contains container item) requires at least two arguments!");
+                        } else if (typeof args[1] != "string") {
+                            throw new SyntaxError("(contains container item) expects a string as second argument!");
+                        } else if (typeof args[0] == "string" || args[0] instanceof Array) {
+                            return args[0].indexOf(args[1]) > -1;
+                        } else {
+                            throw new SyntaxError("(contains container item) expects a string or array as first argument!");
+                        }
+                    }
+                    case "index": {
+                        if (args.length < 2) {
+                            throw new SyntaxError("(index container item) requires at least two arguments!");
+                        } else if (typeof args[1] != "string") {
+                            throw new SyntaxError("(index container item) expects a string as second argument!");
+                        } else if (typeof args[0] == "string" || args[0] instanceof Array) {
+                            return args[0].indexOf(args[1]);
+                        } else {
+                            throw new SyntaxError("(index container item) expects a string or array as first argument!");
+                        }
+                    }
+                    default: {
+                        return parseRule(rule, values); // maybe it's unnecessary parenthesis?
+                    }
+                }
+            }
+            else if (rule[0] == "'" && rule[rule.length - 1] == "'") {
+                // String
+                rule = rule.substring(1, rule.length - 1);
+                let str = "";
+                for (let i = 0; i < rule.length; i++) {
+                    if (rule[i] == "'") {
+                        throw new SyntaxError("Error parsing string: too many ' characters");
+                    } else if (rule[i] == "\\") {
+                        if (i == rule.length - 1) {
+                            throw new SyntaxError("Expected character after escape in string!");
+                        } else {
+                            switch (rule[i + 1]) {
+                                case "\\":
+                                case "'":
+                                    str += rule[i + 1];
+                                    break;
+                                case "n":
+                                    str += "\n";
+                                    break;
+                                default:
+                                    console.warn("Unknown escape sequence: \\" + rule[i + 1]);
+                                    break;
+                            }
+                        }
+                    } else {
+                        str += rule[i];
+                    }
+                }
+                return str;
+            }
+            else if (/^(?:\d+\.?|\d*\.\d+)$/m.test(rule) && !isNaN(Number(rule))) {
+                return Number(rule);
+            }
+            else {
+                throw new SyntaxError("Error parsing rule {" + rule + "}: either did not begin with (, ', or number or end with the corresponding matching character!");
             }
         }
 

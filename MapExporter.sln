@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FrontEnd", "FrontEnd", "{F5
 		assets\map-frontend\global.js = assets\map-frontend\global.js
 		assets\map-frontend\index.html = assets\map-frontend\index.html
 		assets\map-frontend\map.html = assets\map-frontend\map.html
+		assets\map-frontend\placedobjectsdata.json = assets\map-frontend\placedobjectsdata.json
 		assets\map-frontend\rw.css = assets\map-frontend\rw.css
 	EndProjectSection
 EndProject

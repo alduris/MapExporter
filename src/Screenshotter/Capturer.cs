@@ -304,6 +304,7 @@ namespace MapExporter.Screenshotter
                 }
 
                 yield return new WaitForEndOfFrame(); // extra frame or two for safety
+                yield return null;
             }
             Random.InitState(0);
             room.Abstractize();
