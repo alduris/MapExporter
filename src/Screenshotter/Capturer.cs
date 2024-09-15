@@ -173,25 +173,42 @@ namespace MapExporter.Screenshotter
             Directory.CreateDirectory(PathOfRegion(slugcat.value, region));
 
             List<AbstractRoom> rooms = [.. game.world.abstractRooms];
-            RegionInfo mapContent;
+            RegionInfo mapContent = null;
             var inputPath = Path.Combine(Data.RenderOutputDir(slugcat.value, region), "metadata.json");
             if (updateMode != SSUpdateMode.Everything && updateMode != SSUpdateMode.MetadataWithRoomPositions && File.Exists(inputPath))
             {
+                bool exception = false;
                 try
                 {
                     mapContent = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(inputPath)));
+                    if (updateMode != SSUpdateMode.MergeNewRoomsOnly) // we want to do this later in this case so we can filter out old rooms
+                        mapContent.MergeNewData(game.world);
                 }
                 catch (Exception ex)
                 {
+                    exception = true;
                     Plugin.Logger.LogError("Issue loading metadata file! Reverting to 'Everything' behavior");
                     Plugin.Logger.LogError(ex);
-                    updateMode = SSUpdateMode.Everything;
-                    mapContent = new(game.world);
+                }
+                if (exception)
+                {
+                    CreateErrorPopup("Uh oh!", "Issue loading metadata file. Will revert to 'Everything' behavior. Continue?", true, () =>
+                    {
+                        updateMode = SSUpdateMode.Everything;
+                        mapContent = new(game.world);
+                    });
+                    yield return null;
                 }
             }
             else
             {
                 mapContent = new(game.world);
+            }
+
+            if (mapContent == null)
+            {
+                CreateErrorPopup("Uh oh!", "Map content is somehow null. Please restart process.", false);
+                yield break;
             }
 
             // Don't image rooms not available for this slugcat
@@ -203,8 +220,20 @@ namespace MapExporter.Screenshotter
             // Abide by user preferences
             if (updateMode == SSUpdateMode.MergeNewRoomsOnly)
             {
+                // Remove all existing rooms
                 rooms.RemoveAll(x => mapContent.rooms.ContainsKey(x.name));
+
+                // Add rooms connecting to the new rooms
+                HashSet<AbstractRoom> connections = rooms.SelectMany(x => x.connections).Select(game.world.GetAbstractRoom).Where(x => x != null).ToHashSet();
+                rooms.AddRange(connections);
+
+                Plugin.Logger.LogDebug("ROOMS TO BE MERGED:");
+                foreach (var room in rooms)
+                    Plugin.Logger.LogDebug(room.name);
+
+                mapContent.MergeNewData(game.world);
             }
+
 
             // TODO: readd reuse rooms
 
@@ -224,7 +253,7 @@ namespace MapExporter.Screenshotter
                 File.WriteAllText(PathOfMetadata(slugcat.value, region), Json.Serialize(mapContent));
             }
 
-            Plugin.Logger.LogDebug("capture task done with " + region);
+            Plugin.Logger.LogDebug("Capture task done with " + region);
         }
 
         private System.Collections.IEnumerable CaptureRoom(AbstractRoom room, RegionInfo regionContent)
@@ -309,6 +338,18 @@ namespace MapExporter.Screenshotter
             Random.InitState(0);
             room.Abstractize();
             yield return null;
+        }
+
+
+        public void CreateErrorPopup(string title, string message, bool canContinue, Action onContinue = null)
+        {
+            Plugin.errorQueue.Enqueue(new ErrorInfo
+            {
+                title = title,
+                message = message,
+                canContinue = canContinue,
+                onContinue = onContinue
+            });
         }
     }
 }

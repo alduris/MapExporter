@@ -37,8 +37,13 @@ namespace MapExporter
             // Region identity + echo room because why not grab that here
             acronym = world.name;
             name = Region.GetRegionFullName(acronym, null);
-            echoRoom = world?.worldGhost?.ghostRoom?.name;
+            echoRoom = world.worldGhost?.ghostRoom?.name;
 
+            MergeNewData(world);
+        }
+
+        public void MergeNewData(World world)
+        {
             // Figure out where the rooms are in dev tools so we can create our room representations
             if (Data.CollectRoomPositions(Capturer.updateMode))
             {
@@ -81,8 +86,11 @@ namespace MapExporter
             // Ok continue on with initializing the rest of the object
             foreach (var room in world.abstractRooms)
             {
-                rooms[room.name] = new RoomEntry(this, world, room);
-                // I would initialize connections here but they require a loaded room so nope :3
+                if (!rooms.ContainsKey(room.name))
+                {
+                    rooms[room.name] = new RoomEntry(this, world, room);
+                    // I would initialize connections here but they require a loaded room so nope :3
+                }
             }
         }
 
