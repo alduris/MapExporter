@@ -1,0 +1,38 @@
+{
+    "datapearl": {
+        "text": [
+            "(if (and (!= (setting 4) 'Misc') (!= (setting 4) 'Misc2') (!= (setting 4) 'BroadcastMisc')) (setting 4) '')"
+        ],
+        "icon": "(if (and (!= (setting 4) 'Misc') (!= (setting 4) 'Misc2') (!= (setting 4) 'BroadcastMisc')) (join './resources/objects/pearl/' (lower (setting 4)) '.png') (default))"
+    },
+    "uniquedatapearl": {
+        "use": "datapearl"
+    },
+    "bluetoken": {
+        "text": [
+            "(setting 5)"
+        ],
+        "displayif": "(not (contains (split (setting 6) '|') (slugcat)))"
+    },
+    "goldtoken": {
+        "text": [
+            "(setting 5)"
+        ],
+        "displayif": "(not (contains (split (setting 6) '|') (slugcat)))"
+    },
+    "redtoken": {
+        "text": [
+            "(setting 5)"
+        ],
+        "displayif": "(not (contains (split (setting 6) '|') (slugcat)))"
+    },
+    "greentoken": {
+        "text": [
+            "(setting 5)"
+        ],
+        "displayif": "(not (contains (split (setting 6) '|') (slugcat)))"
+    },
+    "devtoken": {
+        "displayif": "(not (contains (split (setting 6) '|') (slugcat)))"
+    }
+}

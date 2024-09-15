@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using MapExporter.Tabs.UI;
 using Menu.Remix.MixedUI;
+using Menu.Remix.MixedUI.ValueTypes;
 using RWCustom;
 using UnityEngine;
 
@@ -17,6 +18,7 @@ namespace MapExporter.Tabs
         private OpComboBox scugSelector;
         private OpComboBox importSelector;
         private OpScrollBox roomSelector;
+        private OpCheckBox recenterCheckBox;
         private OpMapBox mapBox;
         private readonly WeakReference<OpTextButton> activeButton = new(null);
 
@@ -66,6 +68,11 @@ namespace MapExporter.Tabs
             var importButton = new OpSimpleButton(new(importSelector.pos.x + importSelector.size.x + 6f, importSelector.pos.y), new Vector2(80f, 24f), "IMPORT");
             importButton.OnClick += ImportButton_OnClick;
 
+            const string RECENTER_TEXT = "Recenter on save: ";
+            recenterCheckBox = new OpCheckBox(OIUtil.CosmeticBind(true), new(MENU_SIZE - SIDE_PADDING - CHECKBOX_SIZE, SIDE_PADDING));
+            float recenterWidth = LabelTest.GetWidth(RECENTER_TEXT, false);
+            var recenterLabel = new OpLabel(recenterCheckBox.pos.x - 6f - recenterWidth, SIDE_PADDING + (12f - LabelTest.LineHeight(false) / 2f), RECENTER_TEXT, false);
+
             // Body boxes and such
             const float BODY_LEFT_WIDTH = MENU_SIZE * 0.25f;
             const float BODY_RIGHT_WIDTH = MENU_SIZE - BODY_LEFT_WIDTH;
@@ -96,6 +103,8 @@ namespace MapExporter.Tabs
                 // Bottom things
                 importLabel,
                 importButton,
+                recenterCheckBox,
+                recenterLabel,
 
                 // Place the combo boxes last for z-index reasons
                 scugSelector,
@@ -290,15 +299,18 @@ namespace MapExporter.Tabs
             }
 
             // Zero the rooms
-            Vector2 midpoint = Vector2.zero;
-            foreach (var room in activeRegion.rooms.Values)
+            if (recenterCheckBox.GetValueBool())
             {
-                midpoint += room.devPos;
-            }
-            midpoint /= activeRegion.rooms.Count;
-            foreach (var room in activeRegion.rooms.Values)
-            {
-                room.devPos -= midpoint;
+                Vector2 midpoint = Vector2.zero;
+                foreach (var room in activeRegion.rooms.Values)
+                {
+                    midpoint += room.devPos;
+                }
+                midpoint /= activeRegion.rooms.Count;
+                foreach (var room in activeRegion.rooms.Values)
+                {
+                    room.devPos -= midpoint;
+                }
             }
 
             // Save

@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
+using DevInterface;
+using MapExporter.Screenshotter;
 using RWCustom;
 using UnityEngine;
-using DevInterface;
-using System.Runtime.CompilerServices;
 
 namespace MapExporter
 {
     internal sealed class RegionInfo : IJsonObject
     {
+        private const float SCALEDOWN = 2f;
         public static readonly ConditionalWeakTable<World, List<World.CreatureSpawner>> spawnerCWT = new();
         public Dictionary<string, RoomEntry> rooms = [];
         public List<ConnectionEntry> connections = [];
@@ -22,6 +25,7 @@ namespace MapExporter
         public List<Color> fgcolors = [];
         public List<Color> bgcolors = [];
         public List<Color> sccolors = [];
+        public bool fromJson = false;
 
         // For passing data down to children
         private readonly Dictionary<string, Vector2> devPos = [];
@@ -33,49 +37,60 @@ namespace MapExporter
             // Region identity + echo room because why not grab that here
             acronym = world.name;
             name = Region.GetRegionFullName(acronym, null);
-            echoRoom = world?.worldGhost?.ghostRoom?.name;
+            echoRoom = world.worldGhost?.ghostRoom?.name;
 
+            MergeNewData(world);
+        }
+
+        public void MergeNewData(World world)
+        {
             // Figure out where the rooms are in dev tools so we can create our room representations
-            var devMap = (MapPage)FormatterServices.GetUninitializedObject(typeof(MapPage));
-            string slugcatFilePath = AssetManager.ResolveFilePath(
-                Path.Combine(
-                    "World",
-                    world.name,
-                    "map_" + world.name + "-" + (world.game.StoryCharacter?.value ?? "") + ".txt"
-                ));
-            string normalFilePath = AssetManager.ResolveFilePath(
-                Path.Combine(
-                    "World",
-                    world.name,
-                    "map_" + world.name + ".txt"
-                ));
-            devMap.filePath = File.Exists(slugcatFilePath) ? slugcatFilePath : normalFilePath;
-            devMap.subNodes = [];
-            if (devMap.filePath == normalFilePath && !File.Exists(normalFilePath))
+            if (Data.CollectRoomPositions(Capturer.updateMode))
             {
-                throw new FileNotFoundException("Map file doesn't exist for region " + acronym + "!");
-            }
-            foreach (var room in world.abstractRooms)
-            {
-                var panel = (RoomPanel)FormatterServices.GetUninitializedObject(typeof(RoomPanel));
-                panel.roomRep = (MapObject.RoomRepresentation)FormatterServices.GetUninitializedObject(typeof(MapObject.RoomRepresentation));
-                panel.roomRep.room = room;
-                devMap.subNodes.Add(panel);
-            }
+                var devMap = (MapPage)FormatterServices.GetUninitializedObject(typeof(MapPage));
+                string slugcatFilePath = AssetManager.ResolveFilePath(
+                    Path.Combine(
+                        "World",
+                        world.name,
+                        "map_" + world.name + "-" + (world.game.StoryCharacter?.value ?? "") + ".txt"
+                    ));
+                string normalFilePath = AssetManager.ResolveFilePath(
+                    Path.Combine(
+                        "World",
+                        world.name,
+                        "map_" + world.name + ".txt"
+                    ));
+                devMap.filePath = File.Exists(slugcatFilePath) ? slugcatFilePath : normalFilePath;
+                devMap.subNodes = [];
+                if (devMap.filePath == normalFilePath && !File.Exists(normalFilePath))
+                {
+                    throw new FileNotFoundException("Map file doesn't exist for region " + acronym + "!");
+                }
+                foreach (var room in world.abstractRooms)
+                {
+                    var panel = (RoomPanel)FormatterServices.GetUninitializedObject(typeof(RoomPanel));
+                    panel.roomRep = (MapObject.RoomRepresentation)FormatterServices.GetUninitializedObject(typeof(MapObject.RoomRepresentation));
+                    panel.roomRep.room = room;
+                    devMap.subNodes.Add(panel);
+                }
 
-            devMap.LoadMapConfig();
+                devMap.LoadMapConfig();
 
-            foreach (var node in devMap.subNodes)
-            {
-                var panel = node as RoomPanel;
-                devPos[panel.roomRep.room.name] = panel.devPos;
+                foreach (var node in devMap.subNodes)
+                {
+                    var panel = node as RoomPanel;
+                    devPos[panel.roomRep.room.name] = panel.devPos;
+                }
             }
 
             // Ok continue on with initializing the rest of the object
             foreach (var room in world.abstractRooms)
             {
-                rooms[room.name] = new RoomEntry(this, world, room);
-                // I would initialize connections here but they require a loaded room so nope :3
+                if (!rooms.ContainsKey(room.name))
+                {
+                    rooms[room.name] = new RoomEntry(this, world, room);
+                    // I would initialize connections here but they require a loaded room so nope :3
+                }
             }
         }
 
@@ -115,12 +130,12 @@ namespace MapExporter
                 rooms.Remove(key);
             }
 
-            // Theoretically any of these removed rooms shouldn't have any connections but you never know
+            // Filter out the theoretically impossible things we don't want like connections to rooms we removed and incomplete connection entries.
             int i = 0;
             while (i < connections.Count)
             {
                 var conn = connections[i];
-                if (toRemove.Contains(conn.roomA) || toRemove.Contains(conn.roomB))
+                if (toRemove.Contains(conn.roomA) || toRemove.Contains(conn.roomB) || !conn.complete)
                 {
                     connections.RemoveAt(i);
                 }
@@ -158,13 +173,15 @@ namespace MapExporter
                 connections = [],
                 fgcolors = ((List<object>)json["fgcolors"]).Cast<List<object>>().Select(Arr2Color).ToList(),
                 bgcolors = ((List<object>)json["bgcolors"]).Cast<List<object>>().Select(Arr2Color).ToList(),
-                sccolors = ((List<object>)json["sccolors"]).Cast<List<object>>().Select(Arr2Color).ToList()
+                sccolors = ((List<object>)json["sccolors"]).Cast<List<object>>().Select(Arr2Color).ToList(),
+                fromJson = true
             };
 
             // Add rooms
             foreach (var kv in (Dictionary<string, object>)json["rooms"])
             {
-                entry.rooms[kv.Key] = RoomEntry.FromJson((Dictionary<string, object>)kv.Value);
+                entry.rooms[kv.Key] = RoomEntry.FromJson(entry, (Dictionary<string, object>)kv.Value);
+                entry.devPos[kv.Key] = entry.rooms[kv.Key].devPos * SCALEDOWN;
             }
 
             // Add connections
@@ -201,10 +218,14 @@ namespace MapExporter
 
             public DenSpawnData[][] spawns;
             public string[] tags;
+            public PlacedObjectData[] placedObjects;
 
             internal bool offscreenDen = false;
 
-            public RoomEntry() { }
+            public RoomEntry(RegionInfo owner)
+            { 
+                regionInfo = owner;
+            }
 
             public RoomEntry(RegionInfo owner, World world, AbstractRoom room)
             {
@@ -213,8 +234,9 @@ namespace MapExporter
 
                 roomName = room.name;
                 subregion = room.subregionName;
-                devPos = owner.devPos[room.name] / 2f; // I do not want to write a paragraph explaining the dividing by 2
+                devPos = owner.devPos[room.name] / SCALEDOWN;
 
+                // spawns
                 if (spawnerCWT.TryGetValue(world, out var spawners))
                 {
                     List<DenSpawnData[]> spawns = [];
@@ -288,48 +310,109 @@ namespace MapExporter
                     {
                         nodes[i] = room.LocalCoordinateOfNode(i).Tile;
                     }
-                    catch (IndexOutOfRangeException) // die
+                    catch (Exception e) // die
                     {
+                        Plugin.Logger.LogError(aRoom.name + " had a bad node! (index " + i + ", type " + e.GetType().Name + ")");
+                        Plugin.Logger.LogError(e);
                         nodes[i] = new IntVector2(-1, -1);
                     }
                 }
                 // nodes = [.. aRoom.nodes.Select((_, i) => room.LocalCoordinateOfNode(i).Tile)];
 
                 // Initialize connections
-                for (int i = 0; i < aRoom.connections.Length; i++)
+                if (regionInfo.fromJson)
                 {
-                    var other = aRoom.world.GetAbstractRoom(aRoom.connections[i]);
-                    if (other == null) continue;
-
-                    ConnectionEntry conn = null;
-                    foreach (var c in regionInfo.connections)
+                    // If we loaded from the JSON, figure out what rooms already connect to this
+                    var existing = regionInfo.connections.Where(x => x.roomA == aRoom.name || x.roomB == aRoom.name)
+                        .ToDictionary(x => x.roomA == aRoom.name ? x.roomB : x.roomA);
+                    var visitedExisting = new HashSet<string>();
+                    for (int i = 0; i < aRoom.connections.Length; i++)
                     {
-                        if (c.roomB == aRoom.name && c.roomA == other.name)
+                        var other = aRoom.world.GetAbstractRoom(aRoom.connections[i]);
+                        if (other == null) continue;
+
+                        // We want to know if there are any new connections.
+                        int nodeIndex = room.shortcuts.Select(x => x.destNode).ToList().IndexOf(aRoom.ExitIndex(other.index));
+                        if (existing.TryGetValue(other.name, out var conn))
                         {
-                            conn = c;
-                            break;
+                            visitedExisting.Add(other.name);
+                            if (!conn.complete)
+                            {
+                                conn.posB = room.shortcuts[nodeIndex].startCoord.Tile;
+                                conn.dirB = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posB));
+                                conn.complete = true;
+                            }
+                        }
+                        else
+                        {
+                            // Create a new entry otherwise
+                            conn = new ConnectionEntry()
+                            {
+                                roomA = aRoom.name,
+                                roomB = other.name,
+                                posA = room.shortcuts[nodeIndex].startCoord.Tile,
+                            };
+                            conn.dirA = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posA));
+                            regionInfo.connections.Add(conn);
                         }
                     }
 
-                    int nodeIndex = room.shortcuts.Select(x => x.destNode).ToList().IndexOf(aRoom.ExitIndex(other.index));
-                    if (conn == null)
+                    // Remove newly non-existent connections
+                    if (visitedExisting.Count != existing.Count)
                     {
-                        conn = new ConnectionEntry()
+                        foreach (var item in existing)
                         {
-                            roomA = aRoom.name,
-                            roomB = other.name,
-                            posA = room.shortcuts[nodeIndex].startCoord.Tile,
-                        };
-                        conn.dirA = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posA));
-                        regionInfo.connections.Add(conn);
-                        // posB side of things will be initialized later when we load the other room
-                    }
-                    else
-                    {
-                        conn.posB = room.shortcuts[nodeIndex].startCoord.Tile;
-                        conn.dirB = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posB));
+                            if (!visitedExisting.Contains(item.Key))
+                            {
+                                regionInfo.connections.Remove(item.Value);
+                            }
+                        }
                     }
                 }
+                else
+                {
+                    // Okay we did *not* load from the JSON, that's cool. We just have to recreate stuff.
+                    for (int i = 0; i < aRoom.connections.Length; i++)
+                    {
+                        var other = aRoom.world.GetAbstractRoom(aRoom.connections[i]);
+                        if (other == null) continue;
+
+                        // Check if there are any entries already out there (as in we completed one half)
+                        ConnectionEntry conn = null;
+                        foreach (var c in regionInfo.connections)
+                        {
+                            if (c.roomB == aRoom.name && c.roomA == other.name)
+                            {
+                                conn = c;
+                                break;
+                            }
+                        }
+
+                        int nodeIndex = room.shortcuts.Select(x => x.destNode).ToList().IndexOf(aRoom.ExitIndex(other.index));
+                        if (conn == null)
+                        {
+                            // A connection entry did not already exist; make one
+                            conn = new ConnectionEntry()
+                            {
+                                roomA = aRoom.name,
+                                roomB = other.name,
+                                posA = room.shortcuts[nodeIndex].startCoord.Tile,
+                            };
+                            conn.dirA = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posA));
+                            regionInfo.connections.Add(conn);
+                        }
+                        else
+                        {
+                            // A connection entry did exist, finish it
+                            conn.posB = room.shortcuts[nodeIndex].startCoord.Tile;
+                            conn.dirB = IntVec2Dir(room.ShorcutEntranceHoleDirection(conn.posB));
+                            conn.complete = true;
+                        }
+                    }
+                }
+
+                // Get placed objects
+                placedObjects = [.. room.roomSettings.placedObjects.Where(Resources.AcceptablePlacedObject).Select(x => new PlacedObjectData(x))];
             }
 
             public Dictionary<string, object> ToJson()
@@ -340,6 +423,7 @@ namespace MapExporter
                     { "subregion", subregion },
                     { "pos", Vec2arr(devPos) },
                     { "hidden", hidden },
+                    { "offscreenDen", offscreenDen },
 
                     { "cameras", cameras?.Select(Vec2arr).ToList() },
                     { "size", size != null ? Intvec2arr(size) : null },
@@ -348,17 +432,19 @@ namespace MapExporter
 
                     { "spawns", spawns },
                     { "tags", tags },
+                    { "objects", placedObjects },
                 };
             }
 
-            public static RoomEntry FromJson(Dictionary<string, object> json)
+            public static RoomEntry FromJson(RegionInfo owner, Dictionary<string, object> json)
             {
-                var entry = new RoomEntry
+                var entry = new RoomEntry(owner)
                 {
                     roomName = (string)json["name"],
                     subregion = (string)json["subregion"],
                     devPos = Arr2Vec2((List<object>)json["pos"]),
                     hidden = json.TryGetValue("hidden", out var hidden) && (bool)hidden,
+                    offscreenDen = json.TryGetValue("offscreenDen", out var offscreen) && (bool)offscreen,
 
                     spawns = ((List<object>)json["spawns"]).Cast<List<object>>().Select(x =>
                     {
@@ -370,6 +456,11 @@ namespace MapExporter
                         return list.ToArray();
                     }).ToArray(),
                     tags = ((List<object>)json["tags"]).Cast<string>().ToArray(),
+                    placedObjects = (json.TryGetValue("objects", out var o) && o is List<object> l ? l : [])
+                        .Cast<Dictionary<string, object>>()
+                        .Select(PlacedObjectData.FromJson)
+                        .Where(x => x._valid)
+                        .ToArray(),
                 };
 
                 if (json["cameras"] != null)
@@ -428,6 +519,45 @@ namespace MapExporter
                     };
                 }
             }
+
+            public struct PlacedObjectData(PlacedObject obj) : IJsonObject
+            {
+                public string type = obj.type.ToString();
+                public Vector2 pos = obj.pos;
+                public List<string> data = [.. obj.data.ToString().Split('~')];
+                internal bool _valid = true;
+
+                public readonly Dictionary<string, object> ToJson()
+                {
+                    return new()
+                    {
+                        { "type", type },
+                        { "pos", Vec2arr(pos) },
+                        { "data", data }
+                    };
+                }
+
+                public static PlacedObjectData FromJson(Dictionary<string, object> json)
+                {
+                    try
+                    {
+                        return new PlacedObjectData()
+                        {
+                            _valid = true,
+                            type = (string)json["type"],
+                            pos = Arr2Vec2((List<object>)json["pos"]),
+                            data = ((List<object>)json["data"]).Cast<string>().ToList()
+                        };
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        return new PlacedObjectData
+                        {
+                            _valid = false
+                        };
+                    }
+                }
+            }
         }
 
         public class ConnectionEntry : IJsonObject
@@ -438,6 +568,7 @@ namespace MapExporter
             public IntVector2 posB;
             public int dirA;
             public int dirB;
+            public bool complete = false;
 
             public ConnectionEntry() { } // empty
 
@@ -474,7 +605,8 @@ namespace MapExporter
                     posA = Arr2IntVec2((List<object>)json["posA"]),
                     posB = Arr2IntVec2((List<object>)json["posB"]),
                     dirA = (int)(long)json["dirA"],
-                    dirB = (int)(long)json["dirB"]
+                    dirB = (int)(long)json["dirB"],
+                    complete = true
                 };
                 return entry;
             }

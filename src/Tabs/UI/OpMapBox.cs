@@ -33,11 +33,6 @@ namespace MapExporter.Tabs.UI
         private Player.InputPackage ctlr;
         private Player.InputPackage lastCtlr;
 
-        public OpMapBox(OpTab tab, float contentSize, bool horizontal = false, bool hasSlideBar = true) : base(tab, 0, horizontal, hasSlideBar)
-        {
-            throw new NotImplementedException(); // nope, not for you :3
-        }
-
         public OpMapBox(Vector2 pos, Vector2 size) : base(pos, size, size.y, false, true, false)
         {
             labelBorrower = new(this);

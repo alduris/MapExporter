@@ -15,9 +15,9 @@ namespace MapExporter
         /// </summary>
         public static string FEPathTo(params string[] path) => path.Aggregate(Path.Combine(Data.ModDirectory, "map-frontend"), Path.Combine);
         public static string TilePathTo(params string[] path) => path.Aggregate(Data.FinalDir, Path.Combine);
-        private static string CreatureIconPath(string item = null) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
-        private static string ObjectIconPath(string item = null) => item == null ? FEPathTo("resources", "objects") : FEPathTo("resources", "objects", item + ".png");
-        private static string SlugcatIconPath(string scug = null) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
+        public static string CreatureIconPath(string item = null) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
+        public static string ObjectIconPath(string item = null) => item == null ? FEPathTo("resources", "objects") : FEPathTo("resources", "objects", item + ".png");
+        public static string SlugcatIconPath(string scug = null) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
 
         public static bool TryGetActualPath(string req, out string path)
         {
@@ -112,6 +112,7 @@ namespace MapExporter
                     scug != MoreSlugcatsEnums.SlugcatStatsName.Slugpup
                 )
             );
+
         public static void CopyFrontendFiles(bool replaceAll = false)
         {
             // Get slugcat icons
@@ -131,7 +132,6 @@ namespace MapExporter
                         pixels[i] *= color;
                     }
                     tex.SetPixels(pixels);
-                    tex.Apply();
                     File.WriteAllBytes(SlugcatIconPath(item.ToLower()), tex.EncodeToPNG());
                     UnityEngine.Object.Destroy(tex);
                 }
@@ -155,7 +155,6 @@ namespace MapExporter
                             var color = CreatureSymbol.ColorOfCreature(iconData);
                             var tex = SpriteColor(sprite, color);
                             Iconify(tex);
-                            tex.Apply();
                             string name = i switch { 1 => "smallcentipede", 2 => "centipede", 3 => "bigcentipede", _ => throw new NotImplementedException() };
                             File.WriteAllBytes(CreatureIconPath(name), tex.EncodeToPNG());
                             UnityEngine.Object.Destroy(tex);
@@ -172,7 +171,6 @@ namespace MapExporter
                         var color = CreatureSymbol.ColorOfCreature(iconData);
                         var tex = SpriteColor(sprite, color);
                         Iconify(tex);
-                        tex.Apply();
                         File.WriteAllBytes(CreatureIconPath(item.ToLower()), tex.EncodeToPNG());
                         UnityEngine.Object.Destroy(tex);
                     }
@@ -180,23 +178,23 @@ namespace MapExporter
             }
 
             // Get object icons
+            if (!Directory.Exists(ObjectIconPath()))
+            {
+                Directory.CreateDirectory(ObjectIconPath());
+            }
+            var creatureNames = CreatureTemplate.Type.values.entries.ToHashSet();
+            var addedNames = new HashSet<string>();
             foreach (var item in PlacedObject.Type.values.entries.ToArray()) // the ToArray is just to create a copy of it because it fails for some reason
             {
-                if (
-                    item == nameof(PlacedObject.Type.Hazer)
-                    || item == nameof(PlacedObject.Type.DeadHazer)
-                    || item == nameof(PlacedObject.Type.VultureGrub)
-                    || item == nameof(PlacedObject.Type.DeadVultureGrub)
-                    || item == nameof(MoreSlugcatsEnums.PlacedObjectType.Stowaway)
-                    || item == nameof(MoreSlugcatsEnums.PlacedObjectType.BigJellyFish)
-                )
+                string name = item;
+                bool flag = false;
+                if (item.StartsWith("Dead") && creatureNames.Contains(name.Substring(4)))
                 {
-                    var name = item switch
-                    {
-                        nameof(PlacedObject.Type.DeadHazer) => nameof(PlacedObject.Type.Hazer),
-                        nameof(PlacedObject.Type.DeadVultureGrub) => nameof(PlacedObject.Type.VultureGrub),
-                        _ => item
-                    };
+                    name = item.Substring(4);
+                    flag = true;
+                }
+                if ((flag || creatureNames.Contains(name)) && (!File.Exists(ObjectIconPath(name)) || replaceAll))
+                {
                     var iconData = new IconSymbol.IconSymbolData
                     {
                         critType = new CreatureTemplate.Type(name, false)
@@ -207,39 +205,65 @@ namespace MapExporter
                     var color = CreatureSymbol.ColorOfCreature(iconData);
                     var tex = SpriteColor(sprite, color);
                     Iconify(tex);
-                    tex.Apply();
-                    File.WriteAllBytes(CreatureIconPath(item.ToLower()), tex.EncodeToPNG());
+                    File.WriteAllBytes(ObjectIconPath(item.ToLower()), tex.EncodeToPNG());
                     UnityEngine.Object.Destroy(tex);
-                }
-                else
-                {
-                    string name = item switch
-                    {
-                        nameof(PlacedObject.Type.ReliableSpear) => "spear",
-                        nameof(PlacedObject.Type.UniqueDataPearl) => "datapearl",
-                        _ => item.ToLower()
-                    };
-                    if (!File.Exists(ObjectIconPath(name)) || replaceAll)
-                    {
-                        // Create the directory if it doesn't exist
-                        if (!Directory.Exists(ObjectIconPath()))
-                        {
-                            Directory.CreateDirectory(ObjectIconPath());
-                        }
-
-                        var type = new AbstractPhysicalObject.AbstractObjectType(item, false);
-                        var spriteName = ItemSymbol.SpriteNameForItem(type, 0);
-                        if (spriteName == "Futile_White") continue;
-                        var sprite = new FSprite(spriteName, true);
-                        var color = ItemSymbol.ColorForItem(type, 0);
-                        var tex = SpriteColor(sprite, color);
-                        Iconify(tex);
-                        tex.Apply();
-                        File.WriteAllBytes(ObjectIconPath(item.ToLower()), tex.EncodeToPNG());
-                        UnityEngine.Object.Destroy(tex);
-                    }
+                    addedNames.Add(name.ToLower());
                 }
             }
+            foreach (var item in AbstractPhysicalObject.AbstractObjectType.values.entries.ToArray())
+            {
+                if (!File.Exists(ObjectIconPath(item)) || replaceAll)
+                {
+
+                    var type = new AbstractPhysicalObject.AbstractObjectType(item, false);
+                    var spriteName = ItemSymbol.SpriteNameForItem(type, 0);
+                    if (spriteName == "Futile_White") continue;
+                    var sprite = new FSprite(spriteName, true);
+                    var color = ItemSymbol.ColorForItem(type, 0);
+                    var tex = SpriteColor(sprite, color);
+                    Iconify(tex);
+                    File.WriteAllBytes(ObjectIconPath(item.ToLower()), tex.EncodeToPNG());
+                    UnityEngine.Object.Destroy(tex);
+                    addedNames.Add(item.ToLower());
+                }
+            }
+
+            foreach (var item in PlacedObject.Type.values.entries.ToArray())
+            {
+                var po = new PlacedObject(new PlacedObject.Type(item, false), null);
+                bool token = po.data is CollectToken.CollectTokenData;
+                if (AcceptablePlacedObject(po) && !token && !Data.PlacedObjectIcons.ContainsKey(item.ToLower()))
+                {
+                    Data.PlacedObjectIcons.Add(item.ToLower(), (addedNames.Contains(item.ToLower()) ? item.ToLower() : "unknown", true));
+                }
+            }
+
+            // Pearls
+            if (!Directory.Exists(Path.Combine(ObjectIconPath(), "pearl")))
+            {
+                Directory.CreateDirectory(Path.Combine(ObjectIconPath(), "pearl"));
+            }
+            foreach (var pearl in DataPearl.AbstractDataPearl.DataPearlType.values.entries)
+            {
+                var path = ObjectIconPath(Path.Combine("pearl", pearl.ToLower()));
+                if (!File.Exists(path) || replaceAll)
+                {
+                    var spriteName = ItemSymbol.SpriteNameForItem(AbstractPhysicalObject.AbstractObjectType.DataPearl, 0);
+                    if (spriteName == "Futile_White") continue;
+                    var sprite = new FSprite(spriteName, true);
+                    var color = DataPearl.UniquePearlMainColor(new DataPearl.AbstractDataPearl.DataPearlType(pearl, false));
+                    var tex = SpriteColor(sprite, color);
+                    Iconify(tex);
+                    File.WriteAllBytes(path, tex.EncodeToPNG());
+                    UnityEngine.Object.Destroy(tex);
+                }
+            }
+        }
+
+        public static bool AcceptablePlacedObject(PlacedObject obj)
+        {
+            return (obj.data is PlacedObject.ConsumableObjectData && obj.data is not PlacedObject.VoidSpawnEggData)
+                || obj.data is CollectToken.CollectTokenData;
         }
 
         public static void Reset(ResetSeverity severity)

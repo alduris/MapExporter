@@ -30,12 +30,14 @@ sealed class Plugin : BaseUnityPlugin
 
     public static bool FlagTriggered => Environment.GetCommandLineArgs().Contains(FLAG_TRIGGER);
 
+    public static Plugin Instance;
     public static new ManualLogSource Logger;
 
     public void OnEnable()
     {
         try
         {
+            Instance = this;
             Logger = base.Logger;
             IL.RainWorld.Awake += RainWorld_Awake;
             On.RainWorld.Start += RainWorld_Start; // "FUCK compatibility just run my hooks" - love you too henpemaz
@@ -251,13 +253,10 @@ sealed class Plugin : BaseUnityPlugin
 
         for (int i = 0; i < 2; i++)
         {
-            ILLabel brto = null;
-            if (c.TryGotoNext(x => x.MatchCall(typeof(File), nameof(File.Exists)), x => x.MatchBrfalse(out brto)))
+            if (c.TryGotoNext(MoveType.After, x => x.MatchCall(typeof(File), nameof(File.Exists))))
             {
-                c.Index--;
-                c.MoveAfterLabels();
-                c.EmitDelegate(() => FlagTriggered);
-                c.Emit(OpCodes.Brtrue, brto);
+                c.EmitDelegate(() => !FlagTriggered);
+                c.Emit(OpCodes.And);
             }
         }
     }
@@ -710,7 +709,9 @@ sealed class Plugin : BaseUnityPlugin
     }
 
     // Runs half-synchronously to the game loop, bless iters
-    System.Collections.IEnumerator captureTask;
+    private System.Collections.IEnumerator captureTask;
+    public ErrorPopup errorPopup;
+    public static Queue<ErrorInfo> errorQueue = [];
 
     // start
     private void RainWorldGame_ctor(On.RainWorldGame.orig_ctor orig, RainWorldGame self, ProcessManager manager)
@@ -781,7 +782,27 @@ sealed class Plugin : BaseUnityPlugin
 
     private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
     {
-        orig(self);
-        captureTask.MoveNext();
+        if (errorPopup != null)
+        {
+            errorPopup.Update();
+            if (!errorPopup.active)
+            {
+                errorPopup = null;
+            }
+        }
+        else if (errorQueue.Count > 0)
+        {
+            var info = errorQueue.Dequeue();
+            errorPopup = new ErrorPopup(info.canContinue, info.title, info.message);
+            if (info.canContinue && info.onContinue != null)
+            {
+                errorPopup.OnContinue += info.onContinue;
+            }
+        }
+        else
+        {
+            orig(self);
+            captureTask.MoveNext();
+        }
     }
 }

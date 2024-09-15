@@ -5,6 +5,7 @@ using System.Linq;
 using MonoMod.Utils;
 using MoreSlugcats;
 using RWCustom;
+using UnityEngine;
 
 namespace MapExporter
 {
@@ -73,10 +74,11 @@ namespace MapExporter
             }
         }
 
-        public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs) : IEquatable<QueueData>, IEquatable<string>
+        public readonly struct QueueData(string name, HashSet<SlugcatStats.Name> scugs, SSUpdateMode updateMode) : IEquatable<QueueData>, IEquatable<string>
         {
             public readonly string acronym = name;
             public readonly HashSet<SlugcatStats.Name> scugs = scugs;
+            public readonly SSUpdateMode updateMode = updateMode;
 
             public bool Equals(QueueData other)
             {
@@ -90,13 +92,14 @@ namespace MapExporter
 
             public override string ToString()
             {
-                return acronym + ";" + string.Join(",", [.. scugs.Select(x => x.value)]);
+                return acronym + ";" + string.Join(",", [.. scugs.Select(x => x.value)]) + ";" + updateMode.ToString();
             }
 
             public Dictionary<string, object> ToJSON() => new()
             {
                 {"name", acronym },
-                {"scugs", scugs.Select(x => x.value).ToArray() }
+                {"scugs", scugs.Select(x => x.value).ToArray() },
+                {"updatemode", updateMode },
             };
         }
         public static readonly Queue<QueueData> QueuedRegions = [];
@@ -109,6 +112,26 @@ namespace MapExporter
             Finished
         }
         public static SSStatus ScreenshotterStatus = SSStatus.Inactive;
+
+        public enum SSUpdateMode
+        {
+            Everything,
+            ScreenshotsOnly,
+            MetadataWithRoomPositions,
+            MetadataNoRoomPositions,
+            MergeNewRoomsOnly,
+            AllButRoomPositions, // screenshots included
+        }
+        public static bool TakeScreenshots(SSUpdateMode updateMode) => updateMode == SSUpdateMode.Everything
+            || updateMode == SSUpdateMode.ScreenshotsOnly
+            || updateMode == SSUpdateMode.MergeNewRoomsOnly
+            || updateMode == SSUpdateMode.AllButRoomPositions;
+        public static bool CollectRoomData(SSUpdateMode updateMode) => CollectRoomPositions(updateMode)
+            || updateMode == SSUpdateMode.MetadataNoRoomPositions
+            || updateMode == SSUpdateMode.AllButRoomPositions;
+        public static bool CollectRoomPositions(SSUpdateMode updateMode) => updateMode == SSUpdateMode.Everything
+            || updateMode == SSUpdateMode.MetadataWithRoomPositions
+            || updateMode == SSUpdateMode.MergeNewRoomsOnly;
 
         public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> RenderedRegions = [];
         public static readonly Dictionary<string, HashSet<SlugcatStats.Name>> FinishedRegions = [];
@@ -131,6 +154,8 @@ namespace MapExporter
             return Region.GetRegionFullName(acronym, name);
         }
 
+        public static Dictionary<string, (string fileName, bool enabled)> PlacedObjectIcons = [];
+
         public static void GetData()
         {
             // Misc stuff
@@ -145,7 +170,10 @@ namespace MapExporter
                     var regions = ((List<object>)json["queue"]).Cast<Dictionary<string, object>>();
                     foreach (var region in regions)
                     {
-                        QueuedRegions.Enqueue(new QueueData((string)region["name"], [.. ((List<object>)region["scugs"]).Select(x => new SlugcatStats.Name((string)x, false))]));
+                        SSUpdateMode updateMode = SSUpdateMode.Everything;
+                        if (region.ContainsKey("updatemode") && !Enum.TryParse((string)region["updatemode"], out updateMode))
+                            updateMode = SSUpdateMode.Everything;
+                        QueuedRegions.Enqueue(new QueueData((string)region["name"], [.. ((List<object>)region["scugs"]).Select(x => new SlugcatStats.Name((string)x, false))], updateMode));
                     }
                 }
 
@@ -235,6 +263,21 @@ namespace MapExporter
                         }
                     }
                 }
+
+                // Placed object icons
+                if (json.TryGetValue("poicons", out var iconObj) && iconObj is Dictionary<string, object> iconDict)
+                {
+                    foreach (var kv in iconDict)
+                    {
+                        if (!PlacedObjectIcons.ContainsKey(kv.Key))
+                        {
+                            if (kv.Value is List<object> iconList && iconList.Count == 2)
+                            {
+                                PlacedObjectIcons.Add(kv.Key, ((string)iconList[0], (bool)iconList[1]));
+                            }
+                        }
+                    }
+                }
             }
 
             Version++;
@@ -280,6 +323,11 @@ namespace MapExporter
                 }
                 names.Add(kv.Key, dict);
             }
+            Dictionary<string, List<object>> icons = [];
+            foreach (var kv in PlacedObjectIcons)
+            {
+                icons.Add(kv.Key, [kv.Value.fileName, kv.Value.enabled]);
+            }
             Dictionary<string, object> save = new()
             {
                 {
@@ -291,6 +339,7 @@ namespace MapExporter
                 { "finished", finished },
                 { "preferences", UserPreferences },
                 { "regionnames", names },
+                { "poicons", icons },
             };
             File.WriteAllText(DataFileDir, Json.Serialize(save));
         }
@@ -313,7 +362,7 @@ namespace MapExporter
         public static readonly Preference<bool> EditorShowCameras = new("editor/cameras", false);
 
         public static readonly Preference<bool> GeneratorLessInsense = new("generator/lessintensive", false);
-        public static readonly Preference<int> GeneratorTileThreads = new("generator/threads", 4, 1, int.MaxValue);
+        public static readonly Preference<int> GeneratorTargetFPS = new("generator/targetfps", 10, 5, 40);
 
         public readonly struct Preference<T>(string key, T defaultValue)
         {
