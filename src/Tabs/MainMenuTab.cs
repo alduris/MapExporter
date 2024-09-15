@@ -68,7 +68,7 @@ namespace MapExporter.Tabs
                 new OpLabel(Column(1, true), Row(5), "Show individual cameras"),
 
                 new OpLabel(Column(1), Row(6), "GENERATOR"),
-                MapToPreference(Preferences.GeneratorMinFPS, 1, 7, "Generator: lower values make the generator run quicker at the cost of high CPU usage and framerate."),
+                MapToPreference(Preferences.GeneratorTargetFPS, 1, 7, "Generator: lower values make the generator run quicker at the cost of high CPU usage and framerate."),
                 new OpLabel(Column(1, true), Row(7), "Target FPS"),
 
                 new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),

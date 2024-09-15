@@ -362,7 +362,7 @@ namespace MapExporter
         public static readonly Preference<bool> EditorShowCameras = new("editor/cameras", false);
 
         public static readonly Preference<bool> GeneratorLessInsense = new("generator/lessintensive", false);
-        public static readonly Preference<int> GeneratorMinFPS = new("generator/targetfps", 10, 5, int.MaxValue);
+        public static readonly Preference<int> GeneratorTargetFPS = new("generator/targetfps", 10, 5, 40);
 
         public readonly struct Preference<T>(string key, T defaultValue)
         {

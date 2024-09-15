@@ -69,7 +69,8 @@ namespace MapExporter.Generation
 
             var timer = new Stopwatch();
             timer.Start();
-            while (timer.ElapsedMilliseconds < 100)
+            int targetFPS = (int)(1000f / Preferences.GeneratorTargetFPS.GetValue());
+            while (timer.ElapsedMilliseconds < targetFPS)
             {
                 if (Done) return;
 
