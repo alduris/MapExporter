@@ -12,8 +12,8 @@ namespace MapExporter.Tabs
         const string HOW_TO_STRING = "1. Run screenshotter on region\n2. Edit layout\n3. Finalize in generator tab\n4. Test interactive map\n5. Export";
         const string CREDITS_STRING =
             "Made by Henpemaz, Dual-Iron, Noblecat57, & Alduris\n" +
-            "with help from Bro748, Vigaro, BensoneWhite, &\n" +
-            "iwantbread\n" +
+            "with help from Bro748, Vigaro, BensoneWhite, \n" +
+            "iwantbread, & Aissurteivos\n" +
             "\n" +
             "";
         public override void Initialize()
@@ -43,7 +43,6 @@ namespace MapExporter.Tabs
                 // Options
                 new OpImage(new Vector2(0f, 424f), "pixel") { scale = new Vector2(600f, 2f), color = MenuColorEffect.rgbMediumGrey },
                 new OpLabel(new Vector2(0f, 385f), new Vector2(600f, 30f), "OPTIONS", FLabelAlignment.Center, true),
-                // Showing things: insects, echoes, iterators, guardians, creatures in screenshots
 
                 MapToPreference(Preferences.ShowCreatures, 0, 0, "Show creatures in the rooms of screenshots. Makes the screenshotting process slower so they can move out of their dens."),
                 new OpLabel(Column(0, true), Row(0), "Show creatures"),
@@ -69,8 +68,8 @@ namespace MapExporter.Tabs
                 new OpLabel(Column(1, true), Row(5), "Show individual cameras"),
 
                 new OpLabel(Column(1), Row(6), "GENERATOR"),
-                MapToPreference(Preferences.GeneratorLessInsense, 1, 7, "Generator: makes some parts do less calculation as a performance saver at the cost of taking longer."),
-                new OpLabel(Column(1, true), Row(7), "Less intensive"),
+                MapToPreference(Preferences.GeneratorMinFPS, 1, 7, "Generator: lower values make the generator run quicker at the cost of high CPU usage and framerate."),
+                new OpLabel(Column(1, true), Row(7), "Target FPS"),
 
                 new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),
                 iconManager = new OpPOIconManager(new Vector2(Column(2), 10f), new Vector2(Column(2) - Column(0) - COLUMN_GAP, Row(0) - 10f))

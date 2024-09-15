@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace MapExporter.Generation
@@ -59,31 +60,38 @@ namespace MapExporter.Generation
             processes.Enqueue(new MiscProcessor(this));
 
             // Preferences
-            lessResourceIntensive = Preferences.GeneratorLessInsense.GetValue();
+            // lessResourceIntensive = Preferences.GeneratorLessInsense.GetValue();
         }
 
         public void Update()
         {
             if (Done) return;
 
-            Processor process = processes.Peek();
-            bool move = !process.MoveNext();
-            Progress = process.Progress;
-            CurrentTask = process.ProcessName;
-            if (process.Failed)
+            var timer = new Stopwatch();
+            timer.Start();
+            while (timer.ElapsedMilliseconds < 100)
             {
-                Done = true;
-                Failed = true;
-                return;
-            }
-            if (move)
-            {
-                process.Dispose(); // I don't think anything actually uses this but just in case for the future
-                processes.Dequeue();
-                if (processes.Count == 0)
+                if (Done) return;
+
+                Processor process = processes.Peek();
+                bool move = !process.MoveNext();
+                Progress = process.Progress;
+                CurrentTask = process.ProcessName;
+                if (process.Failed)
                 {
-                    File.WriteAllText(Path.Combine(outputDir, "region.json"), Json.Serialize(metadata));
                     Done = true;
+                    Failed = true;
+                    return;
+                }
+                if (move)
+                {
+                    process.Dispose(); // I don't think anything actually uses this but just in case for the future
+                    processes.Dequeue();
+                    if (processes.Count == 0)
+                    {
+                        File.WriteAllText(Path.Combine(outputDir, "region.json"), Json.Serialize(metadata));
+                        Done = true;
+                    }
                 }
             }
 
