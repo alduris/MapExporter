@@ -423,6 +423,7 @@ namespace MapExporter
                     { "subregion", subregion },
                     { "pos", Vec2arr(devPos) },
                     { "hidden", hidden },
+                    { "offscreenDen", offscreenDen },
 
                     { "cameras", cameras?.Select(Vec2arr).ToList() },
                     { "size", size != null ? Intvec2arr(size) : null },
@@ -443,6 +444,7 @@ namespace MapExporter
                     subregion = (string)json["subregion"],
                     devPos = Arr2Vec2((List<object>)json["pos"]),
                     hidden = json.TryGetValue("hidden", out var hidden) && (bool)hidden,
+                    offscreenDen = json.TryGetValue("offscreenDen", out var offscreen) && (bool)offscreen,
 
                     spawns = ((List<object>)json["spawns"]).Cast<List<object>>().Select(x =>
                     {
