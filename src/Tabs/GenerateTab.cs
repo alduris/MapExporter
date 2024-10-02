@@ -58,6 +58,8 @@ namespace MapExporter.Tabs
 
             var startButton = new OpSimpleButton(new Vector2(PADDING, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
             startButton.OnClick += StartButton_OnClick;
+            var retryButton = new OpSimpleButton(new Vector2(MARGIN + startButton.pos.x + startButton.size.x, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), "RETRY");
+            retryButton.OnClick += RetryButton_OnClick;
 
             AddItems(
                 new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "GENERATE", true),
@@ -66,6 +68,7 @@ namespace MapExporter.Tabs
                 new OpLabel(PADDING, queueBox.pos.y - PADDING - BIG_LINE_HEIGHT, "CURRENT", true),
                 currentBox,
                 startButton,
+                retryButton,
 
                 // for z-index ordering reasons
                 regionSelector, regionAdd
@@ -253,6 +256,15 @@ namespace MapExporter.Tabs
         private void StartButton_OnClick(UIfocusable trigger)
         {
             running = true;
+        }
+
+        private void RetryButton_OnClick(UIfocusable trigger)
+        {
+            if (current != null && generator != null && generator.Failed)
+            {
+                generator = null;
+                running = true;
+            }
         }
     }
 }

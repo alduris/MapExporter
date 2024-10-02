@@ -363,6 +363,8 @@ namespace MapExporter
 
         public static readonly Preference<bool> GeneratorLessInsense = new("generator/lessintensive", false);
         public static readonly Preference<int> GeneratorTargetFPS = new("generator/targetfps", 10, 5, 40);
+        public static readonly Preference<int> GeneratorCacheSize = new("generator/cachesize", 64, 0, int.MaxValue);
+        public static readonly Preference<bool> GeneratorSkipExisting = new("generator/skipexisting", false);
 
         public readonly struct Preference<T>(string key, T defaultValue)
         {

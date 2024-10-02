@@ -23,7 +23,7 @@ namespace MapExporter.Generation
             string outputPath = Directory.CreateDirectory(OutputPathForStep(zoom)).FullName;
             float multFac = Mathf.Pow(2, zoom);
             var regionInfo = owner.regionInfo;
-            TextureCache<string> imageCache = new(256);
+            TextureCache<string> imageCache = new(Preferences.GeneratorCacheSize.GetValue());
 
             // Find room boundaries
             Vector2 mapMin = Vector2.zero;

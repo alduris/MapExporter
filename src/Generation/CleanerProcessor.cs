@@ -8,6 +8,7 @@ namespace MapExporter.Generation
     internal class CleanerProcessor : Processor
     {
         private readonly List<string> files = [];
+        public bool SkipGenerator { get; private set; } = false;
 
         public CleanerProcessor(Generator owner) : base(owner)
         {
@@ -21,6 +22,10 @@ namespace MapExporter.Generation
                     {
                         // Only the png files
                         files.AddRange(Directory.GetFiles(dir).Where(x => x.EndsWith(".png")));
+                        if (files.Count > 0 && Preferences.GeneratorSkipExisting.GetValue())
+                        {
+                            SkipGenerator = true;
+                        }
                     }
                 }
                 catch (UnauthorizedAccessException) { } // this shouldn't happen
@@ -33,6 +38,8 @@ namespace MapExporter.Generation
 
         protected override IEnumerator<float> Process()
         {
+            if (SkipGenerator) yield break;
+
             int i = 0;
             foreach (var file in files)
             {

@@ -30,7 +30,7 @@ namespace MapExporter.Screenshotter.UI
         public PopupLabel(FContainer container, Vector2 pos, string message, bool bigText, FTextParams textParams = null)
         {
             this.pos = pos;
-            label = new FLabel(bigText ? Custom.GetDisplayFont() : Custom.GetFont(), text, (textParams == null) ? new FTextParams() : textParams)
+            label = new FLabel(bigText ? Custom.GetDisplayFont() : Custom.GetFont(), message, textParams ?? new FTextParams())
             {
                 alignment = FLabelAlignment.Center
             };

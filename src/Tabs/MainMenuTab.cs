@@ -84,6 +84,10 @@ namespace MapExporter.Tabs
                 new OpLabel(Column(1), Row(6), "GENERATOR"),
                 MapToPreference(Preferences.GeneratorTargetFPS, 1, 7, "Generator: lower values make the generator run quicker at the cost of high CPU usage and framerate."),
                 new OpLabel(Column(1, true), Row(7), "Target FPS"),
+                MapToPreference(Preferences.GeneratorCacheSize, 1, 8, "Generator: higher values make the generator run quicker at the cost of higher memory usage. This can cause fatal Unity crashes."),
+                new OpLabel(Column(1, true), Row(8), "Tile Cache Size"),
+
+                // max row=12 (inclusive), then start moving stuff from column 1 into column 0
 
                 new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),
                 iconManager = new OpPOIconManager(new Vector2(Column(2), 10f), new Vector2(ColumnWidth(2), Row(0) - 10f))
