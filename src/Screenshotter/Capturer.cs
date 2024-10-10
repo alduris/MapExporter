@@ -197,6 +197,7 @@ namespace MapExporter.Screenshotter
                         updateMode = SSUpdateMode.Everything;
                         mapContent = new(game.world);
                     });
+                    while (!Input.GetKey(KeyCode.Slash))
                     yield return null;
                 }
             }
@@ -299,7 +300,8 @@ namespace MapExporter.Screenshotter
             while (game.cameras[0].loadingRoom != null) yield return null;
             Random.InitState(0);
 
-            regionContent.UpdateRoom(room.realizedRoom);
+            if (Data.CollectRoomData(updateMode))
+                regionContent.UpdateRoom(room.realizedRoom);
 
             if (Preferences.ShowCreatures.GetValue() && Data.TakeScreenshots(updateMode))
             {
