@@ -28,7 +28,7 @@ namespace MapExporter.Generation
                             roomName = room.roomName,
                             den = data.Key,
                             spawnData = [.. data],
-                            coords = room.devPos + (room.nodes == null ? Vector2.zero : room.nodes[data.Key].ToVector2() * 20f + new Vector2(10f, 10f))
+                            coords = room.devPos + (room.nodes == null ? (room.offscreenDen ? offscreenSize / 2f : Vector2.zero) : room.nodes[data.Key].ToVector2() * 20f + new Vector2(10f, 10f))
                         });
                     }
                     catch (IndexOutOfRangeException)
