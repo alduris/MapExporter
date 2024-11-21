@@ -37,11 +37,15 @@ namespace MapExporter.Generation
                 else
                     fh += 1;
             }
-            sh = (bs == 0 && fs == 0) ? 0.5f : ((bh * fs + fh * bs) / (bs + fs));
-            sh = sh < 0 ? (1 + (sh % 1f)) : (sh % 1f);
+            sh = (Mathf.Approximately(bs, 0f) && Mathf.Approximately(fs, 0f)) ? 0.5f : ((bh * fs + fh * bs) / (bs + fs));
+            while (sh > 1f) sh -= 1f;
+            while (sh < 0f) sh += 1f;
 
             ss = Mathf.Sqrt((bs * bs + fs * fs) / 2.0f); // this does some circle math stuff
             sv = Mathf.Sqrt((bv * bv + fv * fv) / 2.0f); // ditto
+
+            if (ss < 0.2f) ss = 0.3f - ss / 2f;
+            if (sv < 0.3f) sv = 0.45f - sv / 2f;
 
             metadata["geocolor"] = Color2Arr(HSV2HSL(sh, ss, sv).rgb);
 
