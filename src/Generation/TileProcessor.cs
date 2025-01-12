@@ -240,19 +240,20 @@ namespace MapExporter.Generation
             }
         }
 
+        [BurstCompile]
         public struct CopyTextureJob : IJobParallelFor
         {
             [ReadOnly] public NativeArray<Color32> Src;
             public NativeArray<Color32> Dst;
-            public int SrcTotalWidth;
-            public int DstTotalWidth;
-            public int SrcTotalHeight;
-            public int DstTotalHeight;
-            public int Sx;
-            public int Sy;
-            public int SW;
-            public int Dx;
-            public int Dy;
+            [ReadOnly] public int SrcTotalWidth;
+            [ReadOnly] public int DstTotalWidth;
+            [ReadOnly] public int SrcTotalHeight;
+            [ReadOnly] public int DstTotalHeight;
+            [ReadOnly] public int Sx;
+            [ReadOnly] public int Sy;
+            [ReadOnly] public int SW;
+            [ReadOnly] public int Dx;
+            [ReadOnly] public int Dy;
 
             public void Execute(int index)
             {
