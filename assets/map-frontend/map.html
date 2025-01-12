@@ -192,7 +192,7 @@
 
         .difficulty-select {
             padding-bottom: 6px;
-            width: 200px;
+            width: 150px;
             position: relative;
             /* re-center after wrap */
             margin-left: auto;
@@ -692,7 +692,7 @@
                 console.error(e);
             }
             var region_url = region.toLowerCase();
-            var roompath = `./slugcats/${pdifficulty}/${region_url}`;
+            var roompath = `./slugcats/${region_url}/${pdifficulty}`;
             getJsonObject(`${roompath}/region.json`, function (json) {
                 var roomjson = json;
                 if ('copyingrooms' in json) {
