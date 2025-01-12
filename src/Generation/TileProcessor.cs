@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
+using Mono.Cecil;
 using RWCustom;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -132,12 +135,14 @@ namespace MapExporter.Generation
             yield break;
         }
 
+        [BurstCompile]
+        #pragma warning disable CS0649 // Field is never assigned to
         private struct CPUBilinearScaleJob : IJobParallelFor
         {
             [ReadOnly] public NativeArray<Color32> OldPixels;
             public NativeArray<Color32> NewPixels;
-            public int OldW, OldH;
-            public int NewW, NewH;
+            [ReadOnly] public int OldW, OldH;
+            [ReadOnly] public int NewW, NewH;
 
             // Use bilinear filtering because it's quick n' easy (probably could do better with something like bicubic or even Lanczos)
             public void Execute(int index)
@@ -155,12 +160,60 @@ namespace MapExporter.Generation
             }
         }
 
+        [BurstCompile(OptimizeFor = OptimizeFor.Performance, FloatMode = FloatMode.Fast)]
+        #pragma warning restore CS0649 // Field is never assigned to
+        private struct CPUBicubicScaleJob : IJobParallelFor
+        {
+            [ReadOnly] public NativeArray<Color32> OldPixels;
+            public NativeArray<Color32> NewPixels;
+            [ReadOnly] public int OldW, OldH;
+            [ReadOnly] public int NewW, NewH;
+
+            public void Execute(int index)
+            {
+                // Implementation note: we have to use Color32 because Texture2D reasons, but I use Color here. Unity converts Color32 and Color implicitly.
+
+                float u = (index % NewW) / (NewW - 1f) * (OldW - 1f);
+                float v = (index / NewW) / (NewH - 1f) * (OldH - 1f);
+                int x = Mathf.FloorToInt(u);
+                int y = Mathf.FloorToInt(v);
+
+                Color[] colors = new Color[16]; // 4x4 grid
+                for (int i = -1; i <= 2; i++)
+                {
+                    for (int j = -1; j <= 2; j++)
+                    {
+                        colors[(j + 1) * 4 + (i + 1)] = OldPixels[Mathf.Clamp(x + i, 0, OldW - 1) + Mathf.Clamp(y + j, 0, OldH - 1) * OldW];
+                    }
+                }
+
+                for (int i = 0; i < 4; i++)
+                {
+                    // Reuse the array because why not
+                    colors[i] = Cubic(u - x, colors[i], colors[i+4], colors[i+8], colors[i+12]);
+                }
+
+                NewPixels[index] = Cubic(v - y, colors[0], colors[1], colors[2], colors[3]);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private readonly Color Cubic(float t, Color a, Color b, Color c, Color d)
+            {
+                Color i = -0.5f * a + 1.5f * b - 1.5f * c + 0.5f * d;
+                Color j = a - 2.5f * b + 2f * c - 0.5f * d;
+                Color k = -0.5f * a + 0.5f * c;
+                Color l = b;
+
+                return i * t * t * t + j * t * t + k * t + l;
+            }
+        }
+
         public static void ScaleTexture(Texture2D texture, int width, int height)
         {
             var oldPixels = new NativeArray<Color32>(texture.GetRawTextureData<Color32>(), Allocator.TempJob);
             var newPixels = new NativeArray<Color32>(width * height, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-            var scaler = new CPUBilinearScaleJob
+            var scaler = new CPUBicubicScaleJob
             {
                 OldPixels = oldPixels,
                 NewPixels = newPixels,
