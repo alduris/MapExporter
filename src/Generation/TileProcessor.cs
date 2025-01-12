@@ -159,9 +159,9 @@ namespace MapExporter.Generation
                 NewPixels[index] = Color32.LerpUnclamped(Color32.LerpUnclamped(tl, tr, u % 1f), Color32.LerpUnclamped(bl, br, u % 1f), v % 1f);
             }
         }
+        #pragma warning restore CS0649 // Field is never assigned to
 
         [BurstCompile(OptimizeFor = OptimizeFor.Performance, FloatMode = FloatMode.Fast)]
-        #pragma warning restore CS0649 // Field is never assigned to
         private struct CPUBicubicScaleJob : IJobParallelFor
         {
             [ReadOnly] public NativeArray<Color32> OldPixels;
