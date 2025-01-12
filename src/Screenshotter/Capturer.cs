@@ -318,6 +318,7 @@ namespace MapExporter.Screenshotter
 
                 yield return new WaitForEndOfFrame(); // wait an extra frame or two so objects can render, why not
                 yield return null;
+                yield return new WaitForEndOfFrame();
 
                 screens++;
 
@@ -335,7 +336,7 @@ namespace MapExporter.Screenshotter
                 }
 
                 yield return new WaitForEndOfFrame(); // extra frame or two for safety
-                yield return null;
+                yield return new WaitForEndOfFrame();
             }
             Random.InitState(0);
             room.Abstractize();
