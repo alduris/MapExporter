@@ -24,8 +24,8 @@ namespace MapExporter
         public static string FinalDir => PathOf("Output");
         public static string DataFileDir => PathOf("data.json");
 
-        public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, acronym); // + " - " + Region.GetRegionFullName(acronym, new(scug)));
-        public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, scug, acronym); // + " - " + Region.GetRegionFullName(acronym, new(scug)));
+        public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, acronym);
+        public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, acronym, scug);
 
         public static void Initialize()
         {

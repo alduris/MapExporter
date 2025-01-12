@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using MoreSlugcats;
+using RWCustom;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace MapExporter
 {
@@ -96,6 +100,101 @@ namespace MapExporter
             return false;
         }
 
+        private static void GenerateSlugcatIcon(SlugcatStats.Name scug, string outputPath)
+        {
+            GenerateDefaultIcon(); // Generate an icon so that it will be there by default
+            Custom.rainWorld.StartCoroutine(ProcessLoop());
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            void GenerateDefaultIcon()
+            {
+                var tex = new Texture2D(1, 1);
+                tex.LoadImage(File.ReadAllBytes(Path.Combine(SlugcatIconPath("default"))));
+
+                var pixels = tex.GetPixels();
+                var color = PlayerGraphics.DefaultSlugcatColor(scug);
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    pixels[i] *= color;
+                }
+
+                tex.SetPixels(pixels);
+
+                File.WriteAllBytes(outputPath, tex.EncodeToPNG());
+                UnityEngine.Object.Destroy(tex);
+            }
+
+            IEnumerator ProcessLoop()
+            {
+                /**
+                 * There are two ways we could go about doing this
+                 *   Option 1: https://rainworldmods.miraheze.org/wiki/Special:FilePath/{slugcat}_icon.png
+                 *     Pros: on success, this redirects to the image
+                 *     Cons: on not success, it takes us to a normal HTML page
+                 *   Option 2: https://rainworldmods.miraheze.org/w/api.php?action=query&titles=File:{slugcat}_icon.png&prop=imageinfo&iiprop=url&format=json
+                 *     Pros: proper API endpoint, gives us computer readable data always
+                 *     Cons: we need to make a second request to get the image on success
+                 * 
+                 * Given these, Option 2 is perhaps the best option as we just have to parse the JSON.
+                 */
+
+                // Make the request to get the URL
+                var actualName = SlugcatStats.getSlugcatName(scug).Replace(' ', '_');
+                var uriReqUri = $"https://rainworldmods.miraheze.org/w/api.php?action=query&titles=File:{actualName}_icon.png&prop=imageinfo&iiprop=url&format=json";
+
+                using (var uriReq = UnityWebRequest.Get(uriReqUri))
+                {
+                    yield return uriReq.SendWebRequest();
+
+                    // Was it successful?
+                    if (uriReq.result == UnityWebRequest.Result.Success)
+                    {
+                        // Get the image's URL
+                        var json = (Dictionary<string, object>)((Dictionary<string, object>)Json.Deserialize(uriReq.downloadHandler.text))["query"];
+                        if (json.ContainsKey("pages"))
+                        {
+                            var pages = (Dictionary<string, object>)json["pages"];
+                            var page = pages.First();
+                            if (page.Key != "-1")
+                            {
+                                // File *does* exist, we can proceed to request the texture
+                                // Big ugly casting hell to get the actual URL because I went the hard route instead of using Newtonsoft :3
+                                var imgUrl = (string)((Dictionary<string, object>)((List<object>)((Dictionary<string, object>)page.Value)["imageinfo"])[0])["url"];
+
+                                // Request to get the image
+                                using (var texReq = UnityWebRequestTexture.GetTexture(imgUrl))
+                                {
+                                    yield return texReq.SendWebRequest();
+
+                                    if (texReq.result == UnityWebRequest.Result.Success)
+                                    {
+                                        // Yayayyayyayayayayay we finally have the texture :D
+                                        var tex = DownloadHandlerTexture.GetContent(texReq);
+                                        CenterTextureInRect(tex, 50, 50);
+
+                                        File.WriteAllBytes(outputPath, tex.EncodeToPNG());
+                                        UnityEngine.Object.Destroy(tex);
+                                    }
+                                    else
+                                    {
+                                        Plugin.Logger.LogWarning($"ERRORED RETRIEVING TEXTURE FOR {scug}\nReason: {texReq.result}\nError details: {texReq.error}");
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        Plugin.Logger.LogWarning($"ERRORED RETRIEVING URI FOR {scug}\nReason: {uriReq.result}\nError details: {uriReq.error}");
+                    }
+                }
+
+                yield break;
+            }
+        }
+
         private static bool IsDefaultSlugcat(SlugcatStats.Name scug) =>
             scug != SlugcatStats.Name.White &&
             scug != SlugcatStats.Name.Yellow &&
@@ -123,17 +222,9 @@ namespace MapExporter
 
                 if (!File.Exists(SlugcatIconPath(item.ToLower())) || (replaceAll && !IsDefaultSlugcat(scug)))
                 {
-                    var color = PlayerGraphics.DefaultSlugcatColor(scug);
-                    var tex = new Texture2D(1, 1);
-                    tex.LoadImage(File.ReadAllBytes(Path.Combine(SlugcatIconPath("default"))));
-                    var pixels = tex.GetPixels();
-                    for (int i = 0; i < pixels.Length; i++)
-                    {
-                        pixels[i] *= color;
-                    }
-                    tex.SetPixels(pixels);
-                    File.WriteAllBytes(SlugcatIconPath(item.ToLower()), tex.EncodeToPNG());
-                    UnityEngine.Object.Destroy(tex);
+                    Plugin.Logger.LogDebug("Making icon for " + item);
+                    // await Task.Run(() => { GenerateSlugcatIcon(scug, SlugcatIconPath(item.ToLower())); });
+                    GenerateSlugcatIcon(scug, SlugcatIconPath(item.ToLower()));
                 }
             }
 
@@ -352,35 +443,44 @@ namespace MapExporter
 
         public static void Iconify(Texture2D texture)
         {
-            CenterTextureInRect(texture, 50, 50);
+            const int w = 50, h = 50;
+
+            CenterTextureInRect(texture, w, h);
 
             // Add outline
             Color[] pixels = texture.GetPixels();
-            bool[] colored = pixels.Select(x => x.a == 1f).ToArray();
+            bool[] colored = pixels.Select(x => x.a > 0f).ToArray();
 
-            for (int i = 0; i < 50; i++)
+            for (int i = 0; i < w; i++)
             {
-                for (int j = 0; j < 50; j++)
+                for (int j = 0; j < h; j++)
                 {
-                    if (colored[i + j * 50]) continue; // don't overwrite
-
-                    // Check all 8 neighboring tiles if can
-                    if (
-                        // left
-                        (i > 0 && j > 0  && colored[(i - 1) + (j - 1) * 50]) ||
-                        (i > 0 &&           colored[(i - 1) +  j      * 50]) ||
-                        (i > 0 && j < 49 && colored[(i - 1) + (j + 1) * 50]) ||
-                        // middle
-                        (j > 0  && colored[i + (j - 1) * 50]) ||
-                        (j < 49 && colored[i + (j + 1) * 50]) ||
-                        // right
-                        (i < 49 && j > 0  && colored[(i + 1) + (j - 1) * 50]) ||
-                        (i < 49 &&           colored[(i + 1) +  j      * 50]) ||
-                        (i < 49 && j < 49 && colored[(i + 1) + (j + 1) * 50])
-                    )
+                    if (colored[i + j * w])
                     {
-                        pixels[i + j * 50] = new Color(0f, 0f, 0f, 1f);
+                        var col = pixels[i + j * w];
+                        pixels[i + j * w] = Color.Lerp(Color.black, new Color(col.r, col.g, col.b), col.a);
                     }
+                    else
+                    {
+                        // Check all 8 neighboring tiles if can do outline
+                        if (
+                            // left
+                            (i > 0 && j > 0 && colored[(i - 1) + (j - 1) * w]) ||
+                            (i > 0 && colored[(i - 1) + j * w]) ||
+                            (i > 0 && j < h - 1 && colored[(i - 1) + (j + 1) * w]) ||
+                            // middle
+                            (j > 0 && colored[i + (j - 1) * w]) ||
+                            (j < w - 1 && colored[i + (j + 1) * w]) ||
+                            // right
+                            (i < w - 1 && j > 0 && colored[(i + 1) + (j - 1) * w]) ||
+                            (i < w - 1 && colored[(i + 1) + j * w]) ||
+                            (i < w - 1 && j < h - 1 && colored[(i + 1) + (j + 1) * w])
+                        )
+                        {
+                            pixels[i + j * w] = new Color(0f, 0f, 0f, 1f);
+                        }
+                    }
+
                 }
             }
 
