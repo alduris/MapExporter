@@ -99,10 +99,10 @@ namespace MapExporter.Generation
                                 // Copy pixels
                                 Vector2 copyOffsetVec = tileCoords - (room.devPos + cam + camOffset) * multFac;
 
-                                float normalizeSize = screenSize.y / imageCache[fileName].height;
-                                Vector2 scale = screenSize * normalizeSize * multFac / tileSize;
+                                float normalizeSize = screenSize.y / imageCache[fileName].height; // If the user is not using the game in 1366x768, this scales the texture to match
+                                Vector2 scale = tileSize / (screenSize * normalizeSize * multFac);
 
-                                Graphics.Blit(imageCache[fileName], rt, scale, copyOffsetVec);
+                                Graphics.Blit(imageCache[fileName], rt, scale, copyOffsetVec / tileSize);
 
                                 if (owner.lessResourceIntensive)
                                 {
