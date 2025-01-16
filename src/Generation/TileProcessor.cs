@@ -60,7 +60,7 @@ namespace MapExporter.Generation
             {
                 for (int tileX = llbTile.x; tileX <= urbTile.x; tileX++)
                 {
-                    Texture2D tile = null;
+                    RenderTexture rt = null; // shoutout to SlimeCubed for introducing me to this concept
 
                     // Build tile
                     var tileCoords = new Vector2(tileX, tileY) * tileSize;
@@ -80,17 +80,11 @@ namespace MapExporter.Generation
                                 string fileName = $"{room.roomName}_{camNo}.png";
 
                                 // Create the tile if necessary
-                                if (tile == null)
+                                if (rt == null)
                                 {
-                                    tile = new Texture2D(tileSizeInt.x, tileSizeInt.y, TextureFormat.ARGB32, false, false);
-
-                                    // Fill with transparent color
-                                    var pixels = tile.GetPixels();
-                                    for (int i = 0; i < pixels.Length; i++)
-                                    {
-                                        pixels[i] = new Color(0f, 0f, 0f, 0f); // original implementation used fgcolor
-                                    }
-                                    tile.SetPixels(pixels);
+                                    rt = new RenderTexture(tileSizeInt.x, tileSizeInt.y, 32, RenderTextureFormat.ARGB32);
+                                    rt.Create();
+                                    GL.Clear(true, true, new Color(0f, 0f, 0f, 0f));
                                 }
 
                                 // Open the camera so we can use it
@@ -99,17 +93,17 @@ namespace MapExporter.Generation
                                     var camTexture = new Texture2D(1, 1, TextureFormat.ARGB32, false, false);
                                     camTexture.LoadImage(File.ReadAllBytes(Path.Combine(owner.inputDir, fileName)), false);
 
-                                    if (zoom != 0 || camTexture.width != screenSize.x || camTexture.height != screenSize.y) // Don't need to rescale to same resolution
-                                        ScaleTexture(camTexture, (int)(screenSize.x * multFac), (int)(screenSize.y * multFac));
-
                                     imageCache[fileName] = camTexture;
                                 }
 
                                 // Copy pixels
                                 Vector2 copyOffsetVec = tileCoords - (room.devPos + cam + camOffset) * multFac;
-                                IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
 
-                                CopyTextureSegment(imageCache[fileName], tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, 0, 0);
+                                float normalizeSize = screenSize.y / imageCache[fileName].height;
+                                Vector2 scale = screenSize * normalizeSize * multFac / tileSize;
+
+                                Graphics.Blit(imageCache[fileName], rt, scale, copyOffsetVec);
+
                                 if (owner.lessResourceIntensive)
                                 {
                                     yield return (processed + 0.5f) / totalTiles;
@@ -122,8 +116,17 @@ namespace MapExporter.Generation
                     processed++;
 
                     // Write tile if we drew anything
-                    if (tile != null)
+                    if (rt != null)
                     {
+                        var oldRT = RenderTexture.active;
+                        RenderTexture.active = rt;
+
+                        var tile = new Texture2D(tileSizeInt.x, tileSizeInt.y, TextureFormat.ARGB32, false, false);
+                        tile.ReadPixels(new Rect(Vector2.zero, tileSize), 0, 0);
+
+                        RenderTexture.active = oldRT;
+                        rt.Release();
+
                         File.WriteAllBytes(Path.Combine(outputPath, $"{tileX}_{-1 - tileY}.png"), tile.EncodeToPNG());
                         Object.Destroy(tile);
                         yield return (float)processed / totalTiles;
