@@ -470,7 +470,7 @@ namespace MapExporter
                             (i > 0 && j < h - 1 && colored[(i - 1) + (j + 1) * w]) ||
                             // middle
                             (j > 0 && colored[i + (j - 1) * w]) ||
-                            (j < w - 1 && colored[i + (j + 1) * w]) ||
+                            (j < h - 1 && colored[i + (j + 1) * w]) ||
                             // right
                             (i < w - 1 && j > 0 && colored[(i + 1) + (j - 1) * w]) ||
                             (i < w - 1 && colored[(i + 1) + j * w]) ||
