@@ -1,3 +1,4 @@
+using MapExporter.Server;
 using MapExporter.Tabs;
 
 namespace MapExporter
@@ -36,6 +37,7 @@ namespace MapExporter
                     (tab as BaseTab).Update();
                 }
             }
+            Exporter.UpdateFileCounter();
         }
     }
 }

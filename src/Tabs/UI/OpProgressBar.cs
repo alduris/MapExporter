@@ -8,6 +8,9 @@ namespace MapExporter.Tabs.UI
         private const float HEIGHT = 16f;
         public OpRect inner;
 
+        private float progress = 0f;
+        private bool innerDirty = true;
+
         public void Initialize()
         {
             inner = new OpRect(pos, new Vector2(HEIGHT, HEIGHT), 1f)
@@ -26,10 +29,10 @@ namespace MapExporter.Tabs.UI
             }
         }
 
-        public void Update(float progress)
+        public void Progress(float progress)
         {
-            inner.size = new Vector2(Mathf.Max(HEIGHT, size.x * progress), inner.size.y);
-            inner.Change();
+            this.progress = progress;
+            innerDirty = true;
         }
 
         public override void Update()
@@ -46,7 +49,32 @@ namespace MapExporter.Tabs.UI
                 {
                     inner.pos = pos;
                 }
+
+                if (innerDirty)
+                {
+                    innerDirty = false;
+                    inner.size = new Vector2(Mathf.Max(HEIGHT, size.x * progress), inner.size.y);
+                    inner.Change();
+                }
             }
+        }
+
+        public override void Deactivate()
+        {
+            base.Deactivate();
+            inner?.Deactivate();
+        }
+
+        public override void Reactivate()
+        {
+            base.Reactivate();
+            inner?.Reactivate();
+        }
+
+        public override void Unload()
+        {
+            inner?.Unload();
+            base.Unload();
         }
     }
 }

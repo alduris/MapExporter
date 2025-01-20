@@ -2,29 +2,39 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security;
 using Menu.Remix.MixedUI;
-using RWCustom;
 using UnityEngine;
 
 namespace MapExporter.Tabs.UI
 {
     /// <summary>
-    /// Directory picker for remix menu. Requires you to 
+    /// Directory picker for remix menu.
     /// </summary>
     internal class OpDirPicker : OpScrollBox
     {
         private bool dirty = true;
 
-        public DirectoryInfo CurrentDir { get; private set; } = null; // Directory.CreateDirectory(Custom.LegacyRootFolderDirectory());
+        public DirectoryInfo CurrentDir { get; private set; } = null;
 
-        public bool ValidDir { get; private set; }
+        public bool ValidDir => CurrentDir != null;
 
-        public OpDirPicker(OpTab tab) : base(tab, 0f, false, true) { }
+        public OpDirPicker(OpTab tab, string startingDir = null) : base(tab, 0f, false, true)
+        {
+            if (startingDir != null)
+            {
+                var info = new DirectoryInfo(startingDir);
+                CurrentDir = info.Exists ? info : null;
+            }
+        }
 
-        public OpDirPicker(Vector2 pos, Vector2 size) : base(pos, size, 0f, false, true, true)
+        public OpDirPicker(Vector2 pos, Vector2 size, string startingDir = null) : base(pos, size, 0f, false, true, true)
         {
             this.size = new Vector2(Mathf.Max(160f, size.x), size.y);
+            if (startingDir != null)
+            {
+                var info = new DirectoryInfo(startingDir);
+                CurrentDir = info.Exists ? info : null;
+            }
         }
 
         public override void Update()
@@ -77,20 +87,40 @@ namespace MapExporter.Tabs.UI
 
                 // Get directory contents
                 Dictionary<string, DirectoryInfo> map = [];
-                if (CurrentDir == null)
+                bool errored = false;
+                do
                 {
-                    foreach (var item in Directory.GetLogicalDrives())
+                    if (CurrentDir == null)
                     {
-                        map.Add(item, new DirectoryInfo(item));
+                        foreach (var item in Directory.GetLogicalDrives())
+                        {
+                            map.Add(item, new DirectoryInfo(item));
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            foreach (var item in CurrentDir.GetDirectories())
+                            {
+                                map.Add(item.Name, item);
+                            }
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            if (CurrentDir == CurrentDir.Root)
+                            {
+                                CurrentDir = null;
+                            }
+                            else
+                            {
+                                CurrentDir = CurrentDir.Parent;
+                            }
+                            errored = true;
+                        }
                     }
                 }
-                else
-                {
-                    foreach (var item in CurrentDir.GetDirectories())
-                    {
-                        map.Add(item.Name, item);
-                    }
-                }
+                while (errored);
 
                 // Sort and put in the thingamabob
                 var list = map.ToList();

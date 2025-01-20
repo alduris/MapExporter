@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MapExporter.Tabs
 {
 
-    internal abstract class BaseTab(OptionInterface owner, string name) : OpTab(owner, Custom.rainWorld.inGameTranslator.Translate("MapExportTabName:" + name))
+    internal abstract class BaseTab(OptionInterface owner, string name) : OpTab(owner, Custom.rainWorld.inGameTranslator.Translate(name))
     {
         public const float MENU_SIZE = 600f;
         public const float SCROLLBAR_WIDTH = 20f;

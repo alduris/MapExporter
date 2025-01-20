@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using MapExporter.Generation;
+using MapExporter.Server;
 using MapExporter.Tabs.UI;
 using Menu.Remix.MixedUI;
 using UnityEngine;
@@ -192,7 +193,7 @@ namespace MapExporter.Tabs
                 {
                     generator.Update();
                     progressLabel.text = $"Progress: {generator.Progress:0.000%} ({generator.CurrentTask})";
-                    progressBar.Update(generator.Progress);
+                    progressBar.Progress(generator.Progress);
                     if (generator.Done)
                     {
                         currentDirty = true;
@@ -213,6 +214,7 @@ namespace MapExporter.Tabs
                                 current = null;
                             }
                             generator = null;
+                            Exporter.ResetFileCounter();
                         }
                     }
                 }

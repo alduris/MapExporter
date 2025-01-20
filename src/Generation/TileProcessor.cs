@@ -159,7 +159,6 @@ namespace MapExporter.Generation
                 NewPixels[index] = Color32.LerpUnclamped(Color32.LerpUnclamped(tl, tr, u % 1f), Color32.LerpUnclamped(bl, br, u % 1f), v % 1f);
             }
         }
-        #pragma warning restore CS0649 // Field is never assigned to
 
         [BurstCompile(OptimizeFor = OptimizeFor.Performance, FloatMode = FloatMode.Fast)]
         private struct CPUBicubicScaleJob : IJobParallelFor
@@ -207,13 +206,14 @@ namespace MapExporter.Generation
                 return i * t * t * t + j * t * t + k * t + l;
             }
         }
+        #pragma warning restore CS0649 // Field is never assigned to
 
         public static void ScaleTexture(Texture2D texture, int width, int height)
         {
             var oldPixels = new NativeArray<Color32>(texture.GetRawTextureData<Color32>(), Allocator.TempJob);
             var newPixels = new NativeArray<Color32>(width * height, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-            var scaler = new CPUBicubicScaleJob
+            var scaler = new CPUBilinearScaleJob
             {
                 OldPixels = oldPixels,
                 NewPixels = newPixels,

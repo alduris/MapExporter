@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Logging;
 using MapExporter.Screenshotter;
+using MapExporter.Server;
 using Menu.Remix.MixedUI;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -115,10 +116,11 @@ sealed class Plugin : BaseUnityPlugin
                 On.RainWorld.OnModsInit += (orig, self) =>
                 {
                     orig(self);
-                    Data.CheckData();
                     if (isInit) return;
 
                     isInit = true;
+                    Data.CheckData();
+                    Exporter.ResetFileCounter();
 
                     MachineConnector.SetRegisteredOI(MOD_ID, new UI());
 
