@@ -1,10 +1,11 @@
 ﻿using Menu.Remix.MixedUI;
+using RWCustom;
 using UnityEngine;
 
 namespace MapExporter.Tabs
 {
 
-    internal abstract class BaseTab(OptionInterface owner, string name) : OpTab(owner, name)
+    internal abstract class BaseTab(OptionInterface owner, string name) : OpTab(owner, Custom.rainWorld.inGameTranslator.Translate("MapExportTabName:" + name))
     {
         public const float MENU_SIZE = 600f;
         public const float SCROLLBAR_WIDTH = 20f;
@@ -19,5 +20,7 @@ namespace MapExporter.Tabs
 
         public abstract void Initialize();
         public abstract void Update();
+
+        public string Translate(string key) => Custom.rainWorld.inGameTranslator.Translate(key);
     }
 }

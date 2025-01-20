@@ -1,0 +1,6 @@
+MapExportTabName:Main Menu|Main Menu
+MapExportTabName:Data|Data
+MapExportTabName:Screenshotter|Sceenshotter
+MapExportTabName:Edit|Edit
+MapExportTabName:Generator|Generator
+MapExportTabName:Test/Export|Test/Export
