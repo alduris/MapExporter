@@ -27,14 +27,13 @@ namespace MapExporter.Tabs
         {
             const float SIDE_PADDING = 10f;
             const float ITEM_GAP = 20f;
-            const string TUTORIAL = "Shown here is not what is processed but what is present in the mod's data folder, "
-                + "and thus may not accurately represent what regions it recognizes as rendered or processed.";
+            string tutorialText = Translate("MAPEX:datatutorial");
             dataVersion = Data.Version;
 
             // Controls
-            var openFolderButton = new OpSimpleButton(new Vector2(SIDE_PADDING, SIDE_PADDING), new Vector2(160f, 24f), "OPEN DATA FOLDER");
+            var openFolderButton = new OpSimpleButton(new Vector2(SIDE_PADDING, SIDE_PADDING), new Vector2(160f, 24f), Translate("OPEN DATA FOLDER"));
             openFolderButton.OnClick += OpenFolderButton_OnClick;
-            var deleteEverythingButton = new OpHoldButton(new Vector2(MENU_SIZE - SIDE_PADDING - 120f, SIDE_PADDING), new Vector2(120f, 24f), "DELETE ALL", 400) // 10 seconds
+            var deleteEverythingButton = new OpHoldButton(new Vector2(MENU_SIZE - SIDE_PADDING - 120f, SIDE_PADDING), new Vector2(120f, 24f), Translate("DELETE ALL"), 400) // 10 seconds
             { colorEdge = RedColor };
             deleteEverythingButton.OnPressDone += DeleteEverythingButton_OnPressDone;
 
@@ -47,16 +46,16 @@ namespace MapExporter.Tabs
 
             AddItems(
                 // top
-                new OpShinyLabel(new Vector2(0f, MENU_SIZE - SIDE_PADDING - 30f), new Vector2(600f, 30f), "DATA MANAGEMENT", FLabelAlignment.Center, true),
-                new OpLabelLong(new Vector2(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 70), new Vector2(MENU_SIZE - SIDE_PADDING * 2, 40), TUTORIAL, true, FLabelAlignment.Center)
+                new OpShinyLabel(new Vector2(0f, MENU_SIZE - SIDE_PADDING - 30f), new Vector2(600f, 30f), Translate("DATA MANAGEMENT"), FLabelAlignment.Center, true),
+                new OpLabelLong(new Vector2(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 70), new Vector2(MENU_SIZE - SIDE_PADDING * 2, 40), tutorialText, true, FLabelAlignment.Center)
                 { verticalAlignment = OpLabel.LabelVAlignment.Top },
 
                 // middle
                 renderedList,
                 processedList,
-                new OpLabel(new Vector2(renderedList.pos.x, renderedList.pos.y + renderedList.size.y), new Vector2(renderedList.size.x, 30f), "SCREENSHOTTED", FLabelAlignment.Right, true)
+                new OpLabel(new Vector2(renderedList.pos.x, renderedList.pos.y + renderedList.size.y), new Vector2(renderedList.size.x, 30f), Translate("SCREENSHOTTED"), FLabelAlignment.Right, true)
                 { verticalAlignment = OpLabel.LabelVAlignment.Center },
-                new OpLabel(new Vector2(processedList.pos.x, processedList.pos.y + processedList.size.y), new Vector2(processedList.size.x, 30f), "GENERATED", FLabelAlignment.Left, true)
+                new OpLabel(new Vector2(processedList.pos.x, processedList.pos.y + processedList.size.y), new Vector2(processedList.size.x, 30f), Translate("GENERATED"), FLabelAlignment.Left, true)
                 { verticalAlignment = OpLabel.LabelVAlignment.Center },
                 new OpImage(new Vector2(299f, BOTTOM_GAP), "pixel") { scale = new Vector2(2f, SCROLLBOX_HEIGHT + 30f), color = MenuColorEffect.rgbMediumGrey },
 
@@ -98,7 +97,7 @@ namespace MapExporter.Tabs
                 var dir = Directory.CreateDirectory(Data.RenderDir);
                 if (dir.GetDirectories().Length == 0)
                 {
-                    renderedList.AddItems(new OpLabel(INNER_PAD, renderedList.size.y - INNER_PAD - LabelTest.LineHeight(false), "Empty!"));
+                    renderedList.AddItems(new OpLabel(INNER_PAD, renderedList.size.y - INNER_PAD - LabelTest.LineHeight(false), Translate("Empty!")));
                 }
                 else
                 {
@@ -126,7 +125,7 @@ namespace MapExporter.Tabs
                 var dir = Directory.CreateDirectory(Data.FinalDir);
                 if (dir.GetDirectories().Length == 0)
                 {
-                    processedList.AddItems(new OpLabel(INNER_PAD, processedList.size.y - INNER_PAD - LabelTest.LineHeight(false), "Empty!"));
+                    processedList.AddItems(new OpLabel(INNER_PAD, processedList.size.y - INNER_PAD - LabelTest.LineHeight(false), Translate("Empty!")));
                 }
                 else
                 {
@@ -223,11 +222,11 @@ namespace MapExporter.Tabs
             if (isRoot)
             {
                 y -= LabelTest.LineHeight(false) * 2;
-                var label = new OpLabel(x, y, "Total size: <calculating>", false);
-                reader.OnRead += (size) => label.text = "Total size: " + FileSizeToString(size);
+                var label = new OpLabel(x, y, Translate("Total size: <calculating>"), false);
+                reader.OnRead += (size) => label.text = $"{Translate("Total size:")} {FileSizeToString(size)}";
 
                 y -= 30f;
-                var deleteFolderButton = new OpHoldButton(new Vector2(x, y), new Vector2(120f, 24f), "DELETE ALL", 200) // 5 sec
+                var deleteFolderButton = new OpHoldButton(new Vector2(x, y), new Vector2(120f, 24f), Translate("DELETE ALL"), 200) // 5 sec
                 { colorEdge = RedColor };
                 deleteFolderButton.OnPressDone += (_) => DeleteFolderButton_OnPressDone(deleteFolderButton, resetSeverity);
                 box.AddItems(label, deleteFolderButton);
@@ -252,10 +251,11 @@ namespace MapExporter.Tabs
         {
             var (suffix, divisor) = size switch
             {
-                >= 1_000_000_000L => ("GB", 100_000_000L),
-                >= 1_000_000L     => ("MB", 100_000L),
-                >= 1_000L         => ("KB", 100L),
-                _                 => ("B",  1L)
+                >= 1_000_000_000_000L => (Translate("filesize:TB"), 100_000_000_000L),
+                >= 1_000_000_000L     => (Translate("filesize:GB"), 100_000_000L),
+                >= 1_000_000L         => (Translate("filesize:MB"), 100_000L),
+                >= 1_000L             => (Translate("filesize:KB"), 100L),
+                _                     => (Translate("filesize:B"),  1L)
             };
 
             size /= divisor;

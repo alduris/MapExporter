@@ -6,7 +6,7 @@ namespace MapExporter.Generation
 {
     internal class PlacedObjectProcessor(Generator owner) : Processor(owner)
     {
-        public override string ProcessName => "Placed Objects";
+        public override string ProcessName => "Placed objects";
 
         protected override IEnumerator<float> Process()
         {

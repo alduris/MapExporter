@@ -6,7 +6,7 @@ namespace MapExporter.Generation
 {
     internal class RoomProcessor(Generator owner) : Processor(owner)
     {
-        public override string ProcessName => "Rooms";
+        public override string ProcessName => "Room placements";
 
         protected override IEnumerator<float> Process()
         {

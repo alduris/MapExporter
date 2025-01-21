@@ -54,7 +54,7 @@ namespace MapExporter.Tabs
             RegionNames.Clear();
             IEnumerable<(string acronym, string name)> nameValuePairs = regionOrder.Select(x => (x, Region.GetRegionFullName(x, null)));
             foreach (var pair in nameValuePairs) {
-                RegionNames.Add(pair.acronym, pair.name);
+                RegionNames.Add(pair.acronym, Translate(pair.name));
             }
 
             // Set up UI
@@ -90,7 +90,7 @@ namespace MapExporter.Tabs
             // Add UI to UI
             AddItems([
                 // Left side
-                new OpShinyLabel(10f, 560f, "PREPARE", true),
+                new OpShinyLabel(10f, 560f, Translate("PREPARE"), true),
                 addButton,
                 addAllButton,
                 startButton,
@@ -101,7 +101,7 @@ namespace MapExporter.Tabs
                 new OpImage(new(299f, 10f), "pixel") { scale = new Vector2(2f, 580f), color = MenuColorEffect.rgbMediumGrey },
 
                 // Right side
-                new OpShinyLabel(315f, 560f, "SCREENSHOTTING", true),
+                new OpShinyLabel(315f, 560f, Translate("SCREENSHOTTING"), true),
                 abortButton,
                 skipButton,
                 retryButton,
@@ -174,7 +174,7 @@ namespace MapExporter.Tabs
                             y -= CHECKBOX_LH;
                             var updateCombo = new OpResourceSelector(OIUtil.CosmeticBind(item.Value.updateMode), new Vector2(EDGE_PAD, y), waitBox.size.x - 2 * EDGE_PAD - SCROLLBAR_WIDTH)
                             {
-                                description = "Determines how much data the screenshotter captures from the region. Note that the screenshotter will still screenshot rooms for which the files are missing."
+                                description = Translate("MAPEX:ssupdatemodedesc")
                             };
                             updateCombo._itemList = updateCombo._itemList.Select(x => new ListItem(x.name, PascalRegex.Replace(x.name, " "), x.value)).ToArray();
                             updateCombo.OnValueChanged += (_, val, old) =>
@@ -276,7 +276,7 @@ namespace MapExporter.Tabs
                         if (i == 1)
                         {
                             y -= BIG_LINE_HEIGHT - LINE_HEIGHT;
-                            queueBox.AddItems(new OpLabel(EDGE_PAD, y, "Current:", true));
+                            queueBox.AddItems(new OpLabel(EDGE_PAD, y, Translate("Current:"), true));
                             y -= LINE_HEIGHT;
                             height += BIG_LINE_HEIGHT;
                         }
@@ -317,7 +317,7 @@ namespace MapExporter.Tabs
                             queueBox.AddItems(new OpImage(new Vector2(EDGE_PAD, y), "pixel") { scale = new Vector2(queueBox.size.x - SCROLLBAR_WIDTH - EDGE_PAD * 2, 2f), color = MenuColorEffect.rgbMediumGrey });
                             y -= 2f + SM_PAD + BIG_LINE_HEIGHT;
                             height += 2 * SM_PAD + BIG_LINE_HEIGHT + 2f;
-                            queueBox.AddItems(new OpLabel(EDGE_PAD, y, "Queued:", true));
+                            queueBox.AddItems(new OpLabel(EDGE_PAD, y, Translate("Queued:"), true));
                         }
 
                         i++;

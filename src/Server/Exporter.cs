@@ -55,6 +55,8 @@ namespace MapExporter.Server
         {
             currentProgress = 0;
             zipping = false;
+            inProgress = false;
+            if (zip && exportType == ExportType.MergeChanges) throw new ArgumentException("Cannot use zip with merge changes!");
             inProgress = true;
 
             // Get temporary directory
@@ -151,18 +153,11 @@ namespace MapExporter.Server
             /// <summary>
             /// Full batch with self-host file but it's Python instead of my homemade solution (which is probably really insecure so this is probably the better option)
             /// </summary>
-            PythonServer
-        }
-
-        public static string ExportTypeName(string exportType) {
-            var enumVal = Enum.Parse(typeof(ExportType), exportType);
-            return enumVal switch
-            {
-                ExportType.Server => "Include server (executable)",
-                ExportType.NoServer => "Do not include server",
-                ExportType.PythonServer => "Include server (Python batch file)",
-                _ => throw new NotImplementedException()
-            };
+            PythonServer,
+            /// <summary>
+            /// Merge changes with existing export. Cannot be used with zip files.
+            /// </summary>
+            MergeChanges
         }
 
         /// <summary>

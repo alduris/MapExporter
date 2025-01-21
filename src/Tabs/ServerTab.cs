@@ -42,18 +42,18 @@ namespace MapExporter.Tabs
         public override void Initialize()
         {
 
-            string serverText = "Server controls:";
+            string serverText = Translate("Server controls:");
             float serverTextWidth = LabelTest.GetWidth(serverText, false);
-            string openText = "Open in browser:";
+            string openText = Translate("Open in browser:");
             float openTextWidth = LabelTest.GetWidth(openText, false);
 
             var serverButton = new OpSimpleButton(
                 new Vector2(PADDING + serverTextWidth + MARGIN, MENU_SIZE - PADDING - BIG_LINE_HEIGHT - MARGIN - 24f),
-                new Vector2(60f, 24f), server == null ? "RUN" : "STOP")
+                new Vector2(60f, 24f), Translate(server == null ? "RUN" : "STOP"))
             { colorEdge = YellowColor };
             var openButton = new OpSimpleButton(
                 new Vector2(serverButton.pos.x + serverButton.size.x + MARGIN * 2 + openTextWidth, serverButton.pos.y),
-                new Vector2(60f, 24f), "OPEN");
+                new Vector2(60f, 24f), Translate("OPEN"));
             serverButton.OnClick += (_) =>
             {
                 if (server != null)
@@ -61,19 +61,19 @@ namespace MapExporter.Tabs
                     server.Dispose();
                     server.OnMessage -= Server_OnMessage;
                     server = null;
-                    serverButton.text = "RUN";
+                    serverButton.text = Translate("RUN");
                 }
                 else if (Data.FinishedRegions.Count == 0)
                 {
                     serverButton.PlaySound(SoundID.MENU_Error_Ping);
-                    undisplayedMessages.Enqueue("No regions ready yet!");
+                    undisplayedMessages.Enqueue(Translate("No regions ready yet!"));
                 }
                 else
                 {
                     server = new LocalServer();
                     server.OnMessage += Server_OnMessage;
                     server.Initialize();
-                    serverButton.text = "STOP";
+                    serverButton.text = Translate("STOP");
 
                     foreach (var item in messageBox.items)
                     {
@@ -107,7 +107,7 @@ namespace MapExporter.Tabs
             dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIRPICKER_HEIGHT), Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));
             outputLoc = new OpTextBox(OIUtil.CosmeticBind("mapexport"), new Vector2(PADDING, dirPicker.pos.y + dirPicker.size.y + MARGIN * 2 + 24f), MENU_SIZE - PADDING * 2 - 60f - MARGIN);
             outputLoc.OnValueChanged += (_, newVal, _) => outputLoc.value = Exporter.SafeFileName(outputLoc.value);
-            exportButton = new OpHoldButton(new Vector2(outputLoc.PosX + outputLoc.size.x + MARGIN, outputLoc.PosY), new Vector2(60f, 24f), "EXPORT")
+            exportButton = new OpHoldButton(new Vector2(outputLoc.PosX + outputLoc.size.x + MARGIN, outputLoc.PosY), new Vector2(60f, 24f), Translate("EXPORT"))
             {
                 colorEdge = BlueColor,
             };
@@ -115,31 +115,31 @@ namespace MapExporter.Tabs
 
             zipFileCheckbox = new OpCheckBox(OIUtil.CosmeticBind(false), PADDING, PADDING + DIRPICKER_HEIGHT + MARGIN);
             modeSelector = new OpResourceSelector(OIUtil.CosmeticBind(Exporter.ExportType.Server), new Vector2(PADDING + EXPORT_COLUMN, zipFileCheckbox.PosY), EXPORT_COLUMN * 2 - MARGIN);
-            modeSelector._itemList = modeSelector._itemList.Select(x => new ListItem(x.name, Translate(Exporter.ExportTypeName(x.name)), x.value)).ToArray();
+            modeSelector._itemList = modeSelector._itemList.Select(x => new ListItem(x.name, Translate("ExportType:" + x.name), x.value)).ToArray();
 
             AddItems(
-                new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "TEST SERVER", true),
+                new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, Translate("TEST SERVER"), true),
                 new OpLabel(PADDING, serverButton.pos.y + 2f, serverText, false),
                 serverButton,
                 new OpLabel(openButton.pos.x - MARGIN - openTextWidth, openButton.pos.y + 2f, openText, false),
                 openButton,
                 messageBox,
                 new OpImage(new Vector2(PADDING, DIVIDER - 1), "pixel") { scale = new Vector2(MENU_SIZE - PADDING * 2, 2f), color = MenuColorEffect.rgbMediumGrey },
-                new OpShinyLabel(PADDING, DIVIDER - PADDING - BIG_LINE_HEIGHT, "EXPORTER", true),
+                new OpShinyLabel(PADDING, DIVIDER - PADDING - BIG_LINE_HEIGHT, Translate("EXPORTER"), true),
                 dirPicker,
                 outputLoc,
                 zipFileCheckbox,
-                new OpLabel(PADDING + CHECKBOX_SIZE + MARGIN, zipFileCheckbox.PosY, "Zip result?", false),
+                new OpLabel(PADDING + CHECKBOX_SIZE + MARGIN, zipFileCheckbox.PosY, Translate("Zip result?"), false),
                 modeSelector,
                 exportButton
             );
             if (server == null)
             {
-                Server_OnMessage("Press the 'RUN' button to test the map locally");
+                Server_OnMessage(Translate("MAPEX:servertutorial"));
             }
             else
             {
-                Server_OnMessage("Server already running!");
+                Server_OnMessage(Translate("Server already running!"));
             }
         }
 
@@ -176,7 +176,7 @@ namespace MapExporter.Tabs
                 }
                 else if (Exporter.zipping)
                 {
-                    progressLabel.text = "Zipping... (this will take a while)";
+                    progressLabel.text = Translate("Zipping... (this will take a while)");
                 }
                 else
                 {
@@ -187,7 +187,7 @@ namespace MapExporter.Tabs
 
         private void Server_OnMessage(string message)
         {
-            Plugin.Logger.LogMessage("Server: " + message);
+            Plugin.Logger.LogMessage(Translate("Server: ") + message);
             undisplayedMessages.Enqueue(message);
         }
 
@@ -203,7 +203,7 @@ namespace MapExporter.Tabs
             AddItems(progressBar);
             progressBar.Initialize();
 
-            progressLabel = new OpLabel(progressBar.PosX, progressBar.PosY - 16f, "Exporting...", false);
+            progressLabel = new OpLabel(progressBar.PosX, progressBar.PosY - 16f, Translate("Exporting..."), false);
             AddItems(progressLabel);
 
             RemoveItems(dirPicker);

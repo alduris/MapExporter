@@ -1,6 +1,129 @@
+ADD|ADD
+ALL|ALL
+RUN|RUN
+STOP|STOP
+OPEN|OPEN
+SAVE|SAVE
+SKIP|SKIP
+START|START
+CLEAR|CLEAR
+RETRY|RETRY
+ABORT|ABORT
+QUEUE|QUEUE
+CURRENT|CURRENT
+MAP EXPORTER|MAP EXPORTER
+Map Exporter|Map Exporter
+
 Main Menu|Main Menu
+MAPEX:mmtutorial|1. Run screenshotter on region<LINE>2. Edit layout<LINE>3. Finalize in generator tab<LINE>4. Test interactive map<LINE>5. Export
+MAPEX:mmcredits|Made by Henpemaz, Dual-Iron, Noblecat57, & Alduris with help from Bro748, Vigaro, BensoneWhite, iwantbread, Aissurteivos, & SlimeCubed
+HOW TO USE|HOW TO USE
+default|default
+SHOW/HIDE|SHOW/HIDE
+SCREENSHOTTER|SCREENSHOTTER
+MAP EDITOR|MAP EDITOR
+GENERATOR|GENERATOR
+PLACED OBJECTS|PLACED OBJECTS
+
+show/creatures|Show creatures
+show/creatures/desc|Show creatures in the rooms of screenshots. Makes the screenshotting process slower so they can move out of their dens.
+show/ghosts|Show echoes
+show/ghosts/desc|Show echoes in rooms. Echo effect only appears in the room they spawn in.
+show/guadians|Show guardians
+show/guadians/desc|Show guardians where they spawn.
+show/insects|Show insects
+show/insects/desc|Show bugs spawned from insect groups or room effects in rooms.
+show/oracles|Show iterators
+show/oracles/desc|Show iterators where they spawn.
+
+screenshotter/autofill|Slugcat auto-fill
+screenshotter/autofill/desc|Screenshotter: auto-fill with all slugcats that are marked as being able to access the region.
+screenshotter/skipexisting|Skip existing screenshots
+screenshotter/skipexisting/desc|Screenshotter: don't overwrite existing screenshots
+
+editor/overlap|Show overlapping cams
+editor/overlap/desc|Map editor: show cameras that overlap. Causes lag.
+editor/cameras|Show individual cameras
+editor/cameras/desc|Map editor: toggles between showing all cameras in the room (checked) or just an outline containing the cameras (unchecked)
+
+generator/lessintensive|Less intensive
+generator/lessintensive/desc|Generator: makes the generator process less CPU-intensive at the cost of taking significantly longer.
+generator/targetfps|Target FPS
+generator/targetfps/desc|Generator: lower values make the generator run quicker at the cost of high CPU usage and framerate.
+generator/cachesize|Tile Cache Size
+generator/cachesize/desc|Generator: higher values make the generator run quicker at the cost of higher memory usage. This can cause fatal Unity crashes.
+generator/skipexisting|Skip existing output
+generator/skipexisting/desc|Generator: if a generated output for a particular slugcat in a region exists, skip the generation process for it.
+generator/skiptiles|Skip tile creation
+generator/skiptiles/desc|Generator: skips the tile-creation process to speed things up. Can cause things to not align.
+
 Data|Data
+MAPEX:datatutorial|Shown here is not what is processed but what is present in the mod's data folder, and thus may not accurately represent what regions it recognizes as rendered or processed.
+OPEN DATA FOLDER|OPEN DATA FOLDER
+DELETE ALL|DELETE ALL
+DATA MANAGEMENT|DATA MANAGEMENT
+SCREENSHOTTED|SCREENSHOTTED
+GENERATED|GENERATED
+Empty!|Empty!
+Total size:|Total size:
+Total size: <calculating>|Total size: <calculating>
+filesize:B|B
+filesize:KB|KB
+filesize:MB|MB
+filesize:GB|GB
+filesize:TB|TB
+
 Screenshotter|Sceenshotter
-Edit|Edit
+PREPARE|PREPARE
+SCREENSHOTTING|SCREENSHOTTING
+MAPEX:ssupdatemodedesc|Determines how much data the screenshotter captures from the region. Note that the screenshotter will still screenshot rooms for which the files are missing.
+Current:|Current:
+Queued:|Queued:
+
+Editor|Editor
+Import from: |Import from: 
+IMPORT|IMPORT
+Recenter on save: |Recenter on save: 
+MAPEX:mousetutorial|Left + drag to move, right click to pick room (or use list on left), right click picked room to toggle hidden
+MAPEX:controllertut|<pickup> to move fast, <jump> to pick room (or use list on left), <map> to toggle hidden
+
 Generator|Generator
+GENERATE|GENERATE
+Processing...|Processing...
+Generator missing!|Generator missing!
+Error detected!|Error detected!
+Progress|Progress
+Nothing|Nothing
+Cleaning old files|Cleaning old files
+Connections|Connections
+Room geometry|Room geometry
+Misc|Misc
+Placed objects|Placed objects
+Room placements|Room placements
+Spawns|Spawns
+Zoom level 0|Zoom level 0
+Zoom level -1|Zoom level -1
+Zoom level -2|Zoom level -2
+Zoom level -3|Zoom level -3
+Zoom level -4|Zoom level -4
+Zoom level -5|Zoom level -5
+Zoom level -6|Zoom level -6
+Zoom level -7|Zoom level -7
+
 Test/Export|Test/Export
+TEST SERVER|TEST SERVER
+Server controls:|Server controls:
+Open in browser:|Open in browser:
+Server: |Server: 
+No regions ready yet!|No regions ready yet!
+MAPEX:servertutorial|Press the 'RUN' button to test the map locally
+Server is already running!|Server is already running!
+EXPORTER|EXPORTER
+EXPORT|EXPORT
+Zip result?|Zip result?
+Zipping... (this will take a while)|Zipping... (this will take a while)
+Exporting...|Exporting...
+ExportType:Server|Include server (executable)
+ExportType:NoServer|Do not include server
+ExportType:PythonServer|Include server (Python batch file)
+ExportType:MergeChanges|Merge changes (zip unsupported)

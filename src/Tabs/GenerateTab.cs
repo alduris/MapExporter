@@ -48,7 +48,7 @@ namespace MapExporter.Tabs
             {
                 listHeight = 20
             };
-            regionAdd = new OpSimpleButton(new Vector2(regionSelector.pos.x + regionSelector.size.x + MARGIN, regionSelector.pos.y), new Vector2(60f, 24f), "ADD");
+            regionAdd = new OpSimpleButton(new Vector2(regionSelector.pos.x + regionSelector.size.x + MARGIN, regionSelector.pos.y), new Vector2(60f, 24f), Translate("ADD"));
             regionAdd.OnClick += RegionAdd_OnClick;
 
             queueBox = new OpScrollBox(
@@ -57,16 +57,16 @@ namespace MapExporter.Tabs
                 0f, true, true, true);
             currentBox = new OpScrollBox(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, BOX_HEIGHT), BOX_HEIGHT, false, true, false);
 
-            var startButton = new OpSimpleButton(new Vector2(PADDING, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
+            var startButton = new OpSimpleButton(new Vector2(PADDING, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), Translate("START")) { colorEdge = BlueColor };
             startButton.OnClick += StartButton_OnClick;
-            var retryButton = new OpSimpleButton(new Vector2(MARGIN + startButton.pos.x + startButton.size.x, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), "RETRY");
+            var retryButton = new OpSimpleButton(new Vector2(MARGIN + startButton.pos.x + startButton.size.x, currentBox.pos.y + BOX_HEIGHT + MARGIN), new Vector2(80f, 24f), Translate("RETRY"));
             retryButton.OnClick += RetryButton_OnClick;
 
             AddItems(
-                new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "GENERATE", true),
-                new OpLabel(PADDING, regionSelector.pos.y - PADDING - BIG_LINE_HEIGHT, "QUEUE", true),
+                new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, Translate("GENERATE"), true),
+                new OpLabel(PADDING, regionSelector.pos.y - PADDING - BIG_LINE_HEIGHT, Translate("QUEUE"), true),
                 queueBox,
-                new OpLabel(PADDING, queueBox.pos.y - PADDING - BIG_LINE_HEIGHT, "CURRENT", true),
+                new OpLabel(PADDING, queueBox.pos.y - PADDING - BIG_LINE_HEIGHT, Translate("CURRENT"), true),
                 currentBox,
                 startButton,
                 retryButton,
@@ -164,8 +164,8 @@ namespace MapExporter.Tabs
                     progressBar = new OpProgressBar(new Vector2(C_SPACING, C_SPACING), currentBox.size.x - C_SPACING * 2);
                     string text = generator != null ? "Processing..." : "Generator missing!";
                     if (generator?.Failed ?? false) text = "Error detected!";
-                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, text, false);
-                    var displayText = slugQueue.Peek().value + " - " + Data.RegionNameFor(current, slugQueue.Peek());
+                    progressLabel = new OpLabel(C_SPACING, progressBar.pos.y + progressBar.size.y + C_SPACING, Translate(text), false);
+                    var displayText = slugQueue.Peek().value + " - " + Translate(Data.RegionNameFor(current, slugQueue.Peek()));
 
                     currentBox.AddItems(
                         new OpLabel(C_SPACING, currentBox.size.y - C_SPACING - BIG_LINE_HEIGHT, displayText, true),
@@ -192,7 +192,7 @@ namespace MapExporter.Tabs
                 else
                 {
                     generator.Update();
-                    progressLabel.text = $"Progress: {generator.Progress:0.000%} ({generator.CurrentTask})";
+                    progressLabel.text = $"{Translate("Progress")}: {generator.Progress:0.000%} ({generator.CurrentTask})";
                     progressBar.Progress(generator.Progress);
                     if (generator.Done)
                     {
@@ -227,7 +227,7 @@ namespace MapExporter.Tabs
 
                 var itemList = Data.RenderedRegions.Keys
                     .OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase)
-                    .Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i))
+                    .Select((x, i) => new ListItem(x, $"({x}) {Translate(Data.RegionNameFor(x, null))}", i))
                     .ToList();
                 if (itemList.Count == 0)
                 {

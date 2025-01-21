@@ -42,7 +42,7 @@ namespace MapExporter.Tabs
             regionSelector = new OpComboBox(OIUtil.CosmeticBind(""),
                 new(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 30f),
                 TOPBAR_UNIT_WIDTH * 2 + ITEM_GAP,
-                regionList.Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i)).ToList())
+                regionList.Select((x, i) => new ListItem(x, $"({x}) {Translate(Data.RegionNameFor(x, null))}", i)).ToList())
             {
                 listHeight = 20
             };
@@ -59,16 +59,16 @@ namespace MapExporter.Tabs
             saveButton.OnClick += SaveButton_OnClick;
 
             // Bottom of menu
-            const string IMPORT_TEXT = "Import from: ";
+            string IMPORT_TEXT = Translate("Import from: ");
             var importLabel = new OpLabel(SIDE_PADDING, SIDE_PADDING + (12f - LabelTest.LineHeight(false) / 2f), IMPORT_TEXT, false);
             importSelector = new OpComboBox(OIUtil.CosmeticBind(""), new(importLabel.pos.x + LabelTest.GetWidth(IMPORT_TEXT, false) + 6f, importLabel.pos.y), TOPBAR_UNIT_WIDTH, [""])
             {
                 listHeight = 10
             };
-            var importButton = new OpSimpleButton(new(importSelector.pos.x + importSelector.size.x + 6f, importSelector.pos.y), new Vector2(80f, 24f), "IMPORT");
+            var importButton = new OpSimpleButton(new(importSelector.pos.x + importSelector.size.x + 6f, importSelector.pos.y), new Vector2(80f, 24f), Translate("IMPORT"));
             importButton.OnClick += ImportButton_OnClick;
 
-            const string RECENTER_TEXT = "Recenter on save: ";
+            string RECENTER_TEXT = Translate("Recenter on save: ");
             recenterCheckBox = new OpCheckBox(OIUtil.CosmeticBind(true), new(MENU_SIZE - SIDE_PADDING - CHECKBOX_SIZE, SIDE_PADDING));
             float recenterWidth = LabelTest.GetWidth(RECENTER_TEXT, false);
             var recenterLabel = new OpLabel(recenterCheckBox.pos.x - 6f - recenterWidth, SIDE_PADDING + (12f - LabelTest.LineHeight(false) / 2f), RECENTER_TEXT, false);
@@ -86,8 +86,8 @@ namespace MapExporter.Tabs
             mapBox = new OpMapBox(new(BODY_LEFT_WIDTH + ITEM_GAP / 2, roomSelector.pos.y), new(mapWidth, roomSelector.size.y));
 
             // Add the items
-            const string MOUSE_MODE_TEXT = "Left + drag to move, right click to pick room (or use list on left), right click picked room to toggle hidden";
-            const string CONTROLLER_TEXT = "<pickup> to move fast, <jump> to pick room (or use list on left), <map> to toggle hidden";
+            string MOUSE_MODE_TEXT = Translate("MAPEX:mousetutorial");
+            string CONTROLLER_TEXT = Translate("MAPEX:controllertut");
             AddItems(
                 // Input boxes and such
                 roomSelector,
@@ -97,7 +97,7 @@ namespace MapExporter.Tabs
                 new OpLabel(SIDE_PADDING, MENU_SIZE - SIDE_PADDING - 50f, Custom.rainWorld.processManager.menuesMouseMode ? MOUSE_MODE_TEXT : CONTROLLER_TEXT),
 
                 // Top things
-                new OpShinyLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), "MOVE", FLabelAlignment.Center, true),
+                new OpShinyLabel(new(SIDE_PADDING + TOPBAR_UNIT_WIDTH * 3 + ITEM_GAP * 2, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 30f), Translate("MOVE"), FLabelAlignment.Center, true),
                 saveButton,
 
                 // Bottom things
@@ -123,11 +123,11 @@ namespace MapExporter.Tabs
                 // Update region list
                 var regionList = Data.RenderedRegions.Keys
                     .OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase)
-                    .Select((x, i) => new ListItem(x, $"({x}) {Data.RegionNameFor(x, null)}", i))
+                    .Select((x, i) => new ListItem(x, $"({x}) {Translate(Data.RegionNameFor(x, null))}", i))
                     .ToList();
                 if (regionList.Count == 0)
                     regionList.Add(new ListItem("", "")); // dummy placeholder
-                regionSelector._itemList = regionList.ToArray();
+                regionSelector._itemList = [.. regionList];
                 regionSelector._ResetIndex();
                 regionSelector.Change();
                 RegionSelector_OnValueChanged(null, regionSelector.value, null);
