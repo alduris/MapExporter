@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
+using static MapExporter.Data;
 
 #pragma warning disable CS0162 // Unreachable code detected
 namespace MapExporter.Server
@@ -53,9 +54,7 @@ namespace MapExporter.Server
         public static void ExportServer(ExportType exportType, bool zip, string outputLoc)
         {
             currentProgress = 0;
-            inProgress = false;
             zipping = false;
-            if (exportType == ExportType.None) return;
             inProgress = true;
 
             // Get temporary directory
@@ -80,6 +79,10 @@ namespace MapExporter.Server
             if (exportType == ExportType.Server)
             {
                 RecursivelyCopyDirectory(Path.Combine(Data.ModDirectory, "map-server"), outDir);
+            }
+            else if (exportType == ExportType.PythonServer)
+            {
+                if (!DEBUG) File.WriteAllText(Path.Combine(outDir, "run.bat"), "python -m http.server");
             }
 
             if (zip)
@@ -138,21 +141,28 @@ namespace MapExporter.Server
         public enum ExportType
         {
             /// <summary>
-            /// Default value, does nothing
+            /// Full batch with self-host file
             /// </summary>
-            None,
+            Server,
             /// <summary>
             /// Full batch with no self-host file
             /// </summary>
             NoServer,
             /// <summary>
-            /// Full batch with self-host file
-            /// </summary>
-            Server,
-            /// <summary>
             /// Full batch with self-host file but it's Python instead of my homemade solution (which is probably really insecure so this is probably the better option)
             /// </summary>
             PythonServer
+        }
+
+        public static string ExportTypeName(string exportType) {
+            var enumVal = Enum.Parse(typeof(ExportType), exportType);
+            return enumVal switch
+            {
+                ExportType.Server => "Include server (executable)",
+                ExportType.NoServer => "Do not include server",
+                ExportType.PythonServer => "Include server (Python batch file)",
+                _ => throw new NotImplementedException()
+            };
         }
 
         /// <summary>

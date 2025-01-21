@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing.Printing;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using MapExporter.Server;
 using MapExporter.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
+using Menu.Remix.MixedUI.ValueTypes;
 using UnityEngine;
 
 namespace MapExporter.Tabs
@@ -25,6 +26,8 @@ namespace MapExporter.Tabs
         private OpLabel progressLabel = null;
         private OpTextBox outputLoc;
         private OpHoldButton exportButton;
+        private OpCheckBox zipFileCheckbox;
+        private OpResourceSelector modeSelector;
         private bool exportCooldown = false;
         private int exportCooldownCount = 0;
 
@@ -33,7 +36,8 @@ namespace MapExporter.Tabs
         private const float PADDING = 10f;
         private const float MARGIN = 6f;
         private const float DIVIDER = MENU_SIZE * 0.6f;
-        private const float DIRPICKER_HEIGHT = DIVIDER - 2 * PADDING - MARGIN * 2 - BIG_LINE_HEIGHT - 48f;
+        private const float DIRPICKER_HEIGHT = DIVIDER - 2 * PADDING - MARGIN * 3 - BIG_LINE_HEIGHT - 48f;
+        private const float EXPORT_COLUMN = (MENU_SIZE - PADDING * 2 + MARGIN) / 3;
 
         public override void Initialize()
         {
@@ -101,13 +105,17 @@ namespace MapExporter.Tabs
                 0f);
 
             dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIRPICKER_HEIGHT), Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));
-            outputLoc = new OpTextBox(OIUtil.CosmeticBind("mapexport"), new Vector2(PADDING, dirPicker.pos.y + dirPicker.size.y + MARGIN), MENU_SIZE - PADDING * 2 - 60f - MARGIN);
+            outputLoc = new OpTextBox(OIUtil.CosmeticBind("mapexport"), new Vector2(PADDING, dirPicker.pos.y + dirPicker.size.y + MARGIN * 2 + 24f), MENU_SIZE - PADDING * 2 - 60f - MARGIN);
             outputLoc.OnValueChanged += (_, newVal, _) => outputLoc.value = Exporter.SafeFileName(outputLoc.value);
             exportButton = new OpHoldButton(new Vector2(outputLoc.PosX + outputLoc.size.x + MARGIN, outputLoc.PosY), new Vector2(60f, 24f), "EXPORT")
             {
                 colorEdge = BlueColor,
             };
             exportButton.OnPressDone += ExportButton_OnPressDone;
+
+            zipFileCheckbox = new OpCheckBox(OIUtil.CosmeticBind(false), PADDING, PADDING + DIRPICKER_HEIGHT + MARGIN);
+            modeSelector = new OpResourceSelector(OIUtil.CosmeticBind(Exporter.ExportType.Server), new Vector2(PADDING + EXPORT_COLUMN, zipFileCheckbox.PosY), EXPORT_COLUMN * 2 - MARGIN);
+            modeSelector._itemList = modeSelector._itemList.Select(x => new ListItem(x.name, Translate(Exporter.ExportTypeName(x.name)), x.value)).ToArray();
 
             AddItems(
                 new OpShinyLabel(PADDING, MENU_SIZE - PADDING - BIG_LINE_HEIGHT, "TEST SERVER", true),
@@ -120,6 +128,9 @@ namespace MapExporter.Tabs
                 new OpShinyLabel(PADDING, DIVIDER - PADDING - BIG_LINE_HEIGHT, "EXPORTER", true),
                 dirPicker,
                 outputLoc,
+                zipFileCheckbox,
+                new OpLabel(PADDING + CHECKBOX_SIZE + MARGIN, zipFileCheckbox.PosY, "Zip result?", false),
+                modeSelector,
                 exportButton
             );
             if (server == null)
@@ -156,12 +167,12 @@ namespace MapExporter.Tabs
             {
                 progressBar.Progress((float)Exporter.currentProgress / Exporter.FileCount);
 
-                if (!Exporter.inProgress)
+                if (!Exporter.inProgress && !exportCooldown)
                 {
                     RemoveItems(progressBar, progressLabel);
 
                     dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIRPICKER_HEIGHT), savedDir);
-
+                    AddItems(dirPicker);
                 }
                 else if (Exporter.zipping)
                 {
@@ -202,9 +213,10 @@ namespace MapExporter.Tabs
             // Export the server on another thread so as to not freeze game
             Task.Run(() =>
             {
+                var exportType = Enum.TryParse<Exporter.ExportType>(modeSelector.value ?? "", out var etr) ? etr : Exporter.ExportType.Server;
                 try
                 {
-                    Exporter.ExportServer(Exporter.ExportType.Server, true, Path.Combine(dirPicker.CurrentDir.FullName, outputLoc.value));
+                    Exporter.ExportServer(exportType, zipFileCheckbox.GetValueBool(), Path.Combine(savedDir, outputLoc.value));
                     exportButton.PlaySound(SoundID.MENU_Karma_Ladder_Increase_Bump); // yay
                 }
                 catch (UnauthorizedAccessException uae)
@@ -215,7 +227,7 @@ namespace MapExporter.Tabs
                 catch (Exception e)
                 {
                     Plugin.Logger.LogError(e);
-                    exportButton.PlaySound(SoundID.MENU_Error_Ping); // aw
+                    exportButton.PlaySound(SoundID.MENU_Error_Ping); // aw but why did I put it in another catch statement I forgot
                 }
                 finally
                 {

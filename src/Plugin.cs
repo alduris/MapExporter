@@ -8,6 +8,7 @@ using BepInEx;
 using BepInEx.Logging;
 using MapExporter.Screenshotter;
 using MapExporter.Server;
+using MapExporter.Tabs.UI;
 using Menu.Remix.MixedUI;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -126,6 +127,11 @@ sealed class Plugin : BaseUnityPlugin
 
                     static float OpScrollBox_MaxScroll_get(Func<OpScrollBox, float> orig, OpScrollBox self) => self.horizontal ? -Mathf.Max(self.contentSize - self.size.x, 0f) : orig(self);
                     _ = new Hook(typeof(OpScrollBox).GetProperty(nameof(OpScrollBox.MaxScroll)).GetGetMethod(), OpScrollBox_MaxScroll_get);
+                    On.Menu.Remix.MixedUI.OpTab._RemoveItem += (orig, self, element) =>
+                    {
+                        orig(self, element);
+                        if (element is OpProgressBar progressBar && progressBar.inner != null) orig(self, progressBar.inner);
+                    };
 
                     Logger.LogDebug("UI registered");
                 };
