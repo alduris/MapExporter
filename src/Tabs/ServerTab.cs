@@ -21,16 +21,22 @@ namespace MapExporter.Tabs
         private float messageBoxTotalHeight = MB_VERT_PAD;
 
         private OpDirPicker dirPicker;
+        private OpProgressBar progressBar = null;
+        private OpLabel progressLabel = null;
         private OpTextBox outputLoc;
         private OpHoldButton exportButton;
         private bool exportCooldown = false;
         private int exportCooldownCount = 0;
 
+        private string savedDir = null;
+
+        private const float PADDING = 10f;
+        private const float MARGIN = 6f;
+        private const float DIVIDER = MENU_SIZE * 0.6f;
+        private const float DIRPICKER_HEIGHT = DIVIDER - 2 * PADDING - MARGIN * 2 - BIG_LINE_HEIGHT - 48f;
+
         public override void Initialize()
         {
-            const float PADDING = 10f;
-            const float MARGIN = 6f;
-            const float DIVIDER = MENU_SIZE * 0.5f;
 
             string serverText = "Server controls:";
             float serverTextWidth = LabelTest.GetWidth(serverText, false);
@@ -94,7 +100,7 @@ namespace MapExporter.Tabs
                 new Vector2(MENU_SIZE - 2 * PADDING, MENU_SIZE - DIVIDER - PADDING * 2 - MARGIN * 2 - BIG_LINE_HEIGHT - 24f),
                 0f);
 
-            dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIVIDER - 2 * PADDING - MARGIN - BIG_LINE_HEIGHT - 24f), Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));
+            dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIRPICKER_HEIGHT), Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));
             outputLoc = new OpTextBox(OIUtil.CosmeticBind("mapexport"), new Vector2(PADDING, dirPicker.pos.y + dirPicker.size.y + MARGIN), MENU_SIZE - PADDING * 2 - 60f - MARGIN);
             outputLoc.OnValueChanged += (_, newVal, _) => outputLoc.value = Exporter.SafeFileName(outputLoc.value);
             exportButton = new OpHoldButton(new Vector2(outputLoc.PosX + outputLoc.size.x + MARGIN, outputLoc.PosY), new Vector2(60f, 24f), "EXPORT")
@@ -134,12 +140,10 @@ namespace MapExporter.Tabs
                 string text = undisplayedMessages.Dequeue().Trim();
                 text = LabelTest.WrapText(text, false, width, true);
                 int lines = text.Split('\n').Length;
-                float height = LabelTest.LineHeight(false) * lines;
+                float height = LabelTest._textHeight * lines + 4f;
                 messageBoxTotalHeight += height;
 
-                messageBox.AddItems(
-                    new OpLabelLong(new Vector2(PADDING, messageBox.size.y - messageBoxTotalHeight), new Vector2(width, height), text, false, FLabelAlignment.Left)
-                    );
+                messageBox.AddItems(new OpLabelLong(new Vector2(PADDING, messageBox.size.y - messageBoxTotalHeight), new Vector2(width, height), text, false, FLabelAlignment.Left));
                 messageBoxTotalHeight += MB_VERT_PAD;
                 messageBox.SetContentSize(messageBoxTotalHeight, true);
             }
@@ -147,6 +151,27 @@ namespace MapExporter.Tabs
             if (!exportCooldown && exportCooldownCount > 0) exportCooldownCount--;
             exportButton.greyedOut = exportCooldown || exportCooldownCount > 0;
             if (exportCooldown || exportCooldownCount > 0) exportButton.held = false;
+
+            if (dirPicker == null)
+            {
+                progressBar.Progress((float)Exporter.currentProgress / Exporter.FileCount);
+
+                if (!Exporter.inProgress)
+                {
+                    RemoveItems(progressBar, progressLabel);
+
+                    dirPicker = new OpDirPicker(new Vector2(PADDING, PADDING), new Vector2(MENU_SIZE - 2 * PADDING, DIRPICKER_HEIGHT), savedDir);
+
+                }
+                else if (Exporter.zipping)
+                {
+                    progressLabel.text = "Zipping... (this will take a while)";
+                }
+                else
+                {
+                    progressLabel.text = $"{Translate("Exporting...")} ({Exporter.currentProgress}/{Exporter.FileCount})";
+                }
+            }
         }
 
         private void Server_OnMessage(string message)
@@ -161,16 +186,35 @@ namespace MapExporter.Tabs
             exportButton.held = false;
             exportButton.greyedOut = true;
 
+            savedDir = dirPicker.CurrentDir.FullName;
+            
+            progressBar = new OpProgressBar(new Vector2(dirPicker.PosX, dirPicker.PosY + dirPicker.size.y / 2), MENU_SIZE - PADDING * 2);
+            AddItems(progressBar);
+            progressBar.Initialize();
+
+            progressLabel = new OpLabel(progressBar.PosX, progressBar.PosY - 16f, "Exporting...", false);
+            AddItems(progressLabel);
+
+            RemoveItems(dirPicker);
+            dirPicker = null;
+
+
             // Export the server on another thread so as to not freeze game
             Task.Run(() =>
             {
                 try
                 {
-                    Exporter.ExportServer(Exporter.ExportType.Server, Path.Combine(dirPicker.CurrentDir.FullName, outputLoc.value));
+                    Exporter.ExportServer(Exporter.ExportType.Server, true, Path.Combine(dirPicker.CurrentDir.FullName, outputLoc.value));
                     exportButton.PlaySound(SoundID.MENU_Karma_Ladder_Increase_Bump); // yay
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException uae)
                 {
+                    Plugin.Logger.LogError(uae);
+                    exportButton.PlaySound(SoundID.MENU_Error_Ping); // aw
+                }
+                catch (Exception e)
+                {
+                    Plugin.Logger.LogError(e);
                     exportButton.PlaySound(SoundID.MENU_Error_Ping); // aw
                 }
                 finally

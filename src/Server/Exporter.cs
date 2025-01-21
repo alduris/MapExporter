@@ -9,13 +9,17 @@ namespace MapExporter.Server
 {
     internal static class Exporter
     {
-        private const bool DEBUG = true;
+        private const bool DEBUG = false;
 
-        private static int fileCount = 1;
+        public static int currentProgress = 0;
+        public static bool inProgress = false;
+        public static bool zipping = false;
+
+        public static int FileCount { get; private set; } = 1;
         private static readonly Stack<string> toCheck = [];
         public static void ResetFileCounter()
         {
-            fileCount = 2; // regions.json and slugcats.json
+            FileCount = 2; // regions.json and slugcats.json
             toCheck.Clear();
             toCheck.Push(Resources.FEPathTo());
             toCheck.Push(Data.FinalDir);
@@ -30,7 +34,7 @@ namespace MapExporter.Server
                 {
                     foreach (var file in Directory.GetFiles(path))
                     {
-                        fileCount++;
+                        FileCount++;
                     }
                     foreach (var dir in Directory.GetDirectories(path))
                     {
@@ -41,51 +45,72 @@ namespace MapExporter.Server
 
                 if (toCheck.Count == 0)
                 {
-                    Plugin.Logger.LogDebug($"{fileCount} files to copy");
+                    Plugin.Logger.LogDebug($"{FileCount} files to copy");
                 }
             }
         }
 
-        public static void ExportServer(ExportType exportType, string fileLocation = "mapexport")
+        public static void ExportServer(ExportType exportType, bool zip, string outputLoc)
         {
+            currentProgress = 0;
+            inProgress = false;
+            zipping = false;
             if (exportType == ExportType.None) return;
-
-            fileLocation = SafeFileName(fileLocation);
+            inProgress = true;
 
             // Get temporary directory
-            var tempDir = Path.Combine(Path.GetTempPath(), "mapexporttemp");
-            //Directory.CreateDirectory(tempDir);
+            var outDir = zip ? Path.Combine(Path.GetTempPath(), "mapexporttemp") : outputLoc;
+            if (!DEBUG) Directory.CreateDirectory(outDir);
 
             // Copy frontend files
-            RecursivelyCopyDirectory(Resources.FEPathTo(), tempDir);
+            RecursivelyCopyDirectory(Resources.FEPathTo(), outDir);
 
             Resources.TryGetJsonResource("/regions.json", out var regionsJson);
-            if (!DEBUG) File.WriteAllBytes(Path.Combine(tempDir, "regions.json"), regionsJson);
+            if (!DEBUG) File.WriteAllBytes(Path.Combine(outDir, "regions.json"), regionsJson);
+            currentProgress++;
             Resources.TryGetJsonResource("/slugcats.json", out var slugcatsJson);
-            if (!DEBUG) File.WriteAllBytes(Path.Combine(tempDir, "slugcats.json"), slugcatsJson);
+            if (!DEBUG) File.WriteAllBytes(Path.Combine(outDir, "slugcats.json"), slugcatsJson);
+            currentProgress++;
 
             // Copy output files
-            var tilePath = Path.Combine(tempDir, "slugcats");
+            var tilePath = Path.Combine(outDir, "slugcats");
             RecursivelyCopyDirectory(Data.FinalDir, tilePath);
 
             // Copy self-host executable if wanted
             if (exportType == ExportType.Server)
             {
-                RecursivelyCopyDirectory(Path.Combine(Data.ModDirectory, "map-server"), tempDir);
+                RecursivelyCopyDirectory(Path.Combine(Data.ModDirectory, "map-server"), outDir);
             }
 
-            try
+            if (zip)
             {
-                if (!DEBUG) ZipFile.CreateFromDirectory(tempDir, Path.Combine(fileLocation, fileLocation + ".zip"));
+                try
+                {
+                    zipping = true;
+                    if (!DEBUG) ZipFile.CreateFromDirectory(outDir, Path.Combine(outputLoc, outputLoc + ".zip"));
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogError(ex);
+                    throw;
+                }
+                finally
+                {
+                    // Delete our temporary dir
+                    try
+                    {
+                        if (!DEBUG) Directory.Delete(outDir, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Logger.LogError(ex);
+                    }
+                    inProgress = false;
+                }
             }
-            catch
+            else
             {
-                throw;
-            }
-            finally
-            {
-                // Delete our temporary dir
-                if (!DEBUG) Directory.Delete(tempDir, true);
+                inProgress = false;
             }
         }
 
@@ -104,6 +129,7 @@ namespace MapExporter.Server
                 {
                     if (!DEBUG) File.Copy(file, Path.Combine(destinationPath, new FileInfo(file).Name), true);
                     else Plugin.Logger.LogDebug(Path.Combine(destinationPath, new FileInfo(file).Name));
+                    currentProgress++;
                 }
             }
             catch (UnauthorizedAccessException) { }
