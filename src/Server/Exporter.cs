@@ -24,7 +24,6 @@ namespace MapExporter.Server
             toCheck.Clear();
             toCheck.Push(Resources.FEPathTo());
             toCheck.Push(Data.FinalDir);
-            toCheck.Push(Path.Combine(Data.ModDirectory, "map-server"));
         }
         public static void UpdateFileCounter()
         {
@@ -84,7 +83,7 @@ namespace MapExporter.Server
             }
             else if (exportType == ExportType.PythonServer)
             {
-                if (!DEBUG) File.WriteAllText(Path.Combine(outDir, "run.bat"), "python -m http.server");
+                if (!DEBUG) File.WriteAllLines(Path.Combine(outDir, "run.bat"), ["pip install http.server", "python3 -m http.server"]);
             }
 
             if (zip)

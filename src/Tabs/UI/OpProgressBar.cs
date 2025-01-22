@@ -53,7 +53,7 @@ namespace MapExporter.Tabs.UI
                 if (innerDirty)
                 {
                     innerDirty = false;
-                    inner.size = new Vector2(Mathf.Max(HEIGHT, size.x * progress), inner.size.y);
+                    inner.size = new Vector2(Mathf.Max(HEIGHT, size.x * Mathf.Clamp01(progress)), inner.size.y);
                     inner.Change();
                 }
             }
