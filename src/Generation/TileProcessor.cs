@@ -24,6 +24,7 @@ namespace MapExporter.Generation
         {
             string outputPath = Directory.CreateDirectory(OutputPathForStep(zoom)).FullName;
             float multFac = Mathf.Pow(2, zoom);
+            int zoomDelta = (int)Mathf.Pow(2, -zoom);
             var regionInfo = owner.regionInfo;
             TextureCache<string> imageCache = new(Preferences.GeneratorCacheSize.GetValue());
 
@@ -99,7 +100,7 @@ namespace MapExporter.Generation
                                     camTexture.LoadImage(File.ReadAllBytes(Path.Combine(owner.inputDir, fileName)), false);
 
                                     if (zoom != 0 || camTexture.width != screenSize.x || camTexture.height != screenSize.y) // Don't need to rescale to same resolution
-                                        ScaleTexture(camTexture, (int)(screenSize.x * multFac), (int)(screenSize.y * multFac));
+                                        ScaleTexture(camTexture, (int)(screenSize.x * multFac), (int)(screenSize.y * multFac), zoomDelta);
 
                                     imageCache[fileName] = camTexture;
                                 }
@@ -132,6 +133,39 @@ namespace MapExporter.Generation
 
             imageCache.Destroy();
             yield break;
+        }
+
+        [BurstCompile]
+        #pragma warning disable CS0649 // Field is never assigned to
+        private struct CPUBoxScaleJob : IJobParallelFor {
+            [ReadOnly] public NativeArray<Color32> OldPixels;
+            public NativeArray<Color32> NewPixels;
+            [ReadOnly] public int OldW, OldH;
+            [ReadOnly] public int NewW, NewH;
+            [ReadOnly] public int ZoomDelta;
+
+            public void Execute(int index) {
+                int x = index % NewW;
+                int y = index / NewW;
+
+                float cr = 0, cg = 0, cb = 0, ca = 0;
+
+                for (int dy = 0; dy < ZoomDelta; dy++) {
+                    for (int dx = 0; dx < ZoomDelta; dx++) {
+                        Color32 c = OldPixels[x * ZoomDelta + dx + (y * ZoomDelta + dy) * OldW];
+                        cr += c.r;
+                        cg += c.g;
+                        cb += c.b;
+                        ca += c.a;
+                    }
+                }
+
+                float ar = cr / (float)(ZoomDelta * ZoomDelta);
+                float ag = cg / (float)(ZoomDelta * ZoomDelta);
+                float ab = cb / (float)(ZoomDelta * ZoomDelta);
+                float aa = ca / (float)(ZoomDelta * ZoomDelta);
+                NewPixels[index] = new((byte)ar, (byte)ag, (byte)ab, (byte)aa);
+            }
         }
 
         [BurstCompile]
@@ -207,19 +241,20 @@ namespace MapExporter.Generation
         }
         #pragma warning restore CS0649 // Field is never assigned to
 
-        public static void ScaleTexture(Texture2D texture, int width, int height)
+        public static void ScaleTexture(Texture2D texture, int width, int height, int zoomDelta)
         {
             var oldPixels = new NativeArray<Color32>(texture.GetRawTextureData<Color32>(), Allocator.TempJob);
             var newPixels = new NativeArray<Color32>(width * height, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-            var scaler = new CPUBilinearScaleJob
+            var scaler = new CPUBoxScaleJob
             {
                 OldPixels = oldPixels,
                 NewPixels = newPixels,
                 OldW = texture.width,
                 OldH = texture.height,
                 NewW = width,
-                NewH = height
+                NewH = height,
+                ZoomDelta = zoomDelta
             };
 
             var scalerJob = scaler.Schedule(width * height, 64);
