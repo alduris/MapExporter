@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime;
 using UnityEngine;
+using Watcher;
 using static MapExporterNew.Generation.GenUtil;
 
 namespace MapExporterNew.Generation
@@ -26,6 +27,16 @@ namespace MapExporterNew.Generation
                             pos = room.devPos + thing.pos,
                             destRegion = thing.data[4] == "NULL" ? null : thing.data[4],
                             destRoom = thing.data[5] == "NULL" ? null : thing.data[5],
+                        });
+                    }
+                    else if (ModManager.Watcher && thing.type == nameof(WatcherEnums.PlacedObjectType.SpinningTopSpot))
+                    {
+                        WPs.Add(new WarpPointInfo
+                        {
+                            roomName = room.roomName,
+                            pos = room.devPos + thing.pos,
+                            destRegion = thing.data[3] == "NULL" ? null : thing.data[3],
+                            destRoom = thing.data[4] == "NULL" ? null : thing.data[4],
                         });
                     }
                     else

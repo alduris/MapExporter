@@ -13,6 +13,7 @@ namespace MapExporterNew.Tabs
     {
         private OpComboBox regionSelector;
         private OpSimpleButton regionAdd;
+        private OpSimpleButton regionAddAll;
         private OpScrollBox queueBox;
         private OpScrollBox currentBox;
         private OpLabel progressLabel;
@@ -50,6 +51,8 @@ namespace MapExporterNew.Tabs
             };
             regionAdd = new OpSimpleButton(new Vector2(regionSelector.pos.x + regionSelector.size.x + MARGIN, regionSelector.pos.y), new Vector2(60f, 24f), Translate("ADD"));
             regionAdd.OnClick += RegionAdd_OnClick;
+            regionAddAll = new OpSimpleButton(new Vector2(regionSelector.pos.x + regionSelector.size.x + regionAdd.size.x + MARGIN * 2, regionSelector.pos.y), new Vector2(60f, 24f), Translate("ADD ALL"));
+            regionAddAll.OnClick += RegionAddAll_OnClick;
 
             queueBox = new OpScrollBox(
                 new Vector2(PADDING, regionSelector.pos.y - PADDING - BIG_LINE_HEIGHT - MARGIN - BOX_HEIGHT),
@@ -72,7 +75,7 @@ namespace MapExporterNew.Tabs
                 retryButton,
 
                 // for z-index ordering reasons
-                regionSelector, regionAdd
+                regionSelector, regionAdd, regionAddAll
             );
         }
 
@@ -251,6 +254,18 @@ namespace MapExporterNew.Tabs
             }
 
             queue.AddLast(regionSelector.value);
+            regionSelector.value = null;
+            queueDirty = true;
+        }
+
+        private void RegionAddAll_OnClick(UIfocusable trigger)
+        {
+            var allRegions = Data.RenderedRegions.Keys.OrderBy(s => s, StringComparer.InvariantCultureIgnoreCase).ToHashSet();
+            var alreadyAdded = queue.ToHashSet();
+            foreach (var region in allRegions.Except(alreadyAdded))
+            {
+                queue.AddLast(region);
+            }
             regionSelector.value = null;
             queueDirty = true;
         }

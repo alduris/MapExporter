@@ -135,6 +135,13 @@
             margin-top: 0px;
         }
 
+        .warppoint-image {
+            position: absolute;
+            transform: translate(-50%, -50%) scale(0.5);
+            border: 4px solid white;
+            border-radius: 50%;
+        }
+
         .icon-image {
             position: absolute;
             margin-left: -25px;
@@ -660,6 +667,7 @@
         var warpPointsLayer;
         var loadedDifficulty = null;
         var loadedRegion = null;
+        var rottedRegions = ["wora", "wsur", "whir", "wgwr", "wdsr"];
         function loadRegion(pdifficulty, pregion) {
             if (loadedDifficulty == pdifficulty && loadedRegion == pregion) {
                 // Region isn't changing, double-check focused room
@@ -866,7 +874,7 @@
                         rules ??= poRules[object.toLowerCase()];
                         if (rules != undefined && "use" in rules) {
                             console.log("Using " + rules["use"] + " for object " + object);
-                            object = rules[use];
+                            object = rules["use"];
                         }
 
                         // Data!
@@ -932,11 +940,13 @@
                         let taghtml = "";
                         let warpData = feature.properties;
 
-                        let icon = "unknown";
+                        let icon = "wrsa";
+                        if (rottedRegions.indexOf(region.toLowerCase()) > -1) icon = "unknown";
+                        else if (region.toLowerCase() == "wara") icon = "waua";
                         if (warpData.destRegion != null) icon = warpData.destRegion.toLowerCase();
 
                         taghtml += "<div class=\"warppoint-filter\">";
-                        taghtml += `<img clas="warppoint-image" src="./resources/warp/${icon}.png"/>`;
+                        taghtml += `<img class="warppoint-image" src="./resources/warp/${icon}.png"/>`;
                         taghtml += "</div>";
 
                         return L.marker(latlng, {
@@ -945,14 +955,29 @@
                                 html: taghtml,
                             }),
                             interactive: true,
+                        });
+                    },
+                    onEachFeature: function (feature, layer) {
+                        // Region changing stuff
+                        let warpData = feature.properties;
+                        layer.on({
                             click: function (e) {
                                 if (warpData.destRegion != null) {
                                     region = warpData.destRegion.toUpperCase();
                                     room = warpData.destRoom;
+                                    pushState();
+                                } else if (region.toLowerCase() == "wara") {
+                                    region = "WAUA";
+                                    room = null;
+                                    pushState();
+                                } else if (rottedRegions.indexOf(region.toLowerCase()) == -1) {
+                                    region = "WRSA";
+                                    room = null;
+                                    pushState();
                                 }
                             }
                         });
-                    },
+                    }
                 });
                 if (hadWarpPoints) warpPointsLayer.addTo(map);
                 overlays.addOverlay(warpPointsLayer, "Warp Points");
