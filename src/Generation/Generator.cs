@@ -60,7 +60,7 @@ namespace MapExporterNew.Generation
             processes.Enqueue(new GeometryProcessor(this));
             processes.Enqueue(new SpawnProcessor(this));
             processes.Enqueue(new PlacedObjectProcessor(this));
-            processes.Enqueue(new MiscProcessor(this));
+            processes.Enqueue(new ColorProcessor(this));
 
             // Preferences
             // lessResourceIntensive = Preferences.GeneratorLessInsense.GetValue();

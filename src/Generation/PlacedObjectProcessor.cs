@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime;
 using UnityEngine;
 using static MapExporterNew.Generation.GenUtil;
 
@@ -11,22 +12,37 @@ namespace MapExporterNew.Generation
         protected override IEnumerator<float> Process()
         {
             List<PlacedObjectInfo> POs = [];
+            List<WarpPointInfo> WPs = [];
 
             foreach (var room in owner.regionInfo.rooms.Values)
             {
                 foreach (var thing in room.placedObjects)
                 {
-                    POs.Add(new PlacedObjectInfo
+                    if (thing.type == nameof(PlacedObject.Type.WarpPoint))
                     {
-                        roomName = room.roomName,
-                        type = thing.type,
-                        pos = room.devPos + thing.pos,
-                        settings = thing.data
-                    });
+                        WPs.Add(new WarpPointInfo
+                        {
+                            roomName = room.roomName,
+                            pos = room.devPos + thing.pos,
+                            destRegion = thing.data[4] == "NULL" ? null : thing.data[4],
+                            destRoom = thing.data[5] == "NULL" ? null : thing.data[5],
+                        });
+                    }
+                    else
+                    {
+                        POs.Add(new PlacedObjectInfo
+                        {
+                            roomName = room.roomName,
+                            type = thing.type,
+                            pos = room.devPos + thing.pos,
+                            settings = thing.data
+                        });
+                    }
                 }
             }
 
             owner.metadata["placedobject_features"] = POs;
+            owner.metadata["warppoint_features"] = WPs;
 
             yield return 1f;
             yield break;
@@ -58,6 +74,39 @@ namespace MapExporterNew.Generation
                             { "room", roomName },
                             { "object", type },
                             { "settings", settings }
+                        }
+                    }
+                };
+            }
+        }
+
+        public struct WarpPointInfo : IJsonObject
+        {
+            public string roomName;
+            public Vector2 pos;
+            public string destRegion;
+            public string destRoom;
+
+            public Dictionary<string, object> ToJson()
+            {
+                return new Dictionary<string, object>()
+                {
+                    { "type", "Feature" },
+                    {
+                        "geometry",
+                        new Dictionary<string, object>
+                        {
+                            { "type", "Point" },
+                            { "coordinates", Vec2arr(pos) }
+                        }
+                    },
+                    {
+                        "properties",
+                        new Dictionary<string, object>
+                        {
+                            { "room", roomName },
+                            { "destRegion", destRegion },
+                            { "destRoom", destRoom }
                         }
                     }
                 };

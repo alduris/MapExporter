@@ -57,7 +57,7 @@ static class ReusedRooms
         // else, baseSlugcat
     }
 
-    private static RoomSettings Settings(AbstractRoom a) => new(a.name, a.world.region, false, false, a.world.game.StoryCharacter);
+    private static RoomSettings Settings(AbstractRoom a) => new(a.name, a.world.region, false, false, SlugcatStats.SlugcatToTimeline(a.world.game.StoryCharacter), a.world.game);
 
     public static string SlugcatFor(string slugcat, string region)
     {

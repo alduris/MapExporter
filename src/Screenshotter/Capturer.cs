@@ -64,9 +64,6 @@ namespace MapExporterNew.Screenshotter
         {
             return $"{Path.Combine(PathOfRegion(slugcat, region), room.ToLower())}_{num}.png";
         }
-
-        private static int screens = 0;
-        private const int THRESHOLD = 300;
         public System.Collections.IEnumerator CaptureTask(RainWorldGame game)
         {
             // Task start
@@ -98,19 +95,13 @@ namespace MapExporterNew.Screenshotter
             // Recreate scuglat list from last time if needed
             while (slugsRendering.Count > 0)
             {
-                if (screens > THRESHOLD)
-                {
-                    // Save the memory!
-                    Data.ScreenshotterStatus = Data.SSStatus.Relaunch;
-                    Data.SaveData();
-                    Application.Quit();
-                    yield break;
-                }
-
                 SlugcatStats.Name slugcat = new(slugsRendering.Dequeue());
 
+                game.rainWorld.safariSlugcat = slugcat;
                 game.GetStorySession.saveStateNumber = slugcat;
                 game.GetStorySession.saveState.saveStateNumber = slugcat;
+                game.GetStorySession.saveState.currentTimelinePosition = SlugcatStats.SlugcatToTimeline(slugcat);
+                game.overWorld = new OverWorld(game); // I wonder if this is dangerous
 
                 foreach (var step in CaptureRegion(game, regionRendering))
                     yield return step;
@@ -167,8 +158,8 @@ namespace MapExporterNew.Screenshotter
 
             // load region
             Random.InitState(0);
-            game.overWorld.LoadWorld(region, slugcat, false);
-            Plugin.Logger.LogDebug($"Loaded {slugcat}/{region}");
+            game.overWorld.LoadWorld(region, slugcat, SlugcatStats.SlugcatToTimeline(slugcat), false);
+            Plugin.Logger.LogDebug($"Loaded {slugcat}/{region} (timeline: {SlugcatStats.SlugcatToTimeline(slugcat)})");
 
             Directory.CreateDirectory(PathOfRegion(slugcat.value, region));
 
@@ -225,7 +216,7 @@ namespace MapExporterNew.Screenshotter
                 rooms.RemoveAll(x => mapContent.rooms.ContainsKey(x.name));
 
                 // Add rooms connecting to the new rooms
-                HashSet<AbstractRoom> connections = rooms.SelectMany(x => x.connections).Select(game.world.GetAbstractRoom).Where(x => x != null).ToHashSet();
+                HashSet<AbstractRoom> connections = [.. rooms.SelectMany(x => x.connections).Select(game.world.GetAbstractRoom).Where(x => x != null)];
                 rooms.AddRange(connections);
 
                 Plugin.Logger.LogDebug("ROOMS TO BE MERGED:");
@@ -317,10 +308,7 @@ namespace MapExporterNew.Screenshotter
                 game.cameras[0].virtualMicrophone.AllQuiet();
 
                 yield return new WaitForEndOfFrame(); // wait an extra frame or two so objects can render, why not
-                yield return null;
                 yield return new WaitForEndOfFrame();
-
-                screens++;
 
                 string filename = PathOfScreenshot(game.StoryCharacter.value, room.world.name, room.name, i);
                 if ((!Preferences.ScreenshotterSkipExisting.GetValue() && Data.TakeScreenshots(updateMode)) || !File.Exists(filename))

@@ -546,7 +546,7 @@ namespace MapExporterNew
                             _valid = true,
                             type = (string)json["type"],
                             pos = Arr2Vec2((List<object>)json["pos"]),
-                            data = ((List<object>)json["data"]).Cast<string>().ToList()
+                            data = [.. ((List<object>)json["data"]).Cast<string>()]
                         };
                     }
                     catch (KeyNotFoundException)

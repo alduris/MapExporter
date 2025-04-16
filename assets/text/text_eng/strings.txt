@@ -16,7 +16,7 @@ Map Exporter|Map Exporter
 
 Main Menu|Main Menu
 MAPEX:mmtutorial|1. Run screenshotter on region<LINE>2. Edit layout<LINE>3. Finalize in generator tab<LINE>4. Test interactive map<LINE>5. Export
-MAPEX:mmcredits|Made by Henpemaz, Dual-Iron, Noblecat57, & Alduris with help from Bro748, Vigaro, BensoneWhite, iwantbread, Aissurteivos, & SlimeCubed
+MAPEX:mmcredits|Made by Henpemaz, Dual-Iron, Noblecat57, & Alduris with help from Bro748, Vigaro, BensoneWhite, iwantbread, Aissurteivos, SlimeCubed, & LudoCrypt
 HOW TO USE|HOW TO USE
 default|default
 SHOW/HIDE|SHOW/HIDE

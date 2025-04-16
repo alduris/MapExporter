@@ -5,9 +5,9 @@ using static MapExporterNew.Generation.GenUtil;
 
 namespace MapExporterNew.Generation
 {
-    internal class MiscProcessor(Generator owner) : Processor(owner)
+    internal class ColorProcessor(Generator owner) : Processor(owner)
     {
-        public override string ProcessName => "Misc";
+        public override string ProcessName => "Color";
 
         protected override IEnumerator<float> Process()
         {

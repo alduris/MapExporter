@@ -9,6 +9,7 @@ using MoreSlugcats;
 using RWCustom;
 using UnityEngine;
 using UnityEngine.Networking;
+using Watcher;
 
 namespace MapExporterNew
 {
@@ -21,6 +22,8 @@ namespace MapExporterNew
         public static string TilePathTo(params string[] path) => path.Aggregate(Data.FinalDir, Path.Combine);
         public static string CreatureIconPath(string item = null) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
         public static string ObjectIconPath(string item = null) => item == null ? FEPathTo("resources", "objects") : FEPathTo("resources", "objects", item + ".png");
+        public static string PearlIconPath(string item = null) => item == null ? FEPathTo("resources", "objects", "pearl") : FEPathTo("resources", "objects", "pearl", item + ".png");
+        public static string WarpIconPath(string region = null) => region == null ? FEPathTo("resources", "warp") : FEPathTo("resources", "warp", region.ToLowerInvariant() + ".png");
         public static string SlugcatIconPath(string scug = null) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
 
         public static bool TryGetActualPath(string req, out string path)
@@ -30,9 +33,19 @@ namespace MapExporterNew
 
             if (req.Length == 0) req = "index.html";
 
-            path = FEPathTo(req.Split('/'));
+            var split = req.Split('/');
+            path = FEPathTo(split);
             if (!File.Exists(path))
             {
+                if (path.EndsWith(".png"))
+                {
+                    split[split.Length - 1] = "unknown.png";
+                    path = FEPathTo(split);
+                    if (File.Exists(path))
+                    {
+                        return true;
+                    }
+                }
                 path = null;
                 return false;
             }
@@ -196,11 +209,11 @@ namespace MapExporterNew
         }
 
         private static bool IsDefaultSlugcat(SlugcatStats.Name scug) =>
-            scug != SlugcatStats.Name.White &&
-            scug != SlugcatStats.Name.Yellow &&
-            scug != SlugcatStats.Name.Red &&
-            scug != SlugcatStats.Name.Night &&
-            (
+            scug != SlugcatStats.Name.White
+            && scug != SlugcatStats.Name.Yellow 
+            && scug != SlugcatStats.Name.Red 
+            && scug != SlugcatStats.Name.Night 
+            && (
                 !ModManager.MSC || (
                     scug != MoreSlugcatsEnums.SlugcatStatsName.Gourmand &&
                     scug != MoreSlugcatsEnums.SlugcatStatsName.Artificer &&
@@ -210,7 +223,8 @@ namespace MapExporterNew
                     scug != MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel &&
                     scug != MoreSlugcatsEnums.SlugcatStatsName.Slugpup
                 )
-            );
+            ) 
+            && (!ModManager.Watcher || scug != WatcherEnums.SlugcatStatsName.Watcher);
 
         public static void CopyFrontendFiles(bool replaceAll = false)
         {
@@ -220,18 +234,19 @@ namespace MapExporterNew
                 var scug = new SlugcatStats.Name(item, false);
                 if (SlugcatStats.HiddenOrUnplayableSlugcat(scug) && (!ModManager.MSC || item != MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel.value)) continue;
 
-                if (!File.Exists(SlugcatIconPath(item.ToLower())) || (replaceAll && !IsDefaultSlugcat(scug)))
+                if (!File.Exists(SlugcatIconPath(item.ToLowerInvariant())) || (replaceAll && !IsDefaultSlugcat(scug)))
                 {
                     Plugin.Logger.LogDebug("Making icon for " + item);
-                    // await Task.Run(() => { GenerateSlugcatIcon(scug, SlugcatIconPath(item.ToLower())); });
-                    GenerateSlugcatIcon(scug, SlugcatIconPath(item.ToLower()));
+                    // await Task.Run(() => { GenerateSlugcatIcon(scug, SlugcatIconPath(item.ToLowerInvariant())); });
+                    GenerateSlugcatIcon(scug, SlugcatIconPath(item.ToLowerInvariant()));
                 }
             }
 
             // Get creature icons
-            foreach (var item in CreatureTemplate.Type.values.entries)
+            var creatureNames = CreatureTemplate.Type.values.entries.ToHashSet();
+            foreach (var item in creatureNames)
             {
-                if (!File.Exists(CreatureIconPath(item.ToLower())) || replaceAll)
+                if (!File.Exists(CreatureIconPath(item.ToLowerInvariant())) || replaceAll)
                 {
                     if (item == CreatureTemplate.Type.Centipede.value)
                     {
@@ -262,7 +277,7 @@ namespace MapExporterNew
                         var color = CreatureSymbol.ColorOfCreature(iconData);
                         var tex = SpriteColor(sprite, color);
                         Iconify(tex);
-                        File.WriteAllBytes(CreatureIconPath(item.ToLower()), tex.EncodeToPNG());
+                        File.WriteAllBytes(CreatureIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
                         UnityEngine.Object.Destroy(tex);
                     }
                 }
@@ -273,18 +288,35 @@ namespace MapExporterNew
             {
                 Directory.CreateDirectory(ObjectIconPath());
             }
-            var creatureNames = CreatureTemplate.Type.values.entries.ToHashSet();
             var addedNames = new HashSet<string>();
+            var objectNames = AbstractPhysicalObject.AbstractObjectType.values.entries.ToHashSet();
             foreach (var item in PlacedObject.Type.values.entries.ToArray()) // the ToArray is just to create a copy of it because it fails for some reason
             {
                 string name = item;
-                bool flag = false;
-                if (item.StartsWith("Dead") && creatureNames.Contains(name.Substring(4)))
+                bool deadCritter = false;
+                bool placedCritter = false;
+                bool rottenObject = false;
+                if (item.StartsWith("Dead") && creatureNames.Contains(item.Substring(4)))
                 {
                     name = item.Substring(4);
-                    flag = true;
+                    deadCritter = true;
                 }
-                if ((flag || creatureNames.Contains(name)) && (!File.Exists(ObjectIconPath(name)) || replaceAll))
+                else if (item.StartsWith("Rotten") && objectNames.Contains(item.Substring(6)))
+                {
+                    name = item.Substring(6);
+                    rottenObject = true;
+                }
+                else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6)))
+                {
+                    name = item.Substring(6);
+                    placedCritter = true;
+                }
+                else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6, item.Length - 7)))
+                {
+                    name = item.Substring(6, item.Length - 7);
+                    placedCritter = true;
+                }
+                if ((deadCritter || placedCritter || creatureNames.Contains(name)) && (!File.Exists(ObjectIconPath(name)) || replaceAll))
                 {
                     var iconData = new IconSymbol.IconSymbolData
                     {
@@ -294,18 +326,30 @@ namespace MapExporterNew
                     if (spriteName == "Futile_White") continue;
                     var sprite = new FSprite(spriteName, true);
                     var color = CreatureSymbol.ColorOfCreature(iconData);
+                    var tex = SpriteColor(sprite, deadCritter ? Color.Lerp(color, Color.black, 0.25f) : color);
+                    Iconify(tex);
+                    File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
+                    UnityEngine.Object.Destroy(tex);
+                    addedNames.Add(name.ToLowerInvariant());
+                }
+                else if (rottenObject && (!File.Exists(ObjectIconPath(name)) || replaceAll))
+                {
+                    var type = new AbstractPhysicalObject.AbstractObjectType(name, false);
+                    var spriteName = ItemSymbol.SpriteNameForItem(type, 1);
+                    if (spriteName == "Futile_White") continue;
+                    var sprite = new FSprite(spriteName, true);
+                    var color = ItemSymbol.ColorForItem(type, 1);
                     var tex = SpriteColor(sprite, color);
                     Iconify(tex);
-                    File.WriteAllBytes(ObjectIconPath(item.ToLower()), tex.EncodeToPNG());
+                    File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
                     UnityEngine.Object.Destroy(tex);
-                    addedNames.Add(name.ToLower());
+                    addedNames.Add(item.ToLowerInvariant());
                 }
             }
-            foreach (var item in AbstractPhysicalObject.AbstractObjectType.values.entries.ToArray())
+            foreach (var item in objectNames)
             {
                 if (!File.Exists(ObjectIconPath(item)) || replaceAll)
                 {
-
                     var type = new AbstractPhysicalObject.AbstractObjectType(item, false);
                     var spriteName = ItemSymbol.SpriteNameForItem(type, 0);
                     if (spriteName == "Futile_White") continue;
@@ -313,21 +357,31 @@ namespace MapExporterNew
                     var color = ItemSymbol.ColorForItem(type, 0);
                     var tex = SpriteColor(sprite, color);
                     Iconify(tex);
-                    File.WriteAllBytes(ObjectIconPath(item.ToLower()), tex.EncodeToPNG());
+                    File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
                     UnityEngine.Object.Destroy(tex);
-                    addedNames.Add(item.ToLower());
+                    addedNames.Add(item.ToLowerInvariant());
                 }
             }
 
-            foreach (var item in PlacedObject.Type.values.entries.ToArray())
+            /*foreach (var item in PlacedObject.Type.values.entries.ToArray())
             {
                 var po = new PlacedObject(new PlacedObject.Type(item, false), null);
                 bool token = po.data is CollectToken.CollectTokenData;
-                if (AcceptablePlacedObject(po) && !token && !Data.PlacedObjectIcons.ContainsKey(item.ToLower()))
+                if (AcceptablePlacedObject(po) && !token && !Data.PlacedObjectIcons.ContainsKey(item.ToLowerInvariant()))
                 {
-                    Data.PlacedObjectIcons.Add(item.ToLower(), (addedNames.Contains(item.ToLower()) ? item.ToLower() : "unknown", true));
+                    string defaultKey = "unknown";
+                    var type = po.type;
+                    var typeStr = type.ToString();
+                    if (po.type == PlacedObject.Type.UniqueDataPearl) defaultKey = "datapearl";
+                    else if (po.type == PlacedObject.Type.KarmaFlower) defaultKey = "karmaflower";
+                    else if (typeStr.StartsWith("Dead") && creatureNames.Contains(typeStr.Substring(4))) defaultKey = typeStr.Substring(4).ToLowerInvariant();
+                    else if (typeStr.StartsWith("Rotten") && objectNames.Contains(typeStr.Substring(6))) defaultKey = typeStr.Substring(6).ToLowerInvariant();
+                    else if (typeStr.StartsWith("Placed") && creatureNames.Contains(typeStr.Substring(6))) defaultKey = typeStr.Substring(6).ToLowerInvariant();
+                    else if (typeStr.StartsWith("Placed") && creatureNames.Contains(typeStr.Substring(6, typeStr.Length - 7))) defaultKey = typeStr.Substring(6, typeStr.Length - 7).ToLowerInvariant();
+
+                    Data.PlacedObjectIcons.Add(item.ToLowerInvariant(), (addedNames.Contains(item.ToLowerInvariant()) ? item.ToLowerInvariant() : defaultKey, true));
                 }
-            }
+            }*/
 
             // Pearls
             if (!Directory.Exists(Path.Combine(ObjectIconPath(), "pearl")))
@@ -336,7 +390,7 @@ namespace MapExporterNew
             }
             foreach (var pearl in DataPearl.AbstractDataPearl.DataPearlType.values.entries)
             {
-                var path = ObjectIconPath(Path.Combine("pearl", pearl.ToLower()));
+                var path = ObjectIconPath(Path.Combine("pearl", pearl.ToLowerInvariant()));
                 if (!File.Exists(path) || replaceAll)
                 {
                     var spriteName = ItemSymbol.SpriteNameForItem(AbstractPhysicalObject.AbstractObjectType.DataPearl, 0);
@@ -349,12 +403,35 @@ namespace MapExporterNew
                     UnityEngine.Object.Destroy(tex);
                 }
             }
+
+            // Get warp icons
+            foreach (var region in Region.GetFullRegionOrder())
+            {
+                var filename = $"illustrations/warp-{region.ToLowerInvariant()}.png";
+                var iconPath = AssetManager.ResolveFilePath(filename);
+                if (File.Exists(iconPath))
+                {
+                    var copyPath = WarpIconPath(region);
+                    bool exists = File.Exists(copyPath);
+                    if (!exists || replaceAll)
+                    {
+                        if (exists) File.Delete(copyPath);
+                        File.Copy(iconPath, copyPath);
+                    }
+                }
+            }
         }
 
         public static bool AcceptablePlacedObject(PlacedObject obj)
         {
-            return (obj.data is PlacedObject.ConsumableObjectData && obj.data is not PlacedObject.VoidSpawnEggData)
-                || obj.data is CollectToken.CollectTokenData;
+            return
+                (obj.data is PlacedObject.ConsumableObjectData
+                    && obj.data is not PlacedObject.VoidSpawnEggData
+                    && (!ModManager.MSC || obj.type != MoreSlugcatsEnums.PlacedObjectType.Germinator)
+                    )
+                || obj.data is CollectToken.CollectTokenData
+                || obj.data is WarpPoint.WarpPointData { oneWayExit: false }
+                || obj.data is SpinningTopData;
         }
 
         public static void Reset(ResetSeverity severity)
@@ -449,7 +526,7 @@ namespace MapExporterNew
 
             // Add outline
             Color[] pixels = texture.GetPixels();
-            bool[] colored = pixels.Select(x => x.a > 0f).ToArray();
+            bool[] colored = [.. pixels.Select(x => x.a > 0f)];
 
             for (int i = 0; i < w; i++)
             {

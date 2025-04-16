@@ -35,7 +35,7 @@ namespace MapExporterNew.Hooks
         // ALSO whether or not to show ghosts
         private static bool SpawnGhost2(On.GhostWorldPresence.orig_SpawnGhost orig, GhostWorldPresence.GhostID ghostID, int karma, int karmaCap, int ghostPreviouslyEncountered, bool playingAsRed)
         {
-            throw new NotImplementedException();
+            return Preferences.ShowGhosts.GetValue();
         }
 
         // fix for modded ghosts

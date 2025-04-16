@@ -241,7 +241,8 @@ namespace MapExporterNew.Tabs
                             waitBox.AddItems(checkbox, scugLabel);
                             x += textWidth + BIG_PAD; // extra right padding
                         }
-                        y -= CHECKBOX_LH;
+                        y -= BIG_PAD;
+                        // y -= CHECKBOX_LH;
                     }
 
                     waitBox.SetContentSize(waitBox.size.y - EDGE_PAD - y);

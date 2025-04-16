@@ -10,7 +10,7 @@ namespace MapExporterNew.Tabs
 {
     internal class MainMenuTab(OptionInterface owner) : BaseTab(owner, "Main Menu")
     {
-        private static readonly float[] COLUMN_RATIOS = [0.75f, 1, 1.5f];
+        private static readonly float[] COLUMN_RATIOS = [0.75f, 1];
         private static readonly float COLUMN_RATIO_SUM = COLUMN_RATIOS.Sum();
         private const float COLUMN_GAP = 20f;
         private static float Column(int c, bool label = false)
@@ -27,7 +27,7 @@ namespace MapExporterNew.Tabs
             string HOW_TO_STRING = Translate("MAPEX:mmtutorial").Replace("<LINE>", "\n");
             string CREDITS_STRING = Translate("MAPEX:mmcredits");
 
-            OpPOIconManager iconManager = null;
+            //OpPOIconManager iconManager = null;
             AddItems(
                 // Title
                 new OpShinyLabel(new Vector2(0f, 570f), new Vector2(600f, 30f), Translate("MAP EXPORTER"), FLabelAlignment.Center, true),
@@ -51,10 +51,10 @@ namespace MapExporterNew.Tabs
                 new OpLabel(Column(0), Row(0), Translate("SHOW/HIDE")),
                 new OpLabel(Column(1), Row(0), "SCREENSHOTTER"),
                 new OpLabel(Column(1), Row(3), "MAP EDITOR"),
-                new OpLabel(Column(1), Row(6), "GENERATOR"),
+                new OpLabel(Column(1), Row(6), "GENERATOR")
 
-                new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),
-                iconManager = new OpPOIconManager(new Vector2(Column(2), 10f), new Vector2(ColumnWidth(2), Row(0) - 10f))
+                //new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),
+                //iconManager = new OpPOIconManager(new Vector2(Column(2), 10f), new Vector2(ColumnWidth(2), Row(0) - 10f))
             );
 
             Preferences.Preference<bool>[] Col0 = [
@@ -74,7 +74,8 @@ namespace MapExporterNew.Tabs
                 Preferences.ScreenshotterSkipExisting,
                 default,
                 Preferences.EditorCheckOverlap,
-                Preferences.EditorShowCameras
+                Preferences.EditorShowCameras,
+                default
             ];
             for (int i = 0; i < Col1.Length; i++)
             {
@@ -91,7 +92,7 @@ namespace MapExporterNew.Tabs
                 AddItems(MapToPreference(Col1b[i], 1, i + 1 + Col1.Length), new OpLabel(Column(1, true), Row(i + 1 + Col1.Length), Translate(Col1b[i].key)));
             }
 
-            iconManager.Initialize();
+            //iconManager.Initialize();
 
             UIelement MapToPreference<T>(Preferences.Preference<T> preference, int c, int r)
             {

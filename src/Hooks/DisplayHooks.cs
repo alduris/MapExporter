@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using MoreSlugcats;
 using UnityEngine;
+using Watcher;
 
 namespace MapExporterNew.Hooks
 {
@@ -96,7 +97,6 @@ namespace MapExporterNew.Hooks
             List<PlacedObject> reactivateLater = [];
             foreach (var item in self.roomSettings.placedObjects)
             {
-                // if (item.type == PlacedObject.Type.InsectGroup) item.active = false;
                 if (item.type == PlacedObject.Type.FlyLure
                     || item.type == PlacedObject.Type.JellyFish
                     || item.type == PlacedObject.Type.BubbleGrass
@@ -128,6 +128,9 @@ namespace MapExporterNew.Hooks
                     ))
                 )
                     self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 20);
+
+                if (ModManager.Watcher && (item.type == PlacedObject.Type.Pomegranate || item.type == PlacedObject.Type.PomegranateVine))
+                    self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 40);
 
                 // Fuck you
                 if (item.active)

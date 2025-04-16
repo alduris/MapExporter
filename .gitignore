@@ -407,11 +407,13 @@ assets/map-server/*.*
 assets/map-frontend/resources/creatures/*
 assets/map-frontend/resources/objects/*
 assets/map-frontend/resources/slugcats/*
+assets/map-frontend/resources/warp/*
 
 # Exceptions for custom art or necessary ones
 !assets/map-frontend/resources/creatures/hoverfly.png
 
 !assets/map-frontend/resources/objects/unknown.png
+!assets/map-frontend/resources/objects/karmaflower.png
 !assets/map-frontend/resources/objects/ghostspot.png
 !assets/map-frontend/resources/objects/eeghostspot.png
 !assets/map-frontend/resources/objects/bluetoken.png
@@ -431,3 +433,6 @@ assets/map-frontend/resources/slugcats/*
 !assets/map-frontend/resources/slugcat/spear.png
 !assets/map-frontend/resources/slugcat/saint.png
 !assets/map-frontend/resources/slugcat/inv.png
+!assets/map-frontend/resources/slugcat/watcher.png
+
+!assets/map-frontend/resources/warp/unknown.png

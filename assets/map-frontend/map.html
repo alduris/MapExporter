@@ -25,6 +25,7 @@
             height: 100%;
             padding: 0;
             margin: 0;
+            overflow-x: hidden;
         }
 
         #mapid {
@@ -304,16 +305,16 @@
         .spawn-filter {
             display: initial
         }
-    </style>
 
-    <style id="objectfilters">
         .object-filter {
             display: initial
         }
-    </style>
 
-    <style id="roomtagfilters">
         .roomtag-filter {
+            display: initial
+        }
+
+        .warppoint-filter {
             display: initial
         }
     </style>
@@ -656,6 +657,7 @@
         var densLayer;
         var placedObjectsLayer;
         var roomTagsLayer;
+        var warpPointsLayer;
         var loadedDifficulty = null;
         var loadedRegion = null;
         function loadRegion(pdifficulty, pregion) {
@@ -919,6 +921,42 @@
                 if (hadPlacedObjects) placedObjectsLayer.addTo(map);
                 overlays.addOverlay(placedObjectsLayer, "Placed Objects");
 
+                // Warp points
+                let hadWarpPoints = map.hasLayer(warpPointsLayer) || loadedRegion == null;
+                if (warpPointsLayer) {
+                    overlays.removeLayer(warpPointsLayer);
+                    map.removeLayer(warpPointsLayer);
+                }
+                warpPointsLayer = L.geoJSON(json["warppoint_features"], {
+                    pointToLayer: function (feature, latlng) {
+                        let taghtml = "";
+                        let warpData = feature.properties;
+
+                        let icon = "unknown";
+                        if (warpData.destRegion != null) icon = warpData.destRegion.toLowerCase();
+
+                        taghtml += "<div class=\"warppoint-filter\">";
+                        taghtml += `<img clas="warppoint-image" src="./resources/warp/${icon}.png"/>`;
+                        taghtml += "</div>";
+
+                        return L.marker(latlng, {
+                            icon: L.divIcon({
+                                className: 'warppoint-divs',
+                                html: taghtml,
+                            }),
+                            interactive: true,
+                            click: function (e) {
+                                if (warpData.destRegion != null) {
+                                    region = warpData.destRegion.toUpperCase();
+                                    room = warpData.destRoom;
+                                }
+                            }
+                        });
+                    },
+                });
+                if (hadWarpPoints) warpPointsLayer.addTo(map);
+                overlays.addOverlay(warpPointsLayer, "Warp Points");
+
                 // Room Tags
                 let hadRoomTags = map.hasLayer(roomTagsLayer) || loadedRegion == null;
                 if (roomTagsLayer != null) {
@@ -1014,7 +1052,7 @@
                 if (loadedCount == 1) {
                     map.removeLayer(placedObjectsLayer);
                     map.removeLayer(roomTagsLayer);
-                };
+                }
                 loadedCount++;
             }, true);
 
