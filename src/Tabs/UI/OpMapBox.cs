@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using MapExporter.Generation;
+using MapExporterNew.Generation;
 using Menu.Remix.MixedUI;
 using UnityEngine;
-using static MapExporter.RegionInfo;
+using static MapExporterNew.RegionInfo;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
     internal class OpMapBox : OpScrollBox
     {

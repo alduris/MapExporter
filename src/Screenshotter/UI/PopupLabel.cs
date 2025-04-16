@@ -5,7 +5,7 @@ using UnityEngine;
 // shut up visual studio I don't give a fuck about property naming styles
 #pragma warning disable IDE1006 // Naming Styles
 
-namespace MapExporter.Screenshotter.UI
+namespace MapExporterNew.Screenshotter.UI
 {
     internal class PopupLabel : IPopupUI
     {

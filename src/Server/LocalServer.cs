@@ -4,7 +4,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MapExporter.Server
+namespace MapExporterNew.Server
 {
     public class LocalServer : IDisposable
     {

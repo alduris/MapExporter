@@ -10,7 +10,7 @@ using RWCustom;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace MapExporter
+namespace MapExporterNew
 {
     internal static class Resources
     {

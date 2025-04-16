@@ -6,10 +6,10 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
-using static MapExporter.Generation.GenUtil;
+using static MapExporterNew.Generation.GenUtil;
 using Object = UnityEngine.Object;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     internal class TileProcessor(Generator owner, int zoom) : Processor(owner)
     {

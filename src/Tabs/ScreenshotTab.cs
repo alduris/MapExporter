@@ -4,15 +4,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
-using MapExporter.Tabs.UI;
+using MapExporterNew.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
 using MoreSlugcats;
 using RWCustom;
 using UnityEngine;
-using static MapExporter.Data;
+using static MapExporterNew.Data;
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
     internal class ScreenshotTab : BaseTab
     {

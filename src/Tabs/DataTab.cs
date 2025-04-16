@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using MapExporter.Tabs.UI;
+using MapExporterNew.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
 using UnityEngine;
-using ResetSeverity = MapExporter.Resources.ResetSeverity;
+using ResetSeverity = MapExporterNew.Resources.ResetSeverity;
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
     internal class DataTab(OptionInterface owner) : BaseTab(owner, "Data")
     {

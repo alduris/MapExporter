@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MapExporter.Tabs.UI;
+using MapExporterNew.Tabs.UI;
 using Menu.Remix.MixedUI;
 using Menu.Remix.MixedUI.ValueTypes;
 using RWCustom;
@@ -10,7 +10,7 @@ using UnityEngine;
 
 #pragma warning disable IDE1006 // Naming Styles (beginning with underscore)
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
     internal class EditTab(OptionInterface owner) : BaseTab(owner, "Editor")
     {

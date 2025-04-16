@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     internal class CleanerProcessor : Processor
     {

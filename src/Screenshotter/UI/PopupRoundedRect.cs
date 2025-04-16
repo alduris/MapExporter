@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MapExporter.Screenshotter.UI
+namespace MapExporterNew.Screenshotter.UI
 {
     internal class PopupRoundedRect : IPopupUI
     {

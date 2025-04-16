@@ -8,7 +8,7 @@ using Menu.Remix.MixedUI.ValueTypes;
 using RWCustom;
 using UnityEngine;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
     internal class OpPOIconManager(Vector2 pos, Vector2 size) : OpScrollBox(pos, size, 0f, false, true, true)
     {

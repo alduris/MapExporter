@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
-using static MapExporter.Data;
+using static MapExporterNew.Data;
 
 #pragma warning disable CS0162 // Unreachable code detected
-namespace MapExporter.Server
+namespace MapExporterNew.Server
 {
     internal static class Exporter
     {

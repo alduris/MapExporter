@@ -2,7 +2,7 @@
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     /// <summary>
     /// Texture cache made by Aissurtievos

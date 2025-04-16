@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static MapExporter.Generation.GenUtil;
-using static MapExporter.RegionInfo.RoomEntry;
+using static MapExporterNew.Generation.GenUtil;
+using static MapExporterNew.RegionInfo.RoomEntry;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     internal class SpawnProcessor(Generator owner) : Processor(owner)
     {

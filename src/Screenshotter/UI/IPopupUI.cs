@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MapExporter.Screenshotter.UI
+namespace MapExporterNew.Screenshotter.UI
 {
     internal interface IPopupUI
     {

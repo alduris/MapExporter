@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static MapExporter.Generation.GenUtil;
+using static MapExporterNew.Generation.GenUtil;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     internal class GeometryProcessor(Generator owner) : Processor(owner)
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
     /// <summary>
     /// Directory picker for remix menu.

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 
-namespace MapExporter.Screenshotter
+namespace MapExporterNew.Screenshotter
 {
     internal static class CaptureUtil
     {

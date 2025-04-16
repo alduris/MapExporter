@@ -7,7 +7,7 @@ using MoreSlugcats;
 using RWCustom;
 using UnityEngine;
 
-namespace MapExporter
+namespace MapExporterNew
 {
     internal static class Data
     {

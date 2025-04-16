@@ -1,7 +1,7 @@
 ﻿using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
     /// <summary>
     /// Quite a shrimple class, just applies the MenuText shader to a label

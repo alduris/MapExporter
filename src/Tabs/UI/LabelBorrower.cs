@@ -2,7 +2,7 @@
 using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
     /// <summary>
     /// A system to recycle old labels as needed so as to not produce waste or the weird flickering

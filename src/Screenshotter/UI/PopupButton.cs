@@ -2,7 +2,7 @@
 using Menu;
 using UnityEngine;
 
-namespace MapExporter.Screenshotter.UI
+namespace MapExporterNew.Screenshotter.UI
 {
     internal class PopupButton : IPopupUI
     {

@@ -1,11 +1,11 @@
-﻿global using OpComboBox = MapExporter.Tabs.UI.OpComboBox2;
-global using OpResourceSelector = MapExporter.Tabs.UI.OpResourceSelector2;
+﻿global using OpComboBox = MapExporterNew.Tabs.UI.OpComboBox2;
+global using OpResourceSelector = MapExporterNew.Tabs.UI.OpResourceSelector2;
 
 using System.Collections.Generic;
 using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
 
     /**

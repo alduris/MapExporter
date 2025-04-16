@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using MapExporter.Generation;
-using MapExporter.Server;
-using MapExporter.Tabs.UI;
+using MapExporterNew.Generation;
+using MapExporterNew.Server;
+using MapExporterNew.Tabs.UI;
 using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
     internal class GenerateTab(OptionInterface owner) : BaseTab(owner, "Generator")
     {

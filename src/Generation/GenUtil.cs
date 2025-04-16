@@ -1,7 +1,7 @@
 ﻿using RWCustom;
 using UnityEngine;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     internal static class GenUtil
     {

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using static MapExporter.Generation.GenUtil;
+using static MapExporterNew.Generation.GenUtil;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     internal class PlacedObjectProcessor(Generator owner) : Processor(owner)
     {

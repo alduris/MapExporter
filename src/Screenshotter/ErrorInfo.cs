@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MapExporter.Screenshotter
+namespace MapExporterNew.Screenshotter
 {
     internal struct ErrorInfo
     {

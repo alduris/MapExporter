@@ -7,11 +7,11 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using DevInterface;
-using MapExporter.Screenshotter;
+using MapExporterNew.Screenshotter;
 using RWCustom;
 using UnityEngine;
 
-namespace MapExporter
+namespace MapExporterNew
 {
     internal sealed class RegionInfo : IJsonObject
     {

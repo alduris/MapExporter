@@ -1,7 +1,7 @@
 ﻿using System;
 using Menu.Remix.MixedUI;
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
     internal sealed class OIUtil : OptionInterface
     {

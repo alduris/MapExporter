@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace MapExporter.Generation
+namespace MapExporterNew.Generation
 {
     internal abstract class Processor(Generator owner) : IEnumerator<float>
     {

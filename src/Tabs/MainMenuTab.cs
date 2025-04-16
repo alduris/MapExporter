@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
-using MapExporter.Tabs.UI;
+using MapExporterNew.Tabs.UI;
 using Menu;
 using Menu.Remix;
 using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
     internal class MainMenuTab(OptionInterface owner) : BaseTab(owner, "Main Menu")
     {

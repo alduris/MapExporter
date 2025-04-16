@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using MapExporter.Screenshotter.UI;
+using MapExporterNew.Screenshotter.UI;
 using RWCustom;
 using UnityEngine;
 
-namespace MapExporter.Screenshotter
+namespace MapExporterNew.Screenshotter
 {
     internal class ErrorPopup
     {

@@ -2,7 +2,7 @@
 using RWCustom;
 using UnityEngine;
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
 
     internal abstract class BaseTab(OptionInterface owner, string name) : OpTab(owner, Custom.rainWorld.inGameTranslator.Translate(name))

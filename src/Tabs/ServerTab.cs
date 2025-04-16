@@ -4,14 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using MapExporter.Server;
-using MapExporter.Tabs.UI;
+using MapExporterNew.Server;
+using MapExporterNew.Tabs.UI;
 using Menu;
 using Menu.Remix.MixedUI;
 using Menu.Remix.MixedUI.ValueTypes;
 using UnityEngine;
 
-namespace MapExporter.Tabs
+namespace MapExporterNew.Tabs
 {
     internal class ServerTab(OptionInterface owner) : BaseTab(owner, "Test/Export")
     {

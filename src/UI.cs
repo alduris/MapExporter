@@ -1,7 +1,7 @@
-using MapExporter.Server;
-using MapExporter.Tabs;
+using MapExporterNew.Server;
+using MapExporterNew.Tabs;
 
-namespace MapExporter
+namespace MapExporterNew
 {
     internal class UI : OptionInterface
     {

@@ -1,7 +1,7 @@
 ﻿using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
     internal class OpProgressBar(Vector2 pos, float width) : OpRect(pos, new Vector2(width, HEIGHT), 0.3f)
     {

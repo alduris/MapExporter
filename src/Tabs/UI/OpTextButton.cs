@@ -1,7 +1,7 @@
 ﻿using Menu.Remix.MixedUI;
 using UnityEngine;
 
-namespace MapExporter.Tabs.UI
+namespace MapExporterNew.Tabs.UI
 {
     public class OpTextButton(Vector2 pos, Vector2 size, string displayText = "") : OpSimpleButton(pos, size, displayText)
     {

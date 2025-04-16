@@ -5,9 +5,9 @@ using System.Linq;
 using MoreSlugcats;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using SSUpdateMode = MapExporter.Data.SSUpdateMode;
+using SSUpdateMode = MapExporterNew.Data.SSUpdateMode;
 
-namespace MapExporter.Screenshotter
+namespace MapExporterNew.Screenshotter
 {
     internal class Capturer
     {
