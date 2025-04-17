@@ -125,7 +125,7 @@ namespace MapExporterNew.Server
                 if (!DEBUG) Directory.CreateDirectory(destinationPath);
                 foreach (var dir in Directory.GetDirectories(path))
                 {
-                    var newDest = Path.Combine(destinationPath, new DirectoryInfo(dir).Name);
+                    var newDest = Path.Combine(destinationPath, new DirectoryInfo(dir).Name.ToLowerInvariant());
                     RecursivelyCopyDirectory(dir, newDest);
                 }
 
