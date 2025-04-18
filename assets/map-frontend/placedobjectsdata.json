@@ -11,6 +11,7 @@
     "deadvulturegrub": {"use": "vulturegrub"},
     "albinohazer": {"use": "hazer"},
     "deadalbinohazer": {"use": "hazer"},
+    "sandgrubnetwork": {"displayif": "(false)"},
     "bluetoken": {
         "text": [
             "(setting 5)"

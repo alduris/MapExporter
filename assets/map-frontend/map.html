@@ -467,7 +467,7 @@
             html += `
 <label>
     <div class="region-btn">
-        <input type="radio" class="rw-ui" name="regions" onclick="selectRegion(this.value);" value="${r}"${r == region ? ' checked' : ''} autocomplete = "off">
+        <input type="radio" class="rw-ui" name="regions" onclick="selectRegion(this.value);" value="${r}"${r == params.get("region") ? ' checked' : ''} autocomplete = "off">
         <span>${regions[r]["name"].toUpperCase()} (${r})</span>
     </div>
 </label>`
@@ -945,8 +945,12 @@
                         else if (region.toLowerCase() == "wara") icon = "waua";
                         if (warpData.destRegion != null) icon = warpData.destRegion.toLowerCase();
 
+                        let regionName = regions[icon.toUpperCase()];
+                        if (regionName != undefined) regionName = regionName["name"];
+                        else regionName = "Random warp";
+
                         taghtml += "<div class=\"warppoint-filter\">";
-                        taghtml += `<img class="warppoint-image" src="./resources/warp/${icon}.png"/>`;
+                        taghtml += `<img class="warppoint-image" src="./resources/warp/${icon}.png" title="${regionName}"/>`;
                         taghtml += "</div>";
 
                         return L.marker(latlng, {
@@ -964,7 +968,7 @@
                             click: function (e) {
                                 if (warpData.destRegion != null) {
                                     region = warpData.destRegion.toUpperCase();
-                                    room = warpData.destRoom;
+                                    room = warpData.destRoom?.toUpperCase();
                                     pushState();
                                 } else if (region.toLowerCase() == "wara") {
                                     region = "WAUA";
@@ -1075,8 +1079,8 @@
 
                 // Don't enable certain layers when loaded for the first time
                 if (loadedCount == 1) {
-                    map.removeLayer(placedObjectsLayer);
                     map.removeLayer(roomTagsLayer);
+                    setCollapsibleWidths();
                 }
                 loadedCount++;
             }, true);
@@ -1517,7 +1521,6 @@
         var uncollapsed = null;
         var collapsible = document.querySelectorAll(".collapsible");
         for (const el of collapsible) {
-            el.style.setProperty("--hide-pos", "-" + (el.getBoundingClientRect().width) + "px");
             var button = el.querySelector(".collapse-tab");
             button.addEventListener("click", (e) => {
                 if (uncollapsed != null) {

@@ -1,10 +1,10 @@
 ﻿{
   "id": "mapexporter",
   "name": "Map Exporter",
-  "version": "Beta 1.2",
+  "version": "Beta 1.3",
   "authors": "Henpemaz, Dual-Iron, Noblecat57, Alduris<LINE>Code help: Bro748, Vigaro, BensoneWhite, iwantbread, Aissurteivos, LudoCrypt",
   "description": "An interactive map maker",
-  "tags": [],
+  "tags": ["Tools"],
   "requirements": [],
   "requirements_names": [],
   "checksum_override_version": true
