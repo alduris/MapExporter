@@ -246,40 +246,48 @@ namespace MapExporterNew
             var creatureNames = CreatureTemplate.Type.values.entries.ToHashSet();
             foreach (var item in creatureNames)
             {
-                if (!File.Exists(CreatureIconPath(item.ToLowerInvariant())) || replaceAll)
+                try
                 {
-                    if (item == CreatureTemplate.Type.Centipede.value)
+                    if (!File.Exists(CreatureIconPath(item.ToLowerInvariant())) || replaceAll)
                     {
-                        for (int i = 1; i <= 3; i++)
+                        if (item == CreatureTemplate.Type.Centipede.value)
                         {
-                            var iconData = new IconSymbol.IconSymbolData
+                            for (int i = 1; i <= 3; i++)
                             {
-                                critType = new CreatureTemplate.Type(item, false),
-                                intData = i
+                                var iconData = new IconSymbol.IconSymbolData
+                                {
+                                    critType = new CreatureTemplate.Type(item, false),
+                                    intData = i
+                                };
+                                var sprite = new FSprite(CreatureSymbol.SpriteNameOfCreature(iconData), true);
+                                var color = CreatureSymbol.ColorOfCreature(iconData);
+                                var tex = SpriteColor(sprite, color);
+                                Iconify(tex);
+                                string name = i switch { 1 => "smallcentipede", 2 => "centipede", 3 => "bigcentipede", _ => throw new NotImplementedException() };
+                                File.WriteAllBytes(CreatureIconPath(name), tex.EncodeToPNG());
+                                UnityEngine.Object.Destroy(tex);
+                            }
+                        }
+                        else
+                        {
+                            var iconData = new IconSymbol.IconSymbolData {
+                                critType = new CreatureTemplate.Type(item, false)
                             };
-                            var sprite = new FSprite(CreatureSymbol.SpriteNameOfCreature(iconData), true);
+                            var spriteName = CreatureSymbol.SpriteNameOfCreature(iconData);
+                            if (spriteName == "Futile_White") continue;
+                            var sprite = new FSprite(spriteName, true);
                             var color = CreatureSymbol.ColorOfCreature(iconData);
                             var tex = SpriteColor(sprite, color);
                             Iconify(tex);
-                            string name = i switch { 1 => "smallcentipede", 2 => "centipede", 3 => "bigcentipede", _ => throw new NotImplementedException() };
-                            File.WriteAllBytes(CreatureIconPath(name), tex.EncodeToPNG());
+                            File.WriteAllBytes(CreatureIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
                             UnityEngine.Object.Destroy(tex);
                         }
                     }
-                    else
-                    {
-                        var iconData = new IconSymbol.IconSymbolData {
-                            critType = new CreatureTemplate.Type(item, false)
-                        };
-                        var spriteName = CreatureSymbol.SpriteNameOfCreature(iconData);
-                        if (spriteName == "Futile_White") continue;
-                        var sprite = new FSprite(spriteName, true);
-                        var color = CreatureSymbol.ColorOfCreature(iconData);
-                        var tex = SpriteColor(sprite, color);
-                        Iconify(tex);
-                        File.WriteAllBytes(CreatureIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
-                        UnityEngine.Object.Destroy(tex);
-                    }
+                }
+                catch (Exception e)
+                {
+                    Plugin.Logger.LogError($"Could not create icon for {item}!");
+                    Plugin.Logger.LogError(e);
                 }
             }
 
@@ -292,74 +300,90 @@ namespace MapExporterNew
             var objectNames = AbstractPhysicalObject.AbstractObjectType.values.entries.ToHashSet();
             foreach (var item in PlacedObject.Type.values.entries.ToArray()) // the ToArray is just to create a copy of it because it fails for some reason
             {
-                string name = item;
-                bool deadCritter = false;
-                bool placedCritter = false;
-                bool rottenObject = false;
-                if (item.StartsWith("Dead") && creatureNames.Contains(item.Substring(4)))
+                try
                 {
-                    name = item.Substring(4);
-                    deadCritter = true;
-                }
-                else if (item.StartsWith("Rotten") && objectNames.Contains(item.Substring(6)))
-                {
-                    name = item.Substring(6);
-                    rottenObject = true;
-                }
-                else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6)))
-                {
-                    name = item.Substring(6);
-                    placedCritter = true;
-                }
-                else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6, item.Length - 7)))
-                {
-                    name = item.Substring(6, item.Length - 7);
-                    placedCritter = true;
-                }
-                if ((deadCritter || placedCritter || creatureNames.Contains(name)) && (!File.Exists(ObjectIconPath(name)) || replaceAll))
-                {
-                    var iconData = new IconSymbol.IconSymbolData
+                    string name = item;
+                    bool deadCritter = false;
+                    bool placedCritter = false;
+                    bool rottenObject = false;
+                    if (item.StartsWith("Dead") && creatureNames.Contains(item.Substring(4)))
                     {
-                        critType = new CreatureTemplate.Type(name, false)
-                    };
-                    var spriteName = CreatureSymbol.SpriteNameOfCreature(iconData);
-                    if (spriteName == "Futile_White") continue;
-                    var sprite = new FSprite(spriteName, true);
-                    var color = CreatureSymbol.ColorOfCreature(iconData);
-                    var tex = SpriteColor(sprite, deadCritter ? Color.Lerp(color, Color.black, 0.25f) : color);
-                    Iconify(tex);
-                    File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
-                    UnityEngine.Object.Destroy(tex);
-                    addedNames.Add(name.ToLowerInvariant());
+                        name = item.Substring(4);
+                        deadCritter = true;
+                    }
+                    else if (item.StartsWith("Rotten") && objectNames.Contains(item.Substring(6)))
+                    {
+                        name = item.Substring(6);
+                        rottenObject = true;
+                    }
+                    else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6)))
+                    {
+                        name = item.Substring(6);
+                        placedCritter = true;
+                    }
+                    else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6, item.Length - 7)))
+                    {
+                        name = item.Substring(6, item.Length - 7);
+                        placedCritter = true;
+                    }
+                    if ((deadCritter || placedCritter || creatureNames.Contains(name)) && (!File.Exists(ObjectIconPath(name)) || replaceAll))
+                    {
+                        var iconData = new IconSymbol.IconSymbolData
+                        {
+                            critType = new CreatureTemplate.Type(name, false)
+                        };
+                        var spriteName = CreatureSymbol.SpriteNameOfCreature(iconData);
+                        if (spriteName == "Futile_White") continue;
+                        var sprite = new FSprite(spriteName, true);
+                        var color = CreatureSymbol.ColorOfCreature(iconData);
+                        var tex = SpriteColor(sprite, deadCritter ? Color.Lerp(color, Color.black, 0.25f) : color);
+                        Iconify(tex);
+                        File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
+                        UnityEngine.Object.Destroy(tex);
+                        addedNames.Add(name.ToLowerInvariant());
+                    }
+                    else if (rottenObject && (!File.Exists(ObjectIconPath(name)) || replaceAll))
+                    {
+                        var type = new AbstractPhysicalObject.AbstractObjectType(name, false);
+                        var spriteName = ItemSymbol.SpriteNameForItem(type, 1);
+                        if (spriteName == "Futile_White") continue;
+                        var sprite = new FSprite(spriteName, true);
+                        var color = ItemSymbol.ColorForItem(type, 1);
+                        var tex = SpriteColor(sprite, color);
+                        Iconify(tex);
+                        File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
+                        UnityEngine.Object.Destroy(tex);
+                        addedNames.Add(item.ToLowerInvariant());
+                    }
                 }
-                else if (rottenObject && (!File.Exists(ObjectIconPath(name)) || replaceAll))
+                catch (Exception e)
                 {
-                    var type = new AbstractPhysicalObject.AbstractObjectType(name, false);
-                    var spriteName = ItemSymbol.SpriteNameForItem(type, 1);
-                    if (spriteName == "Futile_White") continue;
-                    var sprite = new FSprite(spriteName, true);
-                    var color = ItemSymbol.ColorForItem(type, 1);
-                    var tex = SpriteColor(sprite, color);
-                    Iconify(tex);
-                    File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
-                    UnityEngine.Object.Destroy(tex);
-                    addedNames.Add(item.ToLowerInvariant());
+                    Plugin.Logger.LogError($"Could not create icon for {item}!");
+                    Plugin.Logger.LogError(e);
                 }
             }
             foreach (var item in objectNames)
             {
-                if (!File.Exists(ObjectIconPath(item)) || replaceAll)
+                try
                 {
-                    var type = new AbstractPhysicalObject.AbstractObjectType(item, false);
-                    var spriteName = ItemSymbol.SpriteNameForItem(type, 0);
-                    if (spriteName == "Futile_White") continue;
-                    var sprite = new FSprite(spriteName, true);
-                    var color = ItemSymbol.ColorForItem(type, 0);
-                    var tex = SpriteColor(sprite, color);
-                    Iconify(tex);
-                    File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
-                    UnityEngine.Object.Destroy(tex);
-                    addedNames.Add(item.ToLowerInvariant());
+                    if (!File.Exists(ObjectIconPath(item)) || replaceAll)
+                    {
+                        var type = new AbstractPhysicalObject.AbstractObjectType(item, false);
+                        var spriteName = ItemSymbol.SpriteNameForItem(type, 0);
+                        if (spriteName == "Futile_White") continue;
+                        var sprite = new FSprite(spriteName, true);
+                        var color = ItemSymbol.ColorForItem(type, 0);
+                        var tex = SpriteColor(sprite, color);
+                        Iconify(tex);
+                        File.WriteAllBytes(ObjectIconPath(item.ToLowerInvariant()), tex.EncodeToPNG());
+                        UnityEngine.Object.Destroy(tex);
+                        addedNames.Add(item.ToLowerInvariant());
+                    }
+                }
+                catch (Exception e)
+                {
+                    Plugin.Logger.LogError($"Could not create icon for {item}!");
+                    Plugin.Logger.LogError(e);
                 }
             }
 
@@ -428,6 +452,7 @@ namespace MapExporterNew
                 (obj.data is PlacedObject.ConsumableObjectData
                     && obj.data is not PlacedObject.VoidSpawnEggData
                     && (!ModManager.MSC || obj.type != MoreSlugcatsEnums.PlacedObjectType.Germinator)
+                    && (obj.type != PlacedObject.Type.SandGrubNetwork)
                     )
                 || obj.data is CollectToken.CollectTokenData
                 || obj.data is WarpPoint.WarpPointData { oneWayExit: false }
