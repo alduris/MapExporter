@@ -64,8 +64,6 @@ namespace MapExporterNew.Generation
                         { "amount", data[0].count },
                         { "creature", data[0].type },
                         { "spawn_data", data[0].data },
-                        { "pre_cycle", false }, // TODO: remove these
-                        { "night", data[0].night }
                     };
 
                     // Lineage has extra data

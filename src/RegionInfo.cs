@@ -255,7 +255,6 @@ namespace MapExporterNew
                                     chance = lineage.progressionChances[j],
                                     count = 1,
                                     type = lineage.creatureTypes[j] < 0 ? "" : new CreatureTemplate.Type(ExtEnum<CreatureTemplate.Type>.values.GetEntry(lineage.creatureTypes[j]), false).value,
-                                    night = lineage.nightCreature,
                                     data = lineage.spawnData[j],
                                     den = lineage.den.abstractNode
                                 };
@@ -268,7 +267,6 @@ namespace MapExporterNew
                                     chance = -1f,
                                     count = simple.amount,
                                     type = simple.creatureType?.value ?? "",
-                                    night = simple.nightCreature,
                                     data = simple.spawnDataString,
                                     den = simple.den.abstractNode
                                 }
@@ -489,7 +487,6 @@ namespace MapExporterNew
                 public string type;
                 public int count;
                 public float chance;
-                public bool night;
                 public string data;
                 public int den;
 
@@ -500,7 +497,6 @@ namespace MapExporterNew
                         { "type", type },
                         { "count", count },
                         { "chance", chance },
-                        { "night", night },
                         { "data", data },
                         { "den", den },
                     };
@@ -513,7 +509,6 @@ namespace MapExporterNew
                         type = (string)json["type"],
                         count = (int)(long)json["count"],
                         chance = (float)(double)json["chance"],
-                        night = (bool)json["night"],
                         data = (string)json["data"],
                         den = (int)(long)json["den"],
                     };
