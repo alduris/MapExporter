@@ -59,7 +59,7 @@ namespace MapExporterNew.Hooks
         // Prevents ghost effect from appearing in nearby rooms
         private static float PreventGhostEffect(On.GhostWorldPresence.orig_GhostMode_AbstractRoom_Vector2 orig, GhostWorldPresence self, AbstractRoom testRoom, Vector2 worldPos)
         {
-            if (self.ghostRoom.name != testRoom.name)
+            if (self.ghostRoom == null || self.ghostRoom.name != testRoom.name)
             {
                 return 0f;
             }
