@@ -586,6 +586,39 @@ namespace MapExporterNew
                 }
             }
 
+            // Fill in holes
+            bool[,] floodfill = new bool[w, h];
+            bool[,] ffChecked = new bool[w, h];
+            Stack<(int x, int y)> toCheck = [];
+            toCheck.Push((0, 0)); // always transparent
+            while (toCheck.Count > 0)
+            {
+                var (x, y) = toCheck.Pop();
+                if (x < 0 || x >= w || y < 0 || y >= h) continue;
+                if (ffChecked[x, y]) continue;
+
+                ffChecked[x, y] = true;
+                if (pixels[x + y * w].a == 0f)
+                {
+                    floodfill[x, y] = true;
+                    toCheck.Push((x + 1, y));
+                    toCheck.Push((x - 1, y));
+                    toCheck.Push((x, y + 1));
+                    toCheck.Push((x, y - 1));
+                }
+            }
+
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++)
+                {
+                    if (pixels[i + j * w].a == 0f && !floodfill[i, j])
+                    {
+                        pixels[i + j * w] = Color.black;
+                    }
+                }
+            }
+
             texture.SetPixels(pixels);
         }
     }
