@@ -234,7 +234,7 @@ namespace MapExporterNew
 
                 roomName = room.name;
                 subregion = room.subregionName;
-                devPos = owner.devPos[room.name] / SCALEDOWN;
+                devPos = owner.devPos.TryGetValue(room.name, out var dvPos) ? dvPos / SCALEDOWN : Vector2.zero;
 
                 // spawns
                 if (spawnerCWT.TryGetValue(world, out var spawners))
