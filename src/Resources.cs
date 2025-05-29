@@ -549,48 +549,13 @@ namespace MapExporterNew
 
             CenterTextureInRect(texture, w, h);
 
-            // Add outline
             Color[] pixels = texture.GetPixels();
-            bool[] colored = [.. pixels.Select(x => x.a > 0f)];
 
-            for (int i = 0; i < w; i++)
-            {
-                for (int j = 0; j < h; j++)
-                {
-                    if (colored[i + j * w])
-                    {
-                        var col = pixels[i + j * w];
-                        pixels[i + j * w] = Color.Lerp(Color.black, new Color(col.r, col.g, col.b), col.a);
-                    }
-                    else
-                    {
-                        // Check all 8 neighboring tiles if can do outline
-                        if (
-                            // left
-                            (i > 0 && j > 0 && colored[(i - 1) + (j - 1) * w]) ||
-                            (i > 0 && colored[(i - 1) + j * w]) ||
-                            (i > 0 && j < h - 1 && colored[(i - 1) + (j + 1) * w]) ||
-                            // middle
-                            (j > 0 && colored[i + (j - 1) * w]) ||
-                            (j < h - 1 && colored[i + (j + 1) * w]) ||
-                            // right
-                            (i < w - 1 && j > 0 && colored[(i + 1) + (j - 1) * w]) ||
-                            (i < w - 1 && colored[(i + 1) + j * w]) ||
-                            (i < w - 1 && j < h - 1 && colored[(i + 1) + (j + 1) * w])
-                        )
-                        {
-                            pixels[i + j * w] = new Color(0f, 0f, 0f, 1f);
-                        }
-                    }
-
-                }
-            }
-
-            // Fill in holes
-            bool[,] floodfill = new bool[w, h];
+            // Figure out where holes lie
+            bool[,] outside = new bool[w, h];
             bool[,] ffChecked = new bool[w, h];
             Stack<(int x, int y)> toCheck = [];
-            toCheck.Push((0, 0)); // always transparent
+            toCheck.Push((0, 0));
             while (toCheck.Count > 0)
             {
                 var (x, y) = toCheck.Pop();
@@ -600,7 +565,7 @@ namespace MapExporterNew
                 ffChecked[x, y] = true;
                 if (pixels[x + y * w].a == 0f)
                 {
-                    floodfill[x, y] = true;
+                    outside[x, y] = true;
                     toCheck.Push((x + 1, y));
                     toCheck.Push((x - 1, y));
                     toCheck.Push((x, y + 1));
@@ -608,13 +573,35 @@ namespace MapExporterNew
                 }
             }
 
+            // Add outline and fill holes
             for (int i = 0; i < w; i++)
             {
                 for (int j = 0; j < h; j++)
                 {
-                    if (pixels[i + j * w].a == 0f && !floodfill[i, j])
+                    if (outside[i, j])
                     {
-                        pixels[i + j * w] = Color.black;
+                        // Check all 8 neighboring tiles if can do outline
+                        if (
+                            // left
+                            (i > 0 && j > 0 && !outside[i - 1, j - 1]) ||
+                            (i > 0 && !outside[i - 1, j]) ||
+                            (i > 0 && j < h - 1 && !outside[i - 1, j + 1]) ||
+                            // middle
+                            (j > 0 && !outside[i, j - 1]) ||
+                            (j < h - 1 && !outside[i, j + 1]) ||
+                            // right
+                            (i < w - 1 && j > 0 && !outside[i + 1, j - 1]) ||
+                            (i < w - 1 && !outside[i + 1, j]) ||
+                            (i < w - 1 && j < h - 1 && !outside[i + 1, j + 1])
+                        )
+                        {
+                            pixels[i + j * w] = new Color(0f, 0f, 0f, 1f);
+                        }
+                    }
+                    else
+                    {
+                        var col = pixels[i + j * w];
+                        pixels[i + j * w] = Color.Lerp(Color.black, new Color(col.r, col.g, col.b), col.a);
                     }
                 }
             }
