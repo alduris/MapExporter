@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using DevInterface;
 using MoreSlugcats;
 using RWCustom;
 using UnityEngine;
@@ -456,7 +458,16 @@ namespace MapExporterNew
                     )
                 || obj.data is CollectToken.CollectTokenData
                 || obj.data is WarpPoint.WarpPointData { oneWayExit: false }
-                || obj.data is SpinningTopData;
+                || obj.data is SpinningTopData
+                || obj.type == PlacedObject.Type.SandGrubHole
+                || (obj.type.ToString().StartsWith("Placed") && GetObjectCategory(obj.type) == ObjectsPage.DevObjectCategories.Creatures);
+
+            static ObjectsPage.DevObjectCategories GetObjectCategory(PlacedObject.Type type)
+            {
+                // Have to do this because for some reason the method is not static and it's too much of a hassle to initialize the object to run one method otherwise
+                ObjectsPage objPage = (ObjectsPage)FormatterServices.GetUninitializedObject(typeof(ObjectsPage));
+                return objPage.DevObjectGetCategoryFromPlacedType(type);
+            }
         }
 
         public static void Reset(ResetSeverity severity)
