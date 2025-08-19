@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using MapExporterNew.Generation;
 using Menu.Remix.MixedUI;
+using RWCustom;
 using UnityEngine;
 using static MapExporterNew.RegionInfo;
 
@@ -36,7 +37,7 @@ namespace MapExporterNew.Tabs.UI
         public OpMapBox(Vector2 pos, Vector2 size) : base(pos, size, size.y, false, true, false)
         {
             labelBorrower = new(this);
-            description = "Left click + drag to move, right click to pick room (or use list), right click picked room to toggle hidden";
+            description = Custom.rainWorld.inGameTranslator.Translate("MAPEX:mousetutorial");
         }
 
         public void Initialize()
