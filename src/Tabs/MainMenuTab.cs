@@ -49,9 +49,9 @@ namespace MapExporterNew.Tabs
                 new OpLabel(new Vector2(0f, 385f), new Vector2(600f, 30f), Translate("OPTIONS"), FLabelAlignment.Center, true),
 
                 new OpLabel(Column(0), Row(0), Translate("SHOW/HIDE")),
-                new OpLabel(Column(1), Row(0), "SCREENSHOTTER"),
-                new OpLabel(Column(1), Row(3), "MAP EDITOR"),
-                new OpLabel(Column(1), Row(6), "GENERATOR")
+                new OpLabel(Column(1), Row(0), Translate("SCREENSHOTTER")),
+                new OpLabel(Column(1), Row(3), Translate("MAP EDITOR")),
+                new OpLabel(Column(1), Row(6), Translate("GENERATOR"))
 
                 //new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),
                 //iconManager = new OpPOIconManager(new Vector2(Column(2), 10f), new Vector2(ColumnWidth(2), Row(0) - 10f))

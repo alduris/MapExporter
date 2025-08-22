@@ -65,17 +65,17 @@ namespace MapExporterNew.Tabs
             {
                 listHeight = 20
             };
-            var addButton = new OpSimpleButton(new Vector2(195f, 530f), new Vector2(40f, 24f), "ADD");
-            var addAllButton = new OpSimpleButton(new Vector2(245f, 530f), new Vector2(40f, 24f), "ALL");
-            var startButton = new OpSimpleButton(new Vector2(10f, 10f), new Vector2(80f, 24f), "START") { colorEdge = BlueColor };
-            var clearButton = new OpSimpleButton(new Vector2(100f, 10f), new Vector2(80f, 24f), "CLEAR");
+            var addButton = new OpSimpleButton(new Vector2(195f, 530f), new Vector2(40f, 24f), Translate("ADD"));
+            var addAllButton = new OpSimpleButton(new Vector2(245f, 530f), new Vector2(40f, 24f), Translate("ALL"));
+            var startButton = new OpSimpleButton(new Vector2(10f, 10f), new Vector2(80f, 24f), Translate("START")) { colorEdge = BlueColor };
+            var clearButton = new OpSimpleButton(new Vector2(100f, 10f), new Vector2(80f, 24f), Translate("CLEAR"));
 
             waitBox = new OpScrollBox(new Vector2(10f, 50f), new Vector2(275f, 470f), 0f, false, true, true);
             queueBox = new OpScrollBox(new Vector2(315f, 10f), new Vector2(275f, 510f), 0f, false, true, true);
 
-            var abortButton = new OpSimpleButton(new Vector2(315f, 530f), new Vector2(80f, 24f), "ABORT") { colorEdge = RedColor };
-            var skipButton = new OpSimpleButton(new Vector2(405f, 530f), new Vector2(80f, 24f), "SKIP");
-            var retryButton = new OpSimpleButton(new Vector2(495f, 530f), new Vector2(80f, 24f), "RETRY");
+            var abortButton = new OpSimpleButton(new Vector2(315f, 530f), new Vector2(80f, 24f), Translate("ABORT")) { colorEdge = RedColor };
+            var skipButton = new OpSimpleButton(new Vector2(405f, 530f), new Vector2(80f, 24f), Translate("SKIP"));
+            var retryButton = new OpSimpleButton(new Vector2(495f, 530f), new Vector2(80f, 24f), Translate("RETRY"));
 
             // Event listeners
             addButton.OnClick += AddButton_OnClick;

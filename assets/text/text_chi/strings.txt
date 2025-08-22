@@ -1,0 +1,131 @@
+ADD|添加
+ALL|全选
+ADD ALL|全选
+RUN|运行
+STOP|停止
+OPEN|打开
+SAVE|保存
+SKIP|跳过
+MOVE|移动
+START|开始
+CLEAR|清除
+RETRY|重试
+ABORT|中止
+QUEUE|队列
+CURRENT|当前
+MAP EXPORTER|地图导出器
+Map Exporter|地图导出器
+
+Main Menu|主菜单
+MAPEX:mmtutorial|1. 在截图器选择区域后运行截图工具<LINE>2. 使用编辑器编辑布局<LINE>3. 在生成器中生成瓦片地图资源<LINE>4. 运行测试交互式地图<LINE>5. 导出
+MAPEX:mmcredits|由 Henpemaz、Dual-Iron、Noblecat57 和 Alduris 制作，感谢 Bro748、Vigaro、BensoneWhite、iwantbread、Aissurteivos、SlimeCubed 与 LudoCrypt 的帮助
+HOW TO USE|使用说明
+default|默认
+SHOW/HIDE|显示/隐藏
+SCREENSHOTTER|截图器
+MAP EDITOR|地图编辑器
+GENERATOR|生成器
+PLACED OBJECTS|放置的物品
+
+show/creatures|显示生物
+show/creatures/desc|在截图的房间中显示生物。会使截图过程变慢，以便它们能从巢穴中移动出来。
+show/ghosts|显示回响
+show/ghosts/desc|在房间中显示回响。回响效果只在它们生成的房间中出现。
+show/guadians|显示守卫
+show/guadians/desc|在它们生成位置显示守卫。
+show/insects|显示昆虫
+show/insects/desc|在房间中显示由昆虫群或房间效果产生的昆虫。
+show/oracles|显示迭代器
+show/oracles/desc|在它们生成位置显示迭代器。
+
+screenshotter/autofill|自动填充蛞蝓猫
+screenshotter/autofill/desc|截图器：自动填充所有被标记为可以访问该区域的蛞蝓猫。
+screenshotter/skipexisting|跳过已存在的截图
+screenshotter/skipexisting/desc|截图器：不要覆盖已存在的截图文件
+
+editor/overlap|显示重叠摄像机
+editor/overlap/desc|地图编辑器：显示在同一位置重叠的摄像机。可能导致卡顿。
+editor/cameras|显示单个摄像机
+editor/cameras/desc|地图编辑器：切换在房间中显示所有摄像机（勾选）或仅显示包含摄像机的轮廓（不勾选）
+
+generator/lessintensive|降低强度
+generator/lessintensive/desc|生成器：降低生成器对 CPU 的占用，但会显著延长生成时间。
+generator/targetfps|目标帧率
+generator/targetfps/desc|生成器：较低的数值使生成器运行更快，但会增加 CPU 使用和帧率波动。
+generator/cachesize|瓦片缓存大小
+generator/cachesize/desc|生成器：较高的值可以加快生成速度，但会占用更多内存。这可能导致 Unity 崩溃。
+generator/skipexisting|跳过已存在瓦片生成
+generator/skipexisting/desc|生成器：如果某个蛞蝓猫在某区域已有瓦片生成，则跳过该生成过程。
+generator/skiptiles|跳过瓦片创建
+generator/skiptiles/desc|生成器：跳过瓦片创建步骤以加速，但可能导致对齐问题。
+
+Data|数据
+MAPEX:datatutorial|此处显示的内容是 mod 的数据文件夹中存在的内容，因此可能无法准确反映它识别为已渲染或已处理的区域。
+OPEN DATA FOLDER|打开数据文件夹
+DELETE ALL|全部删除
+DATA MANAGEMENT|数据管理
+SCREENSHOTTED|已截图
+GENERATED|已生成
+Empty!|空的！
+Total size:|总大小：
+Total size: <calculating>|总大小：<正在计算>
+filesize:B|B
+filesize:KB|KB
+filesize:MB|MB
+filesize:GB|GB
+filesize:TB|TB
+
+Screenshotter|截图器
+PREPARE|准备
+SCREENSHOTTING|等待截图
+MAPEX:ssupdatemodedesc|决定截图器从区域捕获多少数据。注意截图器仍会为缺少文件的房间截图。
+Current:|当前：
+Queued:|排队：
+
+Editor|编辑器
+Import from: |导入自：
+IMPORT|导入
+Recenter on save: |保存时重新居中：
+MAPEX:mousetutorial|左键 + 拖动移动，右键选择房间（或使用左侧列表），右键被选房间可切换选择状态
+MAPEX:controllertut|按 <pickup> 快速移动，按 <jump> 选择房间（或使用左侧列表），按 <map> 切换状态
+
+Generator|生成器
+GENERATE|生成
+Processing...|处理中...
+Generator missing!|找不到生成器！
+Error detected!|检测到错误！
+Progress|进度
+Nothing|无
+Cleaning old files|清理旧文件
+Connections|管道连接
+Room geometry|房间轮廓
+Misc|其他
+Placed objects|放置的物品
+Room placements|房间布局
+Spawns|生物生成
+Zoom level 0|缩放等级 0
+Zoom level -1|缩放等级 -1
+Zoom level -2|缩放等级 -2
+Zoom level -3|缩放等级 -3
+Zoom level -4|缩放等级 -4
+Zoom level -5|缩放等级 -5
+Zoom level -6|缩放等级 -6
+Zoom level -7|缩放等级 -7
+
+Test/Export|测试/导出
+TEST SERVER|测试服务器
+Server controls:|服务器控制：
+Open in browser:|在浏览器中打开：
+Server: |服务器：
+No regions ready yet!|尚无处理好的区域！
+MAPEX:servertutorial|按 "运行" 按钮在本地测试地图
+Server is already running!|服务器已在运行！
+EXPORTER|导出器
+EXPORT|导出
+Zip result?|是否压缩结果？
+Zipping... (this will take a while)|正在压缩...（这将需要一段时间）
+Exporting...|正在导出...
+ExportType:Server|包含服务器（可执行文件）
+ExportType:NoServer|不包含服务器
+ExportType:PythonServer|包含服务器（Python 批处理）
+ExportType:MergeChanges|合并更改（zip 不支持）

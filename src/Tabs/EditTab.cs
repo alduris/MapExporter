@@ -52,7 +52,7 @@ namespace MapExporterNew.Tabs
                 listHeight = 10
             };
             scugSelector.OnValueChanged += ScugSelector_OnValueChanged;
-            var saveButton = new OpSimpleButton(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 24f), "SAVE")
+            var saveButton = new OpSimpleButton(new(MENU_SIZE - SIDE_PADDING - TOPBAR_UNIT_WIDTH, MENU_SIZE - SIDE_PADDING - 30f), new(TOPBAR_UNIT_WIDTH, 24f), Translate("SAVE"))
             {
                 colorEdge = BlueColor
             };
