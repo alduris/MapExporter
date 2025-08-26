@@ -237,8 +237,16 @@ sealed class Plugin : BaseUnityPlugin
         }
         else
         {
-            orig(self);
-            captureTask.MoveNext();
+            try
+            {
+                orig(self);
+                captureTask.MoveNext();
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+                throw e;
+            }
         }
     }
 }
