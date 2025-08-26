@@ -245,7 +245,7 @@ sealed class Plugin : BaseUnityPlugin
             catch (Exception e)
             {
                 Logger.LogError(e);
-                throw e;
+                throw;
             }
         }
     }
