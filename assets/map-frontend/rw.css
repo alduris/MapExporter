@@ -5,9 +5,9 @@
 }
 
 :root {
-    --font-body: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    --font-body: "Segoe UI", Tahoma, Geneva, system-ui, -apple-system, BlinkMacSystemFont, Oxygen, sans-serif;
     --font-title: "Rodondo", sans-serif;
-    --region-btn-width: 260px;
+    --region-btn-width: 320px;
 }
 
 .rw-title {
@@ -27,6 +27,23 @@
     font-family: var(--font-body);
     font-size: 1rem;
     font-weight: 600;
+}
+
+@media screen and (max-width: 820px) {
+    .rw-title {
+        font-size: 5rem;
+    }
+}
+@media screen and (max-width: 640px) {
+    .rw-title {
+        font-size: 4rem;
+    }
+    .rw-bigtext {
+        font-size: 1rem;
+    }
+    .rw-text {
+        font-size: 0.875rem;
+    }
 }
 
 /* RW BUTTON START */

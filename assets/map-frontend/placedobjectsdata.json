@@ -19,7 +19,7 @@
     "placeddrillcrab": {"use": "drillcrab"},
     "placedbigmoth": {"use": "bigmoth"},
     "placedsmallmoth": {"use": "smallmoth"},
-    "placedrat": {"use": "rat"},
+    "placedrats": {"use": "rat"},
     "bluetoken": {
         "text": [
             "(setting 5)"

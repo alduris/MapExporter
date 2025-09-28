@@ -468,7 +468,7 @@ namespace MapExporterNew
             }
 
             // Get warp icons
-            foreach (var region in Region.GetFullRegionOrder())
+            foreach (var region in Region.GetFullRegionOrder().Append("unknown"))
             {
                 var filename = $"illustrations/warp-{region.ToLowerInvariant()}.png";
                 var iconPath = AssetManager.ResolveFilePath(filename);

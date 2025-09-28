@@ -60,6 +60,9 @@
         .lineage-entry {
             height: 24px;
         }
+        .lineage-entry.tall {
+            height: 30px;
+        }
 
         .roomtag-divs {
             display: flex;
@@ -106,11 +109,6 @@
             position: absolute;
             margin-left: -25px;
             margin-top: -25px;
-        }
-
-        .weaver-image {
-            margin-left: -50px;
-            margin-top: -50px;
         }
 
         .rse-image {
@@ -172,10 +170,10 @@
 
         .icon-tooltip {
             position: absolute;
-            margin-left: -8px;
-            margin-top: -22px;
+            margin-left: 0px;
+            margin-top: -16px;
             font-weight: 900;
-            font-size: 150%;
+            font-size: 125%;
             color: white;
             -webkit-text-fill-color: white;
             /* Will override color (regardless of order) */
@@ -238,11 +236,35 @@
 
         .region-btn {
             font-size: 0.8rem;
-            width: 230px;
+            width: 240px;
             height: 24px;
             position: relative;
+        }
+        .region-btn:not(details > .region-btn) {
             margin-top: 8px;
             margin-bottom: 8px;
+        }
+
+        details.rw-ui {
+            border-radius: 8px;
+            border: 2px solid #686672;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+        details.rw-ui > summary {
+            background: #686672;
+            color: black;
+            padding: 4px 8px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            user-select: none;
+        }
+        .region-sublist {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+            padding: 6px;
         }
 
         a {
@@ -279,6 +301,15 @@
             background-image: url(./resources/hamburger.png);
             background-repeat: no-repeat;
             background-position: center;
+        }
+
+        @media screen and (max-width: 640px) {
+            .overlay-label {
+                height: 28px;
+            }
+            input[type="checkbox"].rw-ui + span {
+                top: calc(50% - 10px);
+            }
         }
 
         @media (max-width: 899px) {
@@ -441,6 +472,11 @@
                     window.history.pushState(null, '', window.location.pathname + '?' + newstr);
                 } else if (!noNavigation) document.location.search = newstr;
                 if (!noNavigation) newState();
+
+                const regionButtons = [... document.querySelectorAll("input[name='regions']")];
+                for (const btn of regionButtons) {
+                    btn.checked = (btn.value == region);
+                }
             }
 
             if (region != region_param) {
@@ -638,7 +674,7 @@
             crs: L.CRS.Simple,
             zoomControl: false,
         });
-        map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>, <a href="https://github.com/henpemaz" title="Gamedev &amp; associated arts enthusiast">Henpemaz</a>, &amp; <a href="https://github.com/alduris" title="Some kind of programmer I think">Alduris</a> | Join the <a href="https://discord.gg/kPGJNhrnu2">Rain World Modding Server</a>')
+        map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com" target="_blank" title="A JS library for interactive maps">Leaflet</a>, <a href="https://github.com/henpemaz" target="_blank" title="Gamedev &amp; associated arts enthusiast">Henpemaz</a>, &amp; <a href="https://github.com/alduris" target="_blank" title="Fox enthusiast and sometimes a programmer">Alduris</a> | Join the <a href="https://discord.gg/kPGJNhrnu2" target="_blank">Rain World Modding Server</a>')
         map.setView([0, 0], -5);
 
         // Events
@@ -717,7 +753,7 @@
             } catch (e) {
                 console.error(e);
             }
-            var region_url = region.toLowerCase();
+            var region_url = region.toUpperCase();
             var roompath = `./slugcats/${region_url}/${pdifficulty}`;
             getJsonObject(`${roompath}/region.json`, function (json) {
                 var roomjson = json;
@@ -920,8 +956,8 @@
                                     tooltip += spawndata.join(", ");
                                 }
                                 let icon = spawn.creature.toLowerCase();
-                                if (rottype > 0) icon = icon + "_" + rottype;
                                 if (altform && icon == "skywhale") icon = "altskywhale";
+                                if (rottype > 0) icon = icon + "_" + rottype;
                                 let path = "./resources/icons/" + icon + ".png";
                                 divhtml += `<div class="spawn-entry${spawn_filter}">
                                     <img class="icon-image" src="${path}"/>
@@ -1206,6 +1242,12 @@
                     map.removeLayer(roomTagsLayer);
                     map.removeLayer(rippleEggsLayer);
                     setCollapsibleWidths();
+
+                    // Also check the radio button
+                    const regionButtons = [... document.querySelectorAll("input[name='regions']")];
+                    for (const btn of regionButtons) {
+                        btn.checked = (btn.value == region);
+                    }
                 }
                 loadedCount++;
             }, true);
