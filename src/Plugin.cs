@@ -185,7 +185,7 @@ sealed class Plugin : BaseUnityPlugin
         self.GetStorySession.saveState.deathPersistentSaveData.theMark = false;
         self.GetStorySession.saveState.deathPersistentSaveData.redsDeath = false;
         self.GetStorySession.saveState.deathPersistentSaveData.reinforcedKarma = false;
-        // self.GetStorySession.saveState.deathPersistentSaveData.altEnding = false;
+        self.GetStorySession.saveState.deathPersistentSaveData.altEnding = false;
         self.GetStorySession.saveState.hasRobo = false;
         self.GetStorySession.saveState.redExtraCycles = false;
         self.GetStorySession.saveState.deathPersistentSaveData.ascended = false;
@@ -207,6 +207,10 @@ sealed class Plugin : BaseUnityPlugin
         self.GetStorySession.saveState.deathPersistentSaveData.SaintEnlightMessage = true;
         self.GetStorySession.saveState.deathPersistentSaveData.SMTutorialMessage = true;
         self.GetStorySession.saveState.deathPersistentSaveData.TongueTutorialMessage = true;
+
+        // watcher stuff yay
+        self.GetStorySession.saveState.miscWorldSaveData.numberOfPrinceEncounters = 5; // display the prince
+        self.GetStorySession.saveState.miscWorldSaveData.highestPrinceConversationSeen = 226;
 
         // allow Saint ghosts
         self.GetStorySession.saveState.cycleNumber = 1;

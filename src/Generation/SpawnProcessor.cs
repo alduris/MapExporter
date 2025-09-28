@@ -85,7 +85,7 @@ namespace MapExporterNew.Generation
                         new Dictionary<string, object>
                         {
                             { "type", "Point" },
-                            { "coordinates", Vec2arr(coords) }
+                            { "coordinates", Vector2ToArray(coords) }
                         }
                     },
                     {

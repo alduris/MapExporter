@@ -49,8 +49,8 @@ namespace MapExporterNew.Generation
             }
 
             // Find tile boundaries (lower left inclusive, upper right non-inclusive)
-            IntVector2 llbTile = Vec2IntVecFloor(multFac * mapMin / tileSize);
-            IntVector2 urbTile = Vec2IntVecCeil(multFac * mapMax / tileSize);
+            IntVector2 llbTile = Vector2FloorToIntVector(multFac * mapMin / tileSize);
+            IntVector2 urbTile = Vector2CeilToIntVector(multFac * mapMax / tileSize);
 
             // Make images
             int totalTiles = (urbTile.x - llbTile.x + 1) * (urbTile.y - llbTile.y + 1);
@@ -107,7 +107,7 @@ namespace MapExporterNew.Generation
 
                                 // Copy pixels
                                 Vector2 copyOffsetVec = tileCoords - (room.devPos + cam + camOffset) * multFac;
-                                IntVector2 copyOffset = Vec2IntVecFloor(copyOffsetVec);
+                                IntVector2 copyOffset = Vector2FloorToIntVector(copyOffsetVec);
 
                                 CopyTextureSegment(imageCache[fileName], tile, copyOffset.x, copyOffset.y, tileSizeInt.x, tileSizeInt.y, 0, 0);
                                 if (owner.lessResourceIntensive)

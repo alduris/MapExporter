@@ -22,16 +22,16 @@ namespace MapExporterNew
         /// </summary>
         public static string FEPathTo(params string[] path) => path.Aggregate(Path.Combine(Data.ModDirectory, "map-frontend"), Path.Combine);
         public static string TilePathTo(params string[] path) => path.Aggregate(Data.FinalDir, Path.Combine);
-        public static string CreatureIconPath(string item = null) => item == null ? FEPathTo("resources", "creatures") : FEPathTo("resources", "creatures", item + ".png");
-        public static string ObjectIconPath(string item = null) => item == null ? FEPathTo("resources", "objects") : FEPathTo("resources", "objects", item + ".png");
-        public static string PearlIconPath(string item = null) => item == null ? FEPathTo("resources", "objects", "pearl") : FEPathTo("resources", "objects", "pearl", item + ".png");
+        public static string CreatureIconPath(string item = null) => item == null ? FEPathTo("resources", "icons") : FEPathTo("resources", "icons", item + ".png");
+        public static string ObjectIconPath(string item = null) => item == null ? FEPathTo("resources", "icons") : FEPathTo("resources", "icons", item + ".png");
+        public static string PearlIconPath(string item = null) => item == null ? FEPathTo("resources", "icons", "pearl") : FEPathTo("resources", "icons", "pearl", item + ".png");
         public static string WarpIconPath(string region = null) => region == null ? FEPathTo("resources", "warp") : FEPathTo("resources", "warp", region.ToLowerInvariant() + ".png");
         public static string SlugcatIconPath(string scug = null) => scug == null ? FEPathTo("resources", "slugcats") : FEPathTo("resources", "slugcats", scug + ".png");
 
         public static bool TryGetActualPath(string req, out string path)
         {
             if (req.Length > 0)
-                req = req.Substring(1);
+                req = req[1..];
 
             if (req.Length == 0) req = "index.html";
 
@@ -41,7 +41,7 @@ namespace MapExporterNew
             {
                 if (path.EndsWith(".png"))
                 {
-                    split[split.Length - 1] = "unknown.png";
+                    split[^1] = "unknown.png";
                     path = FEPathTo(split);
                     if (File.Exists(path))
                     {
@@ -59,7 +59,7 @@ namespace MapExporterNew
             bytes = null;
             if (!req.StartsWith("/slugcats/")) return false;
 
-            string path = TilePathTo(req.Substring(10).Split('/')); // 10 = len("/slugcats/")
+            string path = TilePathTo(req[10..].Split('/')); // 10 = len("/slugcats/")
             if (!File.Exists(path)) return false;
 
             bytes = File.ReadAllBytes(path);
@@ -250,7 +250,8 @@ namespace MapExporterNew
             {
                 try
                 {
-                    if (!File.Exists(CreatureIconPath(item.ToLowerInvariant())) || replaceAll)
+                    bool isLizard = StaticWorld.GetCreatureTemplate(new CreatureTemplate.Type(item, false)).IsLizard;
+                    if (!File.Exists(CreatureIconPath(item.ToLowerInvariant())) || isLizard || replaceAll)
                     {
                         if (item == CreatureTemplate.Type.Centipede.value)
                         {
@@ -267,6 +268,42 @@ namespace MapExporterNew
                                 Iconify(tex);
                                 string name = i switch { 1 => "smallcentipede", 2 => "centipede", 3 => "bigcentipede", _ => throw new NotImplementedException() };
                                 File.WriteAllBytes(CreatureIconPath(name), tex.EncodeToPNG());
+                                UnityEngine.Object.Destroy(tex);
+                            }
+                        }
+                        else if (ModManager.Watcher && item == WatcherEnums.CreatureTemplateType.SkyWhale.value)
+                        {
+                            for (int i = 0; i <= 2; i++)
+                            {
+                                var iconData = new IconSymbol.IconSymbolData
+                                {
+                                    critType = new CreatureTemplate.Type(item, false),
+                                    intData = i
+                                };
+                                var sprite = new FSprite(CreatureSymbol.SpriteNameOfCreature(iconData), true);
+                                var color = CreatureSymbol.ColorOfCreature(iconData);
+                                var tex = SpriteColor(sprite, color);
+                                Iconify(tex);
+                                string name = i switch { 0 => "skywhale", 1 => "altskywhale", _ => throw new NotImplementedException() };
+                                File.WriteAllBytes(CreatureIconPath(name), tex.EncodeToPNG());
+                                UnityEngine.Object.Destroy(tex);
+                            }
+                        }
+                        else if (isLizard)
+                        {
+                            for (int i = 0; i < 3; i++)
+                            {
+                                var iconData = new IconSymbol.IconSymbolData {
+                                    critType = new CreatureTemplate.Type(item, false),
+                                    intData = i
+                                };
+                                var spriteName = CreatureSymbol.SpriteNameOfCreature(iconData);
+                                if (spriteName == "Futile_White") continue;
+                                var sprite = new FSprite(spriteName, true);
+                                var color = CreatureSymbol.ColorOfCreature(iconData);
+                                var tex = SpriteColor(sprite, color);
+                                Iconify(tex);
+                                File.WriteAllBytes(CreatureIconPath(item.ToLowerInvariant() + (i == 0 ? "" : ("_" + i))), tex.EncodeToPNG());
                                 UnityEngine.Object.Destroy(tex);
                             }
                         }
@@ -308,24 +345,24 @@ namespace MapExporterNew
                     bool deadCritter = false;
                     bool placedCritter = false;
                     bool rottenObject = false;
-                    if (item.StartsWith("Dead") && creatureNames.Contains(item.Substring(4)))
+                    if (item.StartsWith("Dead") && creatureNames.Contains(item[4..]))
                     {
-                        name = item.Substring(4);
+                        name = item[4..];
                         deadCritter = true;
                     }
-                    else if (item.StartsWith("Rotten") && objectNames.Contains(item.Substring(6)))
+                    else if (item.StartsWith("Rotten") && objectNames.Contains(item[6..]))
                     {
-                        name = item.Substring(6);
+                        name = item[6..];
                         rottenObject = true;
                     }
-                    else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6)))
+                    else if (item.StartsWith("Placed") && objectNames.Contains(item[6..]))
                     {
-                        name = item.Substring(6);
+                        name = item[6..];
                         placedCritter = true;
                     }
-                    else if (item.StartsWith("Placed") && objectNames.Contains(item.Substring(6, item.Length - 7)))
+                    else if (item.StartsWith("Placed") && objectNames.Contains(item[6..^1]))
                     {
-                        name = item.Substring(6, item.Length - 7);
+                        name = item[6..^1];
                         placedCritter = true;
                     }
                     if ((deadCritter || placedCritter || creatureNames.Contains(name)) && (!File.Exists(ObjectIconPath(name)) || replaceAll))
@@ -458,7 +495,9 @@ namespace MapExporterNew
                     )
                 || obj.data is CollectToken.CollectTokenData
                 || obj.data is WarpPoint.WarpPointData { oneWayExit: false }
+                || obj.data is PlacedObject.RippleSpawnEggData
                 || obj.data is SpinningTopData
+                || obj.type == WatcherEnums.PlacedObjectType.WeaverSpot
                 || obj.type == PlacedObject.Type.SandGrubHole
                 || (obj.type.ToString().StartsWith("Placed") && GetObjectCategory(obj.type) == ObjectsPage.DevObjectCategories.Creatures);
 

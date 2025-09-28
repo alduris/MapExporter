@@ -50,7 +50,7 @@ namespace MapExporterNew.Generation
                         new Dictionary<string, object>
                         {
                             { "type", "LineString" },
-                            { "coordinates", new float[][] { Vec2arr(pointA), Vec2arr(handleA), Vec2arr(handleB), Vec2arr(pointB) } }
+                            { "coordinates", new float[][] { Vector2ToArray(pointA), Vector2ToArray(handleA), Vector2ToArray(handleB), Vector2ToArray(pointB) } }
                         }
                     },
                     { "properties", new Dictionary<string, object> {} }

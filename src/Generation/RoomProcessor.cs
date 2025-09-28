@@ -82,7 +82,7 @@ namespace MapExporterNew.Generation
                         new Dictionary<string, object>
                         {
                             { "type", "Polygon" },
-                            { "coordinates", new float[][][] { Rect2Arr(box) } }
+                            { "coordinates", new float[][][] { RectToArray(box) } }
                         }
                     },
                     {
@@ -90,7 +90,7 @@ namespace MapExporterNew.Generation
                         new Dictionary<string, object>
                         {
                             { "name", name },
-                            { "popupcoords", Vec2arr(namePos) },
+                            { "popupcoords", Vector2ToArray(namePos) },
                         }
                     }
                 };
@@ -113,7 +113,7 @@ namespace MapExporterNew.Generation
                         new Dictionary<string, object>()
                         {
                             {"type", "Point" },
-                            { "coordinates", Vec2arr(pos) }
+                            { "coordinates", Vector2ToArray(pos) }
                         }
                     },
                     {

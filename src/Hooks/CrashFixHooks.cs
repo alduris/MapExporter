@@ -15,6 +15,7 @@ namespace MapExporterNew.Hooks
             On.SeedCob.FreezingPaletteUpdate += SeedCob_FreezingPaletteUpdate;
             On.MoreSlugcats.BlinkingFlower.DrawSprites += BlinkingFlower_DrawSprites;
             On.RoomCamera.ApplyEffectColorsToPaletteTexture += EffectColorOOBFix;
+            On.Watcher.WatcherRoomSpecificScript.WRSA_J01.UpdateObjects += WRSA_J01_UpdateObjects;
         }
 
         private static void IgnoreScavAIComplaints(On.ScavengersWorldAI.WorldFloodFiller.orig_Update orig, ScavengersWorldAI.WorldFloodFiller self)
@@ -51,6 +52,14 @@ namespace MapExporterNew.Hooks
             color1 = Math.Min(color1, 21);
             color2 = Math.Min(color2, 21);
             orig(self, ref texture, color1, color2);
+        }
+
+        private static void WRSA_J01_UpdateObjects(On.Watcher.WatcherRoomSpecificScript.WRSA_J01.orig_UpdateObjects orig, Watcher.WatcherRoomSpecificScript.WRSA_J01 self)
+        {
+            // No follow camera object check, just turn on the eyes for hint purposes
+            self.leftEye.active = true;
+            self.rightEye.active = true;
+            self.centerEye1.active = true;
         }
     }
 }

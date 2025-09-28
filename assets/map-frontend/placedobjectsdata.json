@@ -3,15 +3,23 @@
         "text": [
             "(if (and (!= (setting 4) 'Misc') (!= (setting 4) 'Misc2') (!= (setting 4) 'BroadcastMisc')) (setting 4) '')"
         ],
-        "icon": "(if (and (!= (setting 4) 'Misc') (!= (setting 4) 'Misc2') (!= (setting 4) 'BroadcastMisc')) (join './resources/objects/pearl/' (lower (setting 4)) '.png') (default))"
+        "icon": "(if (and (!= (setting 4) 'Misc') (!= (setting 4) 'Misc2') (!= (setting 4) 'BroadcastMisc')) (join './resources/icons/pearl/' (lower (setting 4)) '.png') (default))"
     },
     "eeghostspot": {"use": "ghostspot"},
+    "spinningtopspot": {"use": "ghostspot"},
     "uniquedatapearl": {"use": "datapearl"},
     "deadhazer": {"use": "hazer"},
     "deadvulturegrub": {"use": "vulturegrub"},
     "albinohazer": {"use": "hazer"},
     "deadalbinohazer": {"use": "hazer"},
     "sandgrubnetwork": {"displayif": "(false)"},
+    "sandgrubhole": {"use": "sandgrub"},
+    "placedboxworm": {"use": "boxworm"},
+    "placedfiresprite": {"use": "firesprite"},
+    "placeddrillcrab": {"use": "drillcrab"},
+    "placedbigmoth": {"use": "bigmoth"},
+    "placedsmallmoth": {"use": "smallmoth"},
+    "placedrat": {"use": "rat"},
     "bluetoken": {
         "text": [
             "(setting 5)"

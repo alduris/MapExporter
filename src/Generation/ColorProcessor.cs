@@ -19,9 +19,9 @@ namespace MapExporterNew.Generation
             Color bgcolor = Mode(regionInfo.bgcolors);
             Color sccolor = Mode(regionInfo.sccolors);
 
-            metadata["bgcolor"] = Color2Arr(fgcolor);
-            metadata["highlightcolor"] = Color2Arr(bgcolor);
-            metadata["shortcutcolor"] = Color2Arr(sccolor);
+            metadata["bgcolor"] = ColorToArray(fgcolor);
+            metadata["highlightcolor"] = ColorToArray(bgcolor);
+            metadata["shortcutcolor"] = ColorToArray(sccolor);
 
             // Calculate a geo color
             Vector3 bvec = HSL2HSV(Custom.RGB2HSL(bgcolor));
@@ -47,7 +47,7 @@ namespace MapExporterNew.Generation
             if (ss < 0.2f) ss = 0.3f - ss / 2f;
             if (sv < 0.3f) sv = 0.45f - sv / 2f;
 
-            metadata["geocolor"] = Color2Arr(HSV2HSL(sh, ss, sv).rgb);
+            metadata["geocolor"] = ColorToArray(HSV2HSL(sh, ss, sv).rgb);
 
             yield return 1f;
             yield break;

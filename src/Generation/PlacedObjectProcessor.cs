@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Runtime;
 using UnityEngine;
 using Watcher;
-using static MapExporterNew.Generation.GenUtil;
 
 namespace MapExporterNew.Generation
 {
@@ -13,6 +11,7 @@ namespace MapExporterNew.Generation
         protected override IEnumerator<float> Process()
         {
             List<PlacedObjectInfo> POs = [];
+            List<PlacedObjectInfo> RSEs = [];
             List<WarpPointInfo> WPs = [];
 
             foreach (var room in owner.regionInfo.rooms.Values)
@@ -38,6 +37,23 @@ namespace MapExporterNew.Generation
                             destRegion = thing.data[3] == "NULL" ? null : thing.data[3],
                             destRoom = thing.data[4] == "NULL" ? null : thing.data[4],
                         });
+                        POs.Add(new PlacedObjectInfo
+                        {
+                            roomName = room.roomName,
+                            type = thing.type,
+                            pos = room.devPos + thing.pos,
+                            settings = thing.data
+                        });
+                    }
+                    else if (thing.type == nameof(PlacedObject.Type.RippleSpawnEgg))
+                    {
+                        RSEs.Add(new PlacedObjectInfo
+                        {
+                            roomName = room.roomName,
+                            type = thing.type,
+                            pos = room.devPos + thing.pos,
+                            settings = thing.data
+                        });
                     }
                     else
                     {
@@ -53,6 +69,7 @@ namespace MapExporterNew.Generation
             }
 
             owner.metadata["placedobject_features"] = POs;
+            owner.metadata["ripplespawnegg_features"] = RSEs;
             owner.metadata["warppoint_features"] = WPs;
 
             yield return 1f;
@@ -75,7 +92,7 @@ namespace MapExporterNew.Generation
                         new Dictionary<string, object>
                         {
                             { "type", "Point" },
-                            { "coordinates", Vec2arr(pos) }
+                            { "coordinates", Vector2ToArray(pos) }
                         }
                     },
                     {
@@ -108,7 +125,7 @@ namespace MapExporterNew.Generation
                         new Dictionary<string, object>
                         {
                             { "type", "Point" },
-                            { "coordinates", Vec2arr(pos) }
+                            { "coordinates", Vector2ToArray(pos) }
                         }
                     },
                     {
