@@ -151,6 +151,33 @@
             border-radius: 50%;
         }
 
+        .warpdest-circle {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background-color: #5b4fde;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+        .warpdest-circle.badwarp {
+            background-color: #5f1cd4;
+        }
+
+        .warpdest-label {
+            position: absolute;
+            margin-left: 0px;
+            /* margin-top: -5px; */
+            font-weight: 900;
+            font-size: 112.5%;
+            color: white;
+            -webkit-text-fill-color: white;
+            /* Will override color (regardless of order) */
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: black;
+            pointer-events: none;
+        }
+
         .icon-image {
             position: absolute;
             margin-left: -25px;
@@ -364,6 +391,10 @@
         }
 
         .warppoint-filter {
+            display: initial
+        }
+
+        .warpdest-filter {
             display: initial
         }
 
@@ -716,6 +747,7 @@
         var placedObjectsLayer;
         var roomTagsLayer;
         var warpPointsLayer;
+        var warpDestsLayer;
         var rippleEggsLayer;
         var loadedDifficulty = null;
         var loadedRegion = null;
@@ -1074,9 +1106,11 @@
                         if (regionName != undefined) regionName = regionName["name"];
                         else regionName = "Random warp";
 
-                        taghtml += "<div class=\"warppoint-filter\">";
-                        taghtml += `<img class="warppoint-image" src="./resources/warp/${icon}.png" title="${regionName}"/>`;
-                        taghtml += "</div>";
+                        if (region.toLowerCase() != "waua") {
+                            taghtml += "<div class=\"warppoint-filter\">";
+                            taghtml += `<img class="warppoint-image" src="./resources/warp/${icon}.png" title="${regionName}"/>`;
+                            taghtml += "</div>";
+                        }
 
                         return L.marker(latlng, {
                             icon: L.divIcon({
@@ -1099,7 +1133,11 @@
                                     region = "WAUA";
                                     room = null;
                                     pushState();
-                                } else if (rottedRegions.indexOf(region.toLowerCase()) == -1) {
+                                } else if (rottedRegions.indexOf(region.toLowerCase()) > -1) {
+                                    region = "WORA";
+                                    room = null;
+                                    pushState();
+                                } else {
                                     region = "WRSA";
                                     room = null;
                                     pushState();
@@ -1110,6 +1148,50 @@
                 });
                 if (hadWarpPoints) warpPointsLayer.addTo(map);
                 overlays.addOverlay(warpPointsLayer, "Warp Points");
+
+                // Warp destinations
+                let hadWarpDestinations = map.hasLayer(warpDestsLayer) || loadedRegion == null;
+                if (warpDestsLayer) {
+                    overlays.removeLayer(warpDestsLayer);
+                    map.removeLayer(warpDestsLayer);
+                }
+                warpDestsLayer = L.geoJSON(json["warpdest_features"], {
+                    pointToLayer: function (feature, latlng) {
+                        let taghtml = "";
+                        let data = feature.properties;
+                        let title = "Warp Destination";
+                        let classes = "warpdest-circle";
+
+                        let badWarp = data.badWarp;
+                        let deadEnd = data.deadEnd;
+
+                        if (badWarp) {
+                            title += "\nBad warp";
+                            classes += " badwarp";
+                        }
+                        if (deadEnd) {
+                            title += "\nDead end";
+                        }
+                        if (data.rippleReq > 1) {
+                            title += `\nRipple requirement: ${data.rippleReq}`;
+                        }
+
+                        taghtml += "<div class=\"warpdest-filter\">";
+                        taghtml += `<div class="${classes}" title="${title}"></div>`;
+                        // taghtml += `<img class="warpdest-image" src="./resources/icons/.png"/>`;
+                        if (data.rippleReq > 1) taghtml += `<div class="warpdest-label">\u2265${data.rippleReq}</div>`;
+                        taghtml += "</div>";
+
+                        return L.marker(latlng, {
+                            icon: L.divIcon({
+                                className: 'warpdest-divs',
+                                html: taghtml,
+                            }),
+                        });
+                    }
+                });
+                if (hadWarpDestinations) warpDestsLayer.addTo(map);
+                overlays.addOverlay(warpDestsLayer, "Warp Destinations");
 
                 // Ripple spawn eggs
                 let hadRippleEggs = map.hasLayer(rippleEggsLayer) || loadedRegion == null;
@@ -1125,13 +1207,10 @@
 
                         // Data!
                         let icon = "./resources/icons/ripplespawnegg.png";
-                        let tooltip = "";
-                        let display = true;
 
                         // The resulting HTML
                         objecthtml += `<div class="rse-entry">
                                     <img class="rse-image" src="${icon}"/>
-                                    <div class="rse-tooltip">${tooltip}</div>
                                     </div>`;
 
                         return L.marker(latlng, {

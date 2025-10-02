@@ -293,8 +293,9 @@ namespace MapExporterNew.Tabs
 
         private void SaveButton_OnClick(UIfocusable trigger)
         {
-            if (activeRegion == null)
+            if (activeRegion == null || !activeRegion.rooms.Any(x => !x.Value.hidden))
             {
+                trigger.PlaySound(SoundID.MENU_Error_Ping);
                 return;
             }
 
@@ -302,11 +303,14 @@ namespace MapExporterNew.Tabs
             if (recenterCheckBox.GetValueBool())
             {
                 Vector2 midpoint = Vector2.zero;
+                int roomCount = 0;
                 foreach (var room in activeRegion.rooms.Values)
                 {
+                    if (room.hidden) continue;
                     midpoint += room.devPos;
+                    roomCount++;
                 }
-                midpoint /= activeRegion.rooms.Count;
+                midpoint /= roomCount;
                 foreach (var room in activeRegion.rooms.Values)
                 {
                     room.devPos -= midpoint;
