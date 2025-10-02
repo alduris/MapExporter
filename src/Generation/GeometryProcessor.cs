@@ -72,7 +72,7 @@ namespace MapExporterNew.Generation
                             case 3: // half floors
                                     // Top and bottom lines always get drawn
                                 lines.AddLast(new Line(new(x, y + 20f), new(x + 20f, y + 20f)));
-                                lines.AddLast(new Line(new(x, y + 10f), new(x + 20f, y + 20f)));
+                                lines.AddLast(new Line(new(x, y + 10f), new(x + 20f, y + 10f)));
 
                                 // The edges get a little funky.
                                 // We don't draw if there is another half floor there but otherwise a line needs to be drawn *somewhere*.
