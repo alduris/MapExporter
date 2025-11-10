@@ -18,6 +18,7 @@ namespace MapExporterNew
         public static readonly ConditionalWeakTable<World, List<World.CreatureSpawner>> spawnerCWT = new();
         public Dictionary<string, RoomEntry> rooms = [];
         public List<ConnectionEntry> connections = [];
+        public Dictionary<string, Vector2> vistaPoints = [];
         public string acronym;
         public string name;
         public string echoRoom;
@@ -79,6 +80,23 @@ namespace MapExporterNew
                 {
                     var panel = node as RoomPanel;
                     devPos[panel.roomRep.room.name] = panel.devPos;
+                }
+            }
+
+            // Vista locations
+            if (Data.CollectRoomData(Capturer.updateMode))
+            {
+                var vistasPath = AssetManager.ResolveFilePath(Path.Combine("World", world.name, "vistas.txt"));
+                if (File.Exists(vistasPath))
+                {
+                    var rawLines = File.ReadAllLines(vistasPath);
+                    foreach (var lines in rawLines)
+                    {
+                        var split = lines.Trim().Split(',');
+                        float x = float.Parse(split[1]);
+                        float y = float.Parse(split[2]);
+                        vistaPoints.Add(split[0], new Vector2(x, y));
+                    }
                 }
             }
 
@@ -147,6 +165,11 @@ namespace MapExporterNew
 
         public Dictionary<string, object> ToJson()
         {
+            var newVistaPoints = new Dictionary<string, float[]>();
+            foreach (var kv in vistaPoints)
+            {
+                newVistaPoints[kv.Key] = Vector2ToArray(kv.Value);
+            }
             return new()
             {
                 { "acronym", acronym },
@@ -154,6 +177,7 @@ namespace MapExporterNew
                 { "echoRoom", echoRoom },
                 { "rooms", rooms },
                 { "connections", connections },
+                { "vistaPoints", newVistaPoints },
                 { "fgcolors", (from s in fgcolors select Vector3ToArray((Vector3)(Vector4)s)).ToList() },
                 { "bgcolors", (from s in bgcolors select Vector3ToArray((Vector3)(Vector4)s)).ToList() },
                 { "sccolors", (from s in sccolors select Vector3ToArray((Vector3)(Vector4)s)).ToList() },
@@ -170,9 +194,10 @@ namespace MapExporterNew
 
                 rooms = [],
                 connections = [],
-                fgcolors = ((List<object>)json["fgcolors"]).Cast<List<object>>().Select(ColorFromArray).ToList(),
-                bgcolors = ((List<object>)json["bgcolors"]).Cast<List<object>>().Select(ColorFromArray).ToList(),
-                sccolors = ((List<object>)json["sccolors"]).Cast<List<object>>().Select(ColorFromArray).ToList(),
+                vistaPoints = [],
+                fgcolors = [.. ((List<object>)json["fgcolors"]).Cast<List<object>>().Select(ColorFromArray)],
+                bgcolors = [.. ((List<object>)json["bgcolors"]).Cast<List<object>>().Select(ColorFromArray)],
+                sccolors = [.. ((List<object>)json["sccolors"]).Cast<List<object>>().Select(ColorFromArray)],
                 fromJson = true
             };
 
@@ -187,6 +212,12 @@ namespace MapExporterNew
             foreach (var data in ((List<object>)json["connections"]).Cast<Dictionary<string, object>>())
             {
                 entry.connections.Add(ConnectionEntry.FromJson(data));
+            }
+
+            // Add vistas
+            foreach (var data in (Dictionary<string, object>)json["vistaPoints"])
+            {
+                entry.vistaPoints.Add(data.Key, Vector2FromJson(data.Value));
             }
 
             return entry;

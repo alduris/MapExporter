@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MapExporterNew
+﻿namespace MapExporterNew
 {
     public static class Preferences
     {
@@ -13,6 +7,7 @@ namespace MapExporterNew
         public static readonly Preference<bool> ShowGuardians = new("show/guadians", true);
         public static readonly Preference<bool> ShowInsects = new("show/insects", false);
         public static readonly Preference<bool> ShowOracles = new("show/oracles", true);
+        public static readonly Preference<bool> ShowPrince = new("show/prince", true);
 
         public static readonly Preference<bool> ScreenshotterAutoFill = new("screenshotter/autofill", true);
         public static readonly Preference<bool> ScreenshotterSkipExisting = new("screenshotter/skipexisting", false);
@@ -20,10 +15,9 @@ namespace MapExporterNew
         public static readonly Preference<bool> EditorCheckOverlap = new("editor/overlap", false);
         public static readonly Preference<bool> EditorShowCameras = new("editor/cameras", false);
 
-        public static readonly Preference<bool> GeneratorLessInsense = new("generator/lessintensive", false);
+        public static readonly Preference<bool> GeneratorLessIntense = new("generator/lessintensive", false);
         public static readonly Preference<int> GeneratorTargetFPS = new("generator/targetfps", 10, 5, 40);
         public static readonly Preference<int> GeneratorCacheSize = new("generator/cachesize", 64, 0, int.MaxValue);
-        public static readonly Preference<bool> GeneratorSkipExisting = new("generator/skipexisting", false);
         public static readonly Preference<bool> GeneratorSkipTiles = new("generator/skiptiles", false);
 
         public readonly struct Preference<T>(string key, T defaultValue)

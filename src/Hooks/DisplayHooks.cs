@@ -20,6 +20,7 @@ namespace MapExporterNew.Hooks
             On.GateKarmaGlyph.DrawSprites += MoreVisibleGateKarma;
             On.VoidSpawnGraphics.DrawSprites += AntiVoidSpawn;
             On.Room.Loaded += EffectsBlacklist;
+            On.Watcher.Prince.Update += HidePrince;
         }
 
         private static void NoLightningFlash(On.Lightning.LightningSource.orig_Update orig, Lightning.LightningSource self)
@@ -150,6 +151,16 @@ namespace MapExporterNew.Hooks
             {
                 item.active = true;
             }
+        }
+
+        private static void HidePrince(On.Watcher.Prince.orig_Update orig, Prince self, bool eu)
+        {
+            if (!self.slatedForDeletetion && !Preferences.ShowPrince.GetValue())
+            {
+                self.Destroy();
+                return;
+            }
+            orig(self, eu);
         }
     }
 }

@@ -18,7 +18,7 @@ Map Exporter|Map Exporter
 
 Main Menu|Main Menu
 MAPEX:mmtutorial|1. Run screenshotter on region<LINE>2. Edit layout<LINE>3. Finalize in generator tab<LINE>4. Test interactive map<LINE>5. Export
-MAPEX:mmcredits|Made by Henpemaz, Dual-Iron, Noblecat57, & Alduris with help from Bro748, Vigaro, BensoneWhite, iwantbread, Aissurteivos, SlimeCubed, & LudoCrypt
+MAPEX:mmcredits|Made by Henpemaz, Dual-Iron, Noblecat57, & Alduris with help from Bro748, Vigaro, BensoneWhite, iwantbread, Aissurteivos, SlimeCubed, LudoCrypt, & MortalCat
 HOW TO USE|HOW TO USE
 default|default
 SHOW/HIDE|SHOW/HIDE
@@ -37,6 +37,8 @@ show/insects|Show insects
 show/insects/desc|Show bugs spawned from insect groups or room effects in rooms.
 show/oracles|Show iterators
 show/oracles/desc|Show iterators where they spawn.
+show/prince|Show the Prince
+show/prince/desc|Show the Prince in Outer Rim and anywhere else it appears. Exclusive to Watcher DLC.
 
 screenshotter/autofill|Slugcat auto-fill
 screenshotter/autofill/desc|Screenshotter: auto-fill with all slugcats that are marked as being able to access the region.

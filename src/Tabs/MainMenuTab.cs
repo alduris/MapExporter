@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using MapExporterNew.Tabs.UI;
 using Menu;
 using Menu.Remix;
 using Menu.Remix.MixedUI;
+using RWCustom;
 using UnityEngine;
+using static MapExporterNew.Preferences;
 
 namespace MapExporterNew.Tabs
 {
@@ -46,112 +49,135 @@ namespace MapExporterNew.Tabs
 
                 // Options
                 new OpImage(new Vector2(0f, 424f), "pixel") { scale = new Vector2(600f, 2f), color = MenuColorEffect.rgbMediumGrey },
-                new OpLabel(new Vector2(0f, 385f), new Vector2(600f, 30f), Translate("OPTIONS"), FLabelAlignment.Center, true),
-
-                new OpLabel(Column(0), Row(0), Translate("SHOW/HIDE")),
-                new OpLabel(Column(1), Row(0), Translate("SCREENSHOTTER")),
-                new OpLabel(Column(1), Row(3), Translate("MAP EDITOR")),
-                new OpLabel(Column(1), Row(6), Translate("GENERATOR"))
-
-                //new OpLabel(Column(2), Row(0), "PLACED OBJECTS"),
-                //iconManager = new OpPOIconManager(new Vector2(Column(2), 10f), new Vector2(ColumnWidth(2), Row(0) - 10f))
+                new OpLabel(new Vector2(0f, 385f), new Vector2(600f, 30f), Translate("OPTIONS"), FLabelAlignment.Center, true)
             );
 
-            Preferences.Preference<bool>[] Col0 = [
-                Preferences.ShowCreatures,
-                Preferences.ShowGhosts,
-                Preferences.ShowGuardians,
-                Preferences.ShowInsects,
-                Preferences.ShowOracles
+            DisplayCell[][] displayCells = [
+                // COLUMN 0
+                [
+                    new LabelCell("SHOW/HIDE"),
+                    new BoolPreferenceCell(ShowCreatures),
+                    new BoolPreferenceCell(ShowGhosts),
+                    new BoolPreferenceCell(ShowGuardians),
+                    new BoolPreferenceCell(ShowInsects),
+                    new BoolPreferenceCell(ShowOracles),
+                    new BoolPreferenceCell(ShowPrince),
+                ],
+
+                // COLUMN 1
+                [
+                    new LabelCell("SCREENSHOTTER"),
+                    new BoolPreferenceCell(ScreenshotterAutoFill),
+                    new BoolPreferenceCell(ScreenshotterSkipExisting),
+
+                    new LabelCell("MAP EDITOR"),
+                    new BoolPreferenceCell(EditorCheckOverlap),
+                    new BoolPreferenceCell(EditorShowCameras),
+
+                    new LabelCell("GENERATOR"),
+                    new BoolPreferenceCell(GeneratorSkipTiles),
+                    new IntPreferenceCell(GeneratorCacheSize),
+                    new IntPreferenceCell(GeneratorTargetFPS),
+                ],
             ];
-            for (int i = 0; i < Col0.Length; i++)
+
+            List<UIelement> elements = [];
+            for (int i = 0; i < displayCells.Length; i++)
             {
-                AddItems(MapToPreference(Col0[i], 0, i + 1), new OpLabel(Column(0, true), Row(i + 1), Translate(Col0[i].key)));
+                for (int j = 0; j < displayCells[i].Length; j++)
+                {
+                    displayCells[i][j].Render(elements, new Vector2(Column(i, false), Row(j)), new Vector2(Column(i, true), Row(j)));
+                }
             }
 
-            Preferences.Preference<bool>[] Col1 = [
-                Preferences.ScreenshotterAutoFill,
-                Preferences.ScreenshotterSkipExisting,
-                default,
-                Preferences.EditorCheckOverlap,
-                Preferences.EditorShowCameras,
-                default
-            ];
-            for (int i = 0; i < Col1.Length; i++)
+            AddItems([.. elements]);
+        }
+
+        public override void Update() { }
+
+        private abstract class DisplayCell
+        {
+            public abstract void Render(List<UIelement> elements, Vector2 pos, Vector2 pos2);
+            public string Translate(string key) => Custom.rainWorld.inGameTranslator.Translate(key);
+        }
+
+        private class LabelCell(string text) : DisplayCell
+        {
+            public override void Render(List<UIelement> elements, Vector2 pos, Vector2 pos2)
             {
-                if (Col1[i].key is null) continue;
-                AddItems(MapToPreference(Col1[i], 1, i + 1), new OpLabel(Column(1, true), Row(i + 1), Translate(Col1[i].key)));
+                elements.Add(new OpLabel(pos.x, pos.y, Translate(text), false));
             }
+        }
 
-            Preferences.Preference<int>[] Col1b = [
-                Preferences.GeneratorTargetFPS,
-                Preferences.GeneratorCacheSize
-            ];
-            for (int i = 0; i < Col1b.Length; i++)
+        private class WhitespaceCell() : DisplayCell
+        {
+            public override void Render(List<UIelement> elements, Vector2 pos, Vector2 pos2) { }
+        }
+
+        private class BoolPreferenceCell(Preference<bool> preference) : DisplayCell
+        {
+            public override void Render(List<UIelement> elements, Vector2 pos, Vector2 pos2)
             {
-                AddItems(MapToPreference(Col1b[i], 1, i + 1 + Col1.Length), new OpLabel(Column(1, true), Row(i + 1 + Col1.Length), Translate(Col1b[i].key)));
-            }
-
-            //iconManager.Initialize();
-
-            UIelement MapToPreference<T>(Preferences.Preference<T> preference, int c, int r)
-            {
-                // Create the OpCheckBox
-                var val = preference.GetValue();
                 if (!Data.UserPreferences.ContainsKey(preference.key))
                 {
                     Data.UserPreferences.Add(preference.key, preference.defaultValue);
                 }
 
-                if (val is bool bV && preference.defaultValue is bool bDV)
+                // Create element
+                var checkbox = new OpCheckBox(OIUtil.CosmeticBind(preference.GetValue()), pos)
                 {
-                    var checkbox = new OpCheckBox(OIUtil.CosmeticBind(bV), new Vector2(Column(c), Row(r)))
-                    {
-                        description = $"{Translate(preference.key + "/desc")} ({Translate("default")}: {Translate(bDV ? "Yes" : "No")})".TrimStart(' '),
-                        colorEdge = bV ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey
-                    };
+                    description = $"{Translate(preference.key + "/desc")} ({Translate("default")}: {Translate(preference.defaultValue ? "Yes" : "No")})".TrimStart(' '),
+                    colorEdge = preference.GetValue() ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey
+                };
 
-                    // Change when element changes
-                    checkbox.OnValueChanged += (_, v, ov) =>
-                    {
-                        if (v != ov)
-                        {
-                            bool b = ValueConverter.ConvertToValue<bool>(v);
-                            Data.UserPreferences[preference.key] = b;
-                            Data.SaveData();
-                            checkbox.colorEdge = b ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey;
-                        }
-                    };
-
-                    return checkbox;
-                }
-                else if (val is int iV && preference.defaultValue is int iDV && preference.minRange is int iMin && preference.maxRange is int iMax)
+                // Change when element changes
+                checkbox.OnValueChanged += (_, v, ov) =>
                 {
-                    var dragger = new OpDragger(preference.hasRange ? OIUtil.CosmeticRange(iV, iMin, iMax) : OIUtil.CosmeticBind(iV), new Vector2(Column(c), Row(r)))
+                    if (v != ov)
                     {
-                        description = $"{Translate(preference.key + "/desc")} ({Translate("default")}: {iDV}{(preference.hasRange ? $", [{iMin}, {iMax}]" : "")})".TrimStart(' ').TrimStart(' ')
-                    };
+                        bool b = ValueConverter.ConvertToValue<bool>(v);
+                        Data.UserPreferences[preference.key] = b;
+                        Data.SaveData();
+                        checkbox.colorEdge = b ? MenuColorEffect.rgbWhite : MenuColorEffect.rgbMediumGrey;
+                    }
+                };
 
-                    // Change when element changes
-                    dragger.OnValueChanged += (_, v, ov) =>
-                    {
-                        if (v != ov)
-                        {
-                            int i = ValueConverter.ConvertToValue<int>(v);
-                            Data.UserPreferences[preference.key] = i;
-                            Data.SaveData();
-                        }
-                    };
-
-                    return dragger;
-                }
-                else
-                {
-                    throw new ArgumentException("Preference is unsupported type!");
-                }
+                // Add
+                elements.Add(checkbox);
+                elements.Add(new OpLabel(pos2.x, pos2.y, Translate(preference.key)));
             }
         }
 
-        public override void Update() { }
+        private class IntPreferenceCell(Preference<int> preference) : DisplayCell
+        {
+            public override void Render(List<UIelement> elements, Vector2 pos, Vector2 pos2)
+            {
+                if (!Data.UserPreferences.ContainsKey(preference.key))
+                {
+                    Data.UserPreferences.Add(preference.key, preference.defaultValue);
+                }
+
+                // Create element
+                var dragger = new OpDragger(preference.hasRange ? OIUtil.CosmeticRange(preference.GetValue(), preference.minRange, preference.maxRange) : OIUtil.CosmeticBind(preference.GetValue()), pos)
+                {
+                    description = $"{Translate(preference.key + "/desc")} ({Translate("default")}: {preference.defaultValue}{(preference.hasRange ? $", [{preference.minRange}, {preference.maxRange}]" : "")})".TrimStart(' ').TrimStart(' ')
+                };
+
+                // Change when element changes
+                dragger.OnValueChanged += (_, v, ov) =>
+                {
+                    if (v != ov)
+                    {
+                        int i = ValueConverter.ConvertToValue<int>(v);
+                        Data.UserPreferences[preference.key] = i;
+                        Data.SaveData();
+                    }
+                };
+
+                // Add
+                elements.Add(dragger);
+                elements.Add(new OpLabel(pos2.x, pos2.y, Translate(preference.key)));
+            }
+        }
     }
 }

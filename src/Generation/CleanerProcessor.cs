@@ -22,10 +22,6 @@ namespace MapExporterNew.Generation
                     {
                         // Only the png files
                         files.AddRange(Directory.GetFiles(dir).Where(x => x.EndsWith(".png")));
-                        if (files.Count > 0 && Preferences.GeneratorSkipExisting.GetValue())
-                        {
-                            SkipGenerator = true;
-                        }
                     }
                 }
                 catch (UnauthorizedAccessException) { } // this shouldn't happen

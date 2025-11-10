@@ -61,6 +61,7 @@ namespace MapExporterNew.Generation
             processes.Enqueue(new SpawnProcessor(this));
             processes.Enqueue(new PlacedObjectProcessor(this));
             processes.Enqueue(new ColorProcessor(this));
+            processes.Enqueue(new VistaProcessor(this));
 
             // Preferences
             // lessResourceIntensive = Preferences.GeneratorLessInsense.GetValue();
