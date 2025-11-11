@@ -8,7 +8,6 @@ namespace MapExporterNew.Generation
     internal class CleanerProcessor : Processor
     {
         private readonly List<string> files = [];
-        public bool SkipGenerator { get; private set; } = false;
 
         public CleanerProcessor(Generator owner) : base(owner)
         {
@@ -34,8 +33,6 @@ namespace MapExporterNew.Generation
 
         protected override IEnumerator<float> Process()
         {
-            if (SkipGenerator) yield break;
-
             int i = 0;
             foreach (var file in files)
             {

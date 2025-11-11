@@ -160,7 +160,7 @@ namespace MapExporterNew.Tabs
                 // Create element
                 var dragger = new OpDragger(preference.hasRange ? OIUtil.CosmeticRange(preference.GetValue(), preference.minRange, preference.maxRange) : OIUtil.CosmeticBind(preference.GetValue()), pos)
                 {
-                    description = $"{Translate(preference.key + "/desc")} ({Translate("default")}: {preference.defaultValue}{(preference.hasRange ? $", [{preference.minRange}, {preference.maxRange}]" : "")})".TrimStart(' ').TrimStart(' ')
+                    description = $"{Translate(preference.key + "/desc")} ({Translate("default")}: {preference.defaultValue}{(preference.hasRange ? $", [{preference.minRange}, {preference.maxRange}]" : "")})"
                 };
 
                 // Change when element changes

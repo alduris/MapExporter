@@ -56,10 +56,8 @@ generator/targetfps|Target FPS
 generator/targetfps/desc|Generator: lower values make the generator run quicker at the cost of high CPU usage and framerate.
 generator/cachesize|Tile Cache Size
 generator/cachesize/desc|Generator: higher values make the generator run quicker at the cost of higher memory usage. This can cause fatal Unity crashes.
-generator/skipexisting|Skip existing output
-generator/skipexisting/desc|Generator: if a generated output for a particular slugcat in a region exists, skip the generation process for it.
 generator/skiptiles|Skip tile creation
-generator/skiptiles/desc|Generator: skips the tile-creation process to speed things up. Can cause things to not align.
+generator/skiptiles/desc|Generator: skips the tile-creation process to speed things up. Can cause images to not align properly.
 
 Data|Data
 MAPEX:datatutorial|Shown here is not what is processed but what is present in the mod's data folder, and thus may not accurately represent what regions it recognizes as rendered or processed.

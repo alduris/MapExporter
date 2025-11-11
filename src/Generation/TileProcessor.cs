@@ -16,6 +16,8 @@ namespace MapExporterNew.Generation
         private readonly int zoom = zoom;
         private readonly string outputDir = owner.outputDir;
 
+        private TextureCache<string> imageCache = null;
+
         private string OutputPathForStep(int step) => Path.Combine(outputDir, step.ToString());
 
         public override string ProcessName => "Zoom level " + zoom;
@@ -26,7 +28,7 @@ namespace MapExporterNew.Generation
             float multFac = Mathf.Pow(2, zoom);
             int zoomDelta = (int)Mathf.Pow(2, -zoom);
             var regionInfo = owner.regionInfo;
-            TextureCache<string> imageCache = new(Preferences.GeneratorCacheSize.GetValue());
+            imageCache ??= new(Preferences.GeneratorCacheSize.GetValue());
 
             // Find room boundaries
             Vector2 mapMin = Vector2.zero;
@@ -132,7 +134,14 @@ namespace MapExporterNew.Generation
             }
 
             imageCache.Destroy();
+            imageCache = null;
             yield break;
+        }
+
+        public override void Dispose()
+        {
+            imageCache?.Destroy();
+            imageCache = null;
         }
 
         [BurstCompile]

@@ -88,11 +88,6 @@ namespace MapExporterNew.Generation
                     Failed = true;
                     return;
                 }
-                if (move && process is CleanerProcessor cleaner && cleaner.SkipGenerator)
-                {
-                    processes.Clear();
-                    processes.Enqueue(process); // have to do this to avoid InvalidOperationException
-                }
                 if (move)
                 {
                     process.Dispose(); // I don't think anything actually uses this but just in case for the future

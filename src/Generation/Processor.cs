@@ -10,7 +10,7 @@ namespace MapExporterNew.Generation
         public float Current => Progress;
         object IEnumerator.Current => Current;
 
-        public void Dispose()
+        public virtual void Dispose()
         {
         }
 

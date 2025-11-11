@@ -72,6 +72,7 @@ namespace MapExporterNew.Generation
         {
             foreach (var texture in list)
                 Object.Destroy(texture.Value);
+            list.Clear();
         }
     }
 }
