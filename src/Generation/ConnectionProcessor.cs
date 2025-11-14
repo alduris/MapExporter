@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using static MapExporterNew.Generation.GenUtil;
 
@@ -24,37 +25,34 @@ namespace MapExporterNew.Generation
                 });
             }
 
-            owner.metadata["connection_features"] = connections;
+            owner.metadata["connection_features"] = new JArray(connections);
             yield return 1f;
             yield break;
         }
 
-        private struct ConnectionInfo : IJsonObject
+        private struct ConnectionInfo : IGeoJsonObject
         {
             public Vector2 pointA;
             public int dirA;
             public Vector2 pointB;
             public int dirB;
 
-            public readonly Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
                 float dist = (pointB - pointA).magnitude / 4f;
                 Vector2 basicDir = (pointB - pointA).normalized;
                 Vector2 handleA = pointA + (dirA == -1 ? basicDir : fourDirections[dirA]) * dist;
                 Vector2 handleB = pointB + (dirB == -1 ? -basicDir : fourDirections[dirB]) * dist;
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "LineString" },
-                            { "coordinates", new float[][] { Vector2ToArray(pointA), Vector2ToArray(handleA), Vector2ToArray(handleB), Vector2ToArray(pointB) } }
-                        }
-                    },
-                    { "properties", new Dictionary<string, object> {} }
+                    ["type"] = "LineString",
+                    ["coordinates"] = new JArray(Vector2ToArray(pointA), Vector2ToArray(handleA), Vector2ToArray(handleB), Vector2ToArray(pointB))
                 };
+            }
+
+            public readonly JObject Properties()
+            {
+                return [];
             }
         }
     }

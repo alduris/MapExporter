@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace MapExporterNew.Generation
@@ -195,7 +196,7 @@ namespace MapExporterNew.Generation
                 geo.Add(new GeometryInfo
                 {
                     room = room.roomName,
-                    lines = [.. optimized.Select(x => x.Select(Vector2ToArray).ToArray())],
+                    lines = [.. optimized.Select(x => x.Select(v => new float[] { v.x, v.y }).ToArray())],
                 });
 
                 processed++;
@@ -205,30 +206,30 @@ namespace MapExporterNew.Generation
                 }
             }
 
-            owner.metadata["geo_features"] = geo;
+            owner.metadata["geo_features"] = new JArray(geo);
             
             yield break;
         }
 
-        private struct GeometryInfo : IJsonObject
+        private struct GeometryInfo : IGeoJsonObject
         {
             public string room;
             public float[][][] lines;
 
-            public readonly Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "MultiLineString" },
-                            { "coordinates", lines }
-                        }
-                    },
-                    { "properties", new Dictionary<string, object> { { "room", room } } }
+                    ["type"] = "MultiLineString",
+                    ["coordinates"] = new JArray(lines),
+                };
+            }
+
+            public readonly JObject Properties()
+            {
+                return new JObject()
+                {
+                    ["room"] = room
                 };
             }
         }

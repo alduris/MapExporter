@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using static MapExporterNew.Generation.GenUtil;
 
@@ -60,70 +61,58 @@ namespace MapExporterNew.Generation
                 // yield return (float)i / regionInfo.rooms.Count;
             }
 
-            owner.metadata["room_features"] = roomBoxes;
-            owner.metadata["roomtag_features"] = roomTags;
+            owner.metadata["room_features"] = new JArray(roomBoxes);
+            owner.metadata["roomtag_features"] = new JArray(roomTags);
             yield return 1f;
             yield break;
         }
 
-        private struct RoomBoxInfo : IJsonObject
+        private struct RoomBoxInfo : IGeoJsonObject
         {
             public string name;
             public Rect box;
             public Vector2 namePos;
 
-            public readonly Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Polygon" },
-                            { "coordinates", new float[][][] { RectToArray(box) } }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "name", name },
-                            { "popupcoords", Vector2ToArray(namePos) },
-                        }
-                    }
+                    ["type"] = "Polygon",
+                    ["coordinates"] = new JArray(RectToArray(box)),
+                };
+            }
+
+            public readonly JObject Properties()
+            {
+                return new JObject()
+                {
+                    ["name"] = name,
+                    ["popupcoords"] = Vector2ToArray(namePos)
                 };
             }
         }
 
-        private struct RoomTagInfo : IJsonObject
+        private struct RoomTagInfo : IGeoJsonObject
         {
             public string name;
             public Vector2 pos;
             public string[] tags;
 
-            public Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>()
-                        {
-                            {"type", "Point" },
-                            { "coordinates", Vector2ToArray(pos) }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>()
-                        {
-                            { "room", name },
-                            { "tags", tags }
-                        }
-                    }
+                    ["type"] = "Point",
+                    ["coordinates"] = Vector2ToArray(pos)
+                };
+            }
+
+            public readonly JObject Properties()
+            {
+                return new JObject()
+                {
+                    ["room"] = name,
+                    ["tags"] = new JArray(tags)
                 };
             }
         }

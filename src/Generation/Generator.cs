@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace MapExporterNew.Generation
 {
@@ -18,7 +20,7 @@ namespace MapExporterNew.Generation
         public string CurrentTask { get; private set; } = "Nothing";
 
         private readonly Queue<Processor> processes = [];
-        internal readonly Dictionary<string, object> metadata = [];
+        internal readonly JObject metadata = [];
 
 
         public Generator(SlugcatStats.Name scug, string region)
@@ -32,7 +34,7 @@ namespace MapExporterNew.Generation
             }
 
             // Load region data and adapt it to our needs (we can do this because we're not re-saving the changes)
-            regionInfo = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(Path.Combine(inputDir, "metadata.json"))));
+            regionInfo = RegionInfo.FromJson(File.ReadAllText(Path.Combine(inputDir, "metadata.json")));
             List<string> hiddenRooms = [];
             foreach (var room in regionInfo.rooms.Values)
             {
@@ -94,7 +96,10 @@ namespace MapExporterNew.Generation
                     processes.Dequeue();
                     if (processes.Count == 0)
                     {
-                        File.WriteAllText(Path.Combine(outputDir, "region.json"), Json.Serialize(metadata));
+                        File.WriteAllText(Path.Combine(outputDir, "region.json"), JsonConvert.SerializeObject(metadata, new JsonSerializerSettings()
+                        {
+                            Converters = [new IGeoJsonObject.GeoJsonConverter(), new UnityStructConverter()]
+                        }));
                         Done = true;
                     }
                 }

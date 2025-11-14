@@ -58,7 +58,6 @@ sealed class Plugin : BaseUnityPlugin
         Logger.LogDebug("Started start thingy");
         try
         {
-            On.Json.Serializer.SerializeValue += Serializer_SerializeValue;
             if (FlagTriggered)
             {
                 SetupHooks.Apply();
@@ -127,19 +126,6 @@ sealed class Plugin : BaseUnityPlugin
                 c.EmitDelegate(() => !FlagTriggered);
                 c.Emit(OpCodes.And);
             }
-        }
-    }
-
-    // JSON saving
-    private void Serializer_SerializeValue(On.Json.Serializer.orig_SerializeValue orig, Json.Serializer self, object value)
-    {
-        if (value is IJsonObject obj)
-        {
-            orig(self, obj.ToJson());
-        }
-        else
-        {
-            orig(self, value);
         }
     }
 

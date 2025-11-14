@@ -20,10 +20,11 @@
 		<Reference Include="../lib/*.dll">
 			<Private>false</Private>
 		</Reference>
-		<None Include="../assets/text/**" link="Text/%(RecursiveDir)%(Filename)%(Extension)"/>
+		<None Include="../assets/text/**" link="Text/%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="PolySharp" Version="1.8.3">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>

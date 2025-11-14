@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MoreSlugcats;
+using Newtonsoft.Json;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using SSUpdateMode = MapExporterNew.Data.SSUpdateMode;
@@ -172,7 +173,7 @@ namespace MapExporterNew.Screenshotter
                 bool exception = false;
                 try
                 {
-                    mapContent = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(inputPath)));
+                    mapContent = RegionInfo.FromJson(File.ReadAllText(inputPath));
                     if (updateMode != SSUpdateMode.MergeNewRoomsOnly) // we want to do this later in this case so we can filter out old rooms
                         mapContent.MergeNewData(game.world);
                 }
@@ -243,7 +244,7 @@ namespace MapExporterNew.Screenshotter
             // Done
             if (Data.CollectRoomData(updateMode))
             {
-                File.WriteAllText(PathOfMetadata(slugcat.value, region), Json.Serialize(mapContent));
+                File.WriteAllText(PathOfMetadata(slugcat.value, region), JsonConvert.SerializeObject(mapContent));
             }
 
             Plugin.Logger.LogDebug("Capture task done with " + region);

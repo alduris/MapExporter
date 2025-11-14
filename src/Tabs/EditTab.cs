@@ -5,6 +5,7 @@ using System.Linq;
 using MapExporterNew.Tabs.UI;
 using Menu.Remix.MixedUI;
 using Menu.Remix.MixedUI.ValueTypes;
+using Newtonsoft.Json;
 using RWCustom;
 using UnityEngine;
 
@@ -195,8 +196,7 @@ namespace MapExporterNew.Tabs
             // Find the room list and add its contents
             if (File.Exists(Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json")))
             {
-                activeRegion = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(
-                    Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json"))));
+                activeRegion = RegionInfo.FromJson(File.ReadAllText(Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json")));
                 var roomList = activeRegion.rooms.Keys.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).ToList();
 
                 float y = roomSelector.size.y - ROOMLIST_EDGE_PAD;
@@ -342,7 +342,7 @@ namespace MapExporterNew.Tabs
                 SwitchToRoom(null);
 
                 // Get the other slugcat's region and load its positions
-                var newState = RegionInfo.FromJson((Dictionary<string, object>)Json.Deserialize(File.ReadAllText(Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json"))));
+                var newState = RegionInfo.FromJson(File.ReadAllText(Path.Combine(Data.RenderOutputDir(scug, region), "metadata.json")));
                 foreach (var newRoom in newState.rooms)
                 {
                     if (activeRegion.rooms.TryGetValue(newRoom.Key, out var room))

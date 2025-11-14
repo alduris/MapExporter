@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using MonoMod.Utils;
 using MoreSlugcats;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RWCustom;
 using UnityEngine;
 
@@ -26,6 +28,8 @@ namespace MapExporterNew
 
         public static string RenderOutputDir(string scug, string acronym) => Path.Combine(RenderDir, scug, acronym);
         public static string FinalOutputDir(string scug, string acronym) => Path.Combine(FinalDir, acronym, scug);
+
+        public static Dictionary<string, object> UserPreferences = [];
 
         public static void Initialize()
         {
@@ -161,123 +165,46 @@ namespace MapExporterNew
             // Misc stuff
             if (File.Exists(DataFileDir))
             {
-                var json = (Dictionary<string, object>)Json.Deserialize(File.ReadAllText(DataFileDir));
+                var data = JsonConvert.DeserializeObject<TempSaveData>(File.ReadAllText(DataFileDir));
 
                 // Queue data
                 QueuedRegions.Clear();
-                if (json.ContainsKey("queue"))
+                foreach (var item in data.queue)
                 {
-                    var regions = ((List<object>)json["queue"]).Cast<Dictionary<string, object>>();
-                    foreach (var region in regions)
-                    {
-                        SSUpdateMode updateMode = SSUpdateMode.Everything;
-                        if (region.ContainsKey("updatemode") && !Enum.TryParse((string)region["updatemode"], out updateMode))
-                            updateMode = SSUpdateMode.Everything;
-                        QueuedRegions.Enqueue(new QueueData((string)region["name"], [.. ((List<object>)region["scugs"]).Select(x => new SlugcatStats.Name((string)x, false))], updateMode));
-                    }
+                    QueuedRegions.Enqueue(item);
                 }
 
                 // Screenshotter status
-                if (json.ContainsKey("ssstatus"))
-                {
-                    Enum.TryParse((string)json["ssstatus"], out ScreenshotterStatus);
-                }
+                ScreenshotterStatus = data.ssstatus;
 
                 // Saved progress
                 RenderedRegions.Clear();
-                if (json.ContainsKey("rendered"))
+                foreach ((string region, string[] rawScugs) in data.rendered)
                 {
-                    var regions = (Dictionary<string, object>)json["rendered"];
-                    foreach (var scugRegions in regions)
+                    var scugs = rawScugs.Where(scug => Directory.Exists(RenderOutputDir(scug, region)))
+                        .Select(scug => new SlugcatStats.Name(scug, false))
+                        .ToHashSet();
+                    if (scugs.Any())
                     {
-                        var region = scugRegions.Key;
-                        var scugs = ((List<object>)scugRegions.Value).Select(x => new SlugcatStats.Name((string)x, false)).ToList();
-
-                        // Make sure the regions still exist in our file system
-                        var foundList = new HashSet<SlugcatStats.Name>();
-                        foreach (var scug in scugs)
-                        {
-                            if (Directory.Exists(RenderOutputDir(scug.value, region)))
-                            {
-                                foundList.Add(scug);
-                            }
-                        }
-
-                        // Don't add the scug to the list if they have no rendered regions in the file system
-                        if (foundList.Count > 0)
-                        {
-                            RenderedRegions.Add(region, foundList);
-                        }
+                        RenderedRegions[region] = scugs;
                     }
                 }
 
                 FinishedRegions.Clear();
-                if (json.ContainsKey("finished"))
+                foreach ((string region, string[] rawScugs) in data.rendered)
                 {
-                    var regions = (Dictionary<string, object>)json["finished"];
-                    foreach (var finishedRegion in regions)
+                    var scugs = rawScugs.Where(scug => Directory.Exists(FinalOutputDir(scug, region)))
+                        .Select(scug => new SlugcatStats.Name(scug, false))
+                        .ToHashSet();
+                    if (scugs.Any())
                     {
-                        var region = finishedRegion.Key;
-                        var savedList = ((List<object>)finishedRegion.Value).Select(x => new SlugcatStats.Name((string)x)).ToList();
-
-                        // Make sure the regions still exist in our file system
-                        var scugList = new HashSet<SlugcatStats.Name>();
-                        foreach (var scug in savedList)
-                        {
-                            if (Directory.Exists(FinalOutputDir(scug.value, region)))
-                            {
-                                scugList.Add(scug);
-                            }
-                        }
-
-                        // Don't add the scug to the list if they have no rendered regions in the file system
-                        if (scugList.Count > 0)
-                        {
-                            FinishedRegions.Add(region, scugList);
-                        }
+                        FinishedRegions[region] = scugs;
                     }
                 }
 
                 // User preferences
                 UserPreferences.Clear();
-                if (json.ContainsKey("preferences"))
-                {
-                    UserPreferences.AddRange((Dictionary<string, object>)json["preferences"]);
-                }
-
-                // Region names
-                if (json.TryGetValue("regionnames", out object nameObj) && nameObj is Dictionary<string, object> nameDict)
-                {
-                    RegionNames.Clear();
-                    foreach (var kv in nameDict)
-                    {
-                        var subnames = (Dictionary<string, object>)kv.Value;
-                        if (subnames.ContainsKey("*"))
-                        {
-                            var name = new RegionName((string)subnames["*"]);
-                            foreach (var subname in subnames)
-                            {
-                                if (subname.Key == "*") continue;
-                                name.personalNames[new SlugcatStats.Name(subname.Key, false)] = (string)subname.Value;
-                            }
-                        }
-                    }
-                }
-
-                // Placed object icons
-                /*if (json.TryGetValue("poicons", out var iconObj) && iconObj is Dictionary<string, object> iconDict)
-                {
-                    foreach (var kv in iconDict)
-                    {
-                        if (!PlacedObjectIcons.ContainsKey(kv.Key))
-                        {
-                            if (kv.Value is List<object> iconList && iconList.Count == 2)
-                            {
-                                PlacedObjectIcons.Add(kv.Key, ((string)iconList[0], (bool)iconList[1]));
-                            }
-                        }
-                    }
-                }*/
+                UserPreferences.AddRange(data.preferences);
             }
 
             Version++;
@@ -288,11 +215,8 @@ namespace MapExporterNew
             ScreenshotterStatus = SSStatus.Inactive;
             if (File.Exists(DataFileDir))
             {
-                var json = (Dictionary<string, object>)Json.Deserialize(File.ReadAllText(DataFileDir));
-                if (json.ContainsKey("ssstatus"))
-                {
-                    Enum.TryParse((string)json["ssstatus"], out ScreenshotterStatus);
-                }
+                var json = JsonConvert.DeserializeObject<TempSaveData>(File.ReadAllText(DataFileDir));
+                ScreenshotterStatus = json.ssstatus;
             }
 
             Version++;
@@ -300,6 +224,7 @@ namespace MapExporterNew
 
         public static void SaveData()
         {
+            // Convert data
             Dictionary<string, string[]> rendered = [];
             foreach (var kv in RenderedRegions)
             {
@@ -323,28 +248,28 @@ namespace MapExporterNew
                 }
                 names.Add(kv.Key, dict);
             }
-            Dictionary<string, List<object>> icons = [];
-            foreach (var kv in PlacedObjectIcons)
+
+            // Save
+            File.WriteAllText(DataFileDir, JsonConvert.SerializeObject(new TempSaveData
             {
-                icons.Add(kv.Key, [kv.Value.fileName, kv.Value.enabled]);
-            }
-            Dictionary<string, object> save = new()
-            {
-                {
-                    "queue",
-                    QueuedRegions.Select(x => x.ToJSON()).ToArray()
-                },
-                { "ssstatus", ScreenshotterStatus.ToString() },
-                { "rendered", rendered },
-                { "finished", finished },
-                { "preferences", UserPreferences },
-                { "regionnames", names },
-                //{ "poicons", icons },
-            };
-            File.WriteAllText(DataFileDir, Json.Serialize(save));
+                queue = [.. QueuedRegions],
+                ssstatus = ScreenshotterStatus,
+                rendered = rendered,
+                finished = finished,
+                preferences = UserPreferences,
+                names = names
+            }));
         }
 
-        public static Dictionary<string, object> UserPreferences = [];
+        private class TempSaveData
+        {
+            public List<QueueData> queue = [];
+            public SSStatus ssstatus = SSStatus.Inactive;
+            public Dictionary<string, string[]> rendered = [];
+            public Dictionary<string, string[]> finished = [];
+            public Dictionary<string, object> preferences = [];
+            public Dictionary<string, Dictionary<string, string>> names = [];
+        }
     }
 
 }

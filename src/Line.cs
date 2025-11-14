@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MapExporterNew
 {
-    public struct Line(Vector2 start, Vector2 end) : IJsonObject
+    public struct Line(Vector2 start, Vector2 end)
     {
         public Vector2 start = start;
         public Vector2 end = end;
@@ -56,21 +56,6 @@ namespace MapExporterNew
         public override readonly bool Equals(object obj)
         {
             return obj is Line line && ((line.start == start && line.end == end) || (line.start == end && line.end == start));
-        }
-
-        public readonly Dictionary<string, object> ToJson()
-        {
-            return new Dictionary<string, object>
-            {
-                ["start"] = Vector2ToArray(start),
-                ["end"] = Vector2ToArray(end),
-            };
-        }
-
-        public static Line FromJson(object json)
-        {
-            var list = (Dictionary<string, object>)json;
-            return new Line(Vector2FromJson(list["start"]), Vector2FromJson(list["end"]));
         }
 
         public static Line operator +(Line line, Vector2 pos)

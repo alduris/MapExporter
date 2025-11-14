@@ -4,18 +4,24 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using DevInterface;
 using MapExporterNew.Screenshotter;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RWCustom;
 using UnityEngine;
 
 namespace MapExporterNew
 {
-    internal sealed class RegionInfo : IJsonObject
+    internal sealed class RegionInfo
     {
         private const float SCALEDOWN = 2f;
+
+        [JsonIgnore]
         public static readonly ConditionalWeakTable<World, List<World.CreatureSpawner>> spawnerCWT = new();
+
         public Dictionary<string, RoomEntry> rooms = [];
         public List<ConnectionEntry> connections = [];
         public Dictionary<string, Vector2> vistaPoints = [];
@@ -25,12 +31,18 @@ namespace MapExporterNew
         public List<Color> fgcolors = [];
         public List<Color> bgcolors = [];
         public List<Color> sccolors = [];
+
+        [JsonIgnore]
         public bool fromJson = false;
 
         // For passing data down to children
         private readonly Dictionary<string, Vector2> devPos = [];
 
-        public RegionInfo() { }
+        private RegionInfo()
+        {
+            // Needs to exist for Newtonsoft
+            fromJson = true;
+        }
 
         public RegionInfo(World world)
         {
@@ -40,6 +52,15 @@ namespace MapExporterNew
             echoRoom = world.worldGhost?.ghostRoom?.name;
 
             MergeNewData(world);
+        }
+
+        public void JsonInitialize()
+        {
+            fromJson = true;
+            foreach (var room in rooms.Values)
+            {
+                room.regionInfo = this;
+            }
         }
 
         public void MergeNewData(World world)
@@ -163,71 +184,23 @@ namespace MapExporterNew
             }
         }
 
-        public Dictionary<string, object> ToJson()
-        {
-            var newVistaPoints = new Dictionary<string, float[]>();
-            foreach (var kv in vistaPoints)
-            {
-                newVistaPoints[kv.Key] = Vector2ToArray(kv.Value);
-            }
-            return new()
-            {
-                { "acronym", acronym },
-                { "name", name },
-                { "echoRoom", echoRoom },
-                { "rooms", rooms },
-                { "connections", connections },
-                { "vistaPoints", newVistaPoints },
-                { "fgcolors", (from s in fgcolors select Vector3ToArray((Vector3)(Vector4)s)).ToList() },
-                { "bgcolors", (from s in bgcolors select Vector3ToArray((Vector3)(Vector4)s)).ToList() },
-                { "sccolors", (from s in sccolors select Vector3ToArray((Vector3)(Vector4)s)).ToList() },
-            };
-        }
-
-        public static RegionInfo FromJson(Dictionary<string, object> json)
-        {
-            var entry = new RegionInfo
-            {
-                acronym = (string)json["acronym"],
-                name = (string)json["name"],
-                echoRoom = (string)json["echoRoom"],
-
-                rooms = [],
-                connections = [],
-                vistaPoints = [],
-                fgcolors = [.. ((List<object>)json["fgcolors"]).Cast<List<object>>().Select(ColorFromArray)],
-                bgcolors = [.. ((List<object>)json["bgcolors"]).Cast<List<object>>().Select(ColorFromArray)],
-                sccolors = [.. ((List<object>)json["sccolors"]).Cast<List<object>>().Select(ColorFromArray)],
-                fromJson = true
-            };
-
-            // Add rooms
-            foreach (var kv in (Dictionary<string, object>)json["rooms"])
-            {
-                entry.rooms[kv.Key] = RoomEntry.FromJson(entry, (Dictionary<string, object>)kv.Value);
-                entry.devPos[kv.Key] = entry.rooms[kv.Key].devPos * SCALEDOWN;
-            }
-
-            // Add connections
-            foreach (var data in ((List<object>)json["connections"]).Cast<Dictionary<string, object>>())
-            {
-                entry.connections.Add(ConnectionEntry.FromJson(data));
-            }
-
-            // Add vistas
-            foreach (var data in (Dictionary<string, object>)json["vistaPoints"])
-            {
-                entry.vistaPoints.Add(data.Key, Vector2FromJson(data.Value));
-            }
-
-            return entry;
-        }
-
         static int IntVec2Dir(IntVector2 vec) => vec.x == 0 && vec.y == 0 ? -1 : (vec.x != 0 ? (vec.x < 0 ? 0 : 2) : (vec.y < 0 ? 1 : 3));
 
-        public class RoomEntry : IJsonObject
+        public static RegionInfo FromJson(string json)
         {
-            private readonly RegionInfo regionInfo;
+            var result = JsonConvert.DeserializeObject<RegionInfo>(json, new JsonSerializerSettings()
+            {
+                Converters = [new UnityStructConverter(), new TerrainEntry.TerrainEntryConverter()]
+            });
+            result.fromJson = true;
+            result.JsonInitialize();
+            return result;
+        }
+
+        public class RoomEntry
+        {
+            [JsonIgnore]
+            internal RegionInfo regionInfo;
 
             public string roomName;
             public string subregion;
@@ -245,6 +218,8 @@ namespace MapExporterNew
             public List<TerrainEntry> terrain = [];
 
             internal bool offscreenDen = false;
+
+            private RoomEntry() { }  // Needs to exist for Newtonsoft
 
             public RoomEntry(RegionInfo owner)
             { 
@@ -440,119 +415,20 @@ namespace MapExporterNew
                 terrain = room.terrain != null ? [.. room.terrain.terrainList.Select(TerrainEntry.GetTerrainEntry).Where(x => x is not null)] : null;
             }
 
-            public Dictionary<string, object> ToJson()
-            {
-                return new()
-                {
-                    { "name", roomName },
-                    { "subregion", subregion },
-                    { "pos", Utils.Vector2ToArray(devPos) },
-                    { "hidden", hidden },
-                    { "offscreenDen", offscreenDen },
-
-                    { "cameras", cameras?.Select(Utils.Vector2ToArray).ToList() },
-                    { "size", size != null ? IntVectorToArray(size) : null },
-                    { "tiles", tiles },
-                    { "nodes", nodes?.Select(IntVectorToArray).ToList() },
-
-                    { "spawns", spawns },
-                    { "tags", tags },
-                    { "objects", placedObjects },
-                    { "terrain", terrain },
-                };
-            }
-
-            public static RoomEntry FromJson(RegionInfo owner, Dictionary<string, object> json)
-            {
-                var entry = new RoomEntry(owner)
-                {
-                    roomName = (string)json["name"],
-                    subregion = (string)json["subregion"],
-                    devPos = Vector2FromList((List<object>)json["pos"]),
-                    hidden = json.TryGetValue("hidden", out var hidden) && (bool)hidden,
-                    offscreenDen = json.TryGetValue("offscreenDen", out var offscreen) && (bool)offscreen,
-
-                    spawns = [.. ((List<object>)json["spawns"]).Cast<List<object>>().Select(x =>
-                    {
-                        var list = new List<DenSpawnData>();
-                        foreach (Dictionary<string, object> spawn in x.Cast<Dictionary<string, object>>())
-                        {
-                            list.Add(DenSpawnData.FromJson(spawn));
-                        }
-                        return list.ToArray();
-                    })],
-                    tags = ((List<object>)json["tags"]).Cast<string>().ToArray(),
-                    placedObjects = [.. (json.TryGetValue("objects", out var o) && o is List<object> l ? l : [])
-                        .Cast<Dictionary<string, object>>()
-                        .Select(PlacedObjectData.FromJson)
-                        .Where(x => x._valid)],
-                };
-
-                if (json["cameras"] != null)
-                {
-                    entry.cameras = ((List<object>)json["cameras"]).Cast<List<object>>().Select(Vector2FromList).ToArray();
-                    entry.size = IntVectorFromList((List<object>)json["size"]);
-                    entry.nodes = ((List<object>)json["nodes"]).Cast<List<object>>().Select(IntVectorFromList).ToArray();
-
-                    var (w, h) = (entry.size.x, entry.size.y);
-                    entry.tiles = new int[w, h][];
-                    var rawTiles = ((List<object>)json["tiles"]).Select(x => ((List<object>)x).Select(x => (int)(long)x).ToArray()).ToArray();
-                    for (int i = 0; i < w; i++)
-                    {
-                        for (int j = 0; j < h; j++)
-                        {
-                            entry.tiles[i, j] = rawTiles[j + i * h]; // multidimensional arrays are row-major (rightmost dimension is contiguous)
-                        }
-                    }
-                }
-
-                if (json.ContainsKey("terrain") && json["terrain"] != null)
-                {
-                    entry.terrain = [.. ((List<object>)json["terrain"]).Cast<Dictionary<string, object>>().Select(TerrainEntry.FromJson).Where(x => x is not null)];
-                }
-
-                return entry;
-            }
-
-            public struct DenSpawnData : IJsonObject
+            public struct DenSpawnData
             {
                 public string type;
                 public int count;
                 public float chance;
                 public string data;
                 public int den;
-
-                public readonly Dictionary<string, object> ToJson()
-                {
-                    return new Dictionary<string, object>
-                    {
-                        { "type", type },
-                        { "count", count },
-                        { "chance", chance },
-                        { "data", data },
-                        { "den", den },
-                    };
-                }
-
-                public static DenSpawnData FromJson(Dictionary<string, object> json)
-                {
-                    return new DenSpawnData()
-                    {
-                        type = (string)json["type"],
-                        count = (int)(long)json["count"],
-                        chance = (float)(double)json["chance"],
-                        data = (string)json["data"],
-                        den = (int)(long)json["den"],
-                    };
-                }
             }
 
-            public struct PlacedObjectData : IJsonObject
+            public struct PlacedObjectData
             {
                 public string type;
                 public Vector2 pos;
                 public List<string> data;
-                internal bool _valid = true;
 
                 public PlacedObjectData(PlacedObject obj)
                 {
@@ -560,41 +436,10 @@ namespace MapExporterNew
                     pos = obj.pos;
                     data = obj.data != null ? [.. obj.data.ToString().Split('~')] : [];
                 }
-
-                public readonly Dictionary<string, object> ToJson()
-                {
-                    return new()
-                    {
-                        { "type", type },
-                        { "pos", Utils.Vector2ToArray(pos) },
-                        { "data", data }
-                    };
-                }
-
-                public static PlacedObjectData FromJson(Dictionary<string, object> json)
-                {
-                    try
-                    {
-                        return new PlacedObjectData()
-                        {
-                            _valid = true,
-                            type = (string)json["type"],
-                            pos = Vector2FromList((List<object>)json["pos"]),
-                            data = [.. ((List<object>)json["data"]).Cast<string>()]
-                        };
-                    }
-                    catch (KeyNotFoundException)
-                    {
-                        return new PlacedObjectData
-                        {
-                            _valid = false
-                        };
-                    }
-                }
             }
         }
 
-        public class ConnectionEntry : IJsonObject
+        public class ConnectionEntry
         {
             public string roomA;
             public string roomB;
@@ -602,9 +447,14 @@ namespace MapExporterNew
             public IntVector2 posB;
             public int dirA;
             public int dirB;
+
+            [JsonIgnore]
             public bool complete = false;
 
-            public ConnectionEntry() { } // empty
+            public ConnectionEntry()
+            {
+                complete = true;
+            }
 
             public ConnectionEntry(string entry) // old version read from world file, obsolete now
             {
@@ -616,436 +466,151 @@ namespace MapExporterNew
                 dirA = int.Parse(fields[6]);
                 dirB = int.Parse(fields[7]);
             }
-
-            public Dictionary<string, object> ToJson()
-            {
-                return new Dictionary<string, object>()
-                {
-                    { "roomA", roomA },
-                    { "roomB", roomB },
-                    { "posA", IntVectorToArray(posA) },
-                    { "posB", IntVectorToArray(posB) },
-                    { "dirA", dirA },
-                    { "dirB", dirB },
-                };
-            }
-
-            public static ConnectionEntry FromJson(Dictionary<string, object> json)
-            {
-                var entry = new ConnectionEntry
-                {
-                    roomA = (string)json["roomA"],
-                    roomB = (string)json["roomB"],
-                    posA = IntVectorFromList((List<object>)json["posA"]),
-                    posB = IntVectorFromList((List<object>)json["posB"]),
-                    dirA = (int)(long)json["dirA"],
-                    dirB = (int)(long)json["dirB"],
-                    complete = true
-                };
-                return entry;
-            }
         }
 
-        public abstract class TerrainEntry(TerrainEntry.TerrainType type) : IJsonObject
+        public class TerrainEntry
         {
-            public readonly TerrainType type = type;
+            public readonly TerrainType type;
+            public readonly List<Line> lines = [];
 
-            public abstract Line? TrimLine(Line line);
-
-            public abstract IEnumerable<Line> GetLines();
-
-            public Dictionary<string, object> ToJson()
+            protected TerrainEntry(TerrainType type)
             {
-                return new Dictionary<string, object>
-                {
-                    ["type"] = (int)type,
-                    ["internal"] = ToInternalJson()
-                };
+                this.type = type;
             }
 
-            protected abstract Dictionary<string, object> ToInternalJson();
-
-            public static TerrainEntry FromJson(Dictionary<string, object> json)
+            public IEnumerable<Line> GetLines()
             {
-                var data = (Dictionary<string, object>)json["internal"];
-                return (TerrainType)(long)json["type"] switch
-                {
-                    // TerrainType.LocalTerrainCurve => null,
-                    TerrainType.TerrainCurve => TerrainCurveEntry.FromInternalJson(data),
-                    TerrainType.SuperSlope => SuperSlopeEntry.FromInternalJson(data),
-                    TerrainType.CurvedSlope => CurvedSlopeEntry.FromInternalJson(data),
-                    _ => throw new NotImplementedException() // intentional
-                };
+                return lines;
             }
 
             public static TerrainEntry GetTerrainEntry(TerrainManager.ITerrain terrain)
             {
                 return terrain switch
                 {
-                    // LocalTerrainCurve => null,
-                    TerrainCurve => new TerrainCurveEntry(terrain as TerrainCurve),
-                    SuperSlope => new SuperSlopeEntry(terrain as SuperSlope),
-                    CurvedSlope => new CurvedSlopeEntry(terrain as CurvedSlope),
+                    TerrainCurve => FromTerrainCurve(terrain as TerrainCurve),  // this also handles LocalTerrainCurve
+                    SuperSlope => FromSuperSlope(terrain as SuperSlope),
+                    CurvedSlope => FromCurvedSlope(terrain as CurvedSlope),
                     _ => null
                 };
             }
 
-            public enum TerrainType
+            private static TerrainEntry FromTerrainCurve(TerrainCurve terrain)
             {
-                UNKNOWN,
-                TerrainCurve,
-                LocalTerrainCurve,
-                SuperSlope,
-                CurvedSlope
-            }
-        }
-
-        public class TerrainCurveEntry : TerrainEntry
-        {
-            private List<Line> curve;
-            private float bottom;
-
-            public TerrainCurveEntry(TerrainCurve curve) : base(TerrainType.TerrainCurve)
-            {
-                this.curve = [];
-                bottom = curve.bottom;
-
-                float minX = curve is LocalTerrainCurve ? 0f : curve.handles.Min(x => x.Middle.x);
-                float maxX = curve is LocalTerrainCurve ? curve.room.PixelWidth : curve.handles.Max(x => x.Middle.x);
-                var points = curve.collisionPoints.Where(p => p.x >= minX && p.x <= maxX).OrderBy(p => p.x).ToList();
+                List<Line> curve = [];
+                float bottom = Mathf.Max(-10000000f, terrain.bottom);
+                float minX = terrain is LocalTerrainCurve ? 0f : terrain.handles.Min(x => x.Middle.x);
+                float maxX = terrain is LocalTerrainCurve ? terrain.room.PixelWidth : terrain.handles.Max(x => x.Middle.x);
+                var points = terrain.collisionPoints.Where(p => p.x >= minX && p.x <= maxX).OrderBy(p => p.x).ToList();
                 for (int i = 0; i < points.Count - 1; i++)
                 {
-                    this.curve.Add(new Line(points[i], points[i + 1]));
-                }
-            }
-
-            protected TerrainCurveEntry(List<Line> curve, float bottom) : base(TerrainType.TerrainCurve)
-            {
-                this.curve = curve;
-                this.bottom = bottom;
-            }
-
-            public override IEnumerable<Line> GetLines()
-            {
-                foreach (var line in curve)
-                {
-                    yield return line;
-                }
-                /*var tr = curve[curve.Count - 1].end;
-                var br = new Vector2(tr.x, bottom);
-                var tl = curve[0].start;
-                var bl = new Vector2(tl.x, bottom);
-                yield return new Line(tr, br);
-                yield return new Line(br, bl);
-                yield return new Line(bl, tl);*/
-            }
-
-            public override Line? TrimLine(Line line)
-            {
-                // Compute the other edges
-                var tr = curve[^1].end;
-                var br = new Vector2(tr.x, bottom);
-                var tl = curve[0].start;
-                var bl = new Vector2(tl.x, bottom);
-                var rightLine = new Line(tr, br);
-                var bottomLine = new Line(br, bl);
-                var leftLine = new Line(bl, tl);
-
-                // Check if it's completely encased within said edges (though don't check the top yet)
-                var basicBounds = Rect.MinMaxRect(bl.x, bl.y, tr.x, Mathf.Max(tr.y, tl.y));
-                if (basicBounds.Contains(line.start) && basicBounds.Contains(line.end))
-                {
-                    // Check against collisions with the top
-                    var surfaceCollisions = SurfaceCollisionsWith(line, curve);
-                    if (surfaceCollisions.Count > 0)
-                    {
-                        // actually for simplicity we won't trim them here
-                        return line;
-                    }
-
-                    // No surface collisions, we must check whether or not it is above the surface
-                    // Luckily, we don't have to check both ends because we know that there are no surface collisions
-                    bool aboveSurface = PointAboveCurve(line.start, curve);
-                    return aboveSurface ? line : null;
-                }
-                else
-                {
-                    // Check line collisions
-                    var surfaceCollisions = SurfaceCollisionsWith(line, curve);
-                    if (surfaceCollisions.Count > 0)
-                    {
-                        return line;
-                        /*foreach (var surface in surfaceCollisions)
-                        {
-                            //
-                        }*/
-                    }
-                    else if (line.CollisionWith(rightLine) is float rightCollision)
-                    {
-                        line = line.CutAt(rightCollision, line.end.x > br.x);
-                    }
-                    else if (line.CollisionWith(leftLine) is float leftCollision)
-                    {
-                        line = line.CutAt(leftCollision, line.end.x < bl.x);
-                    }
-                    else if (line.CollisionWith(bottomLine) is float bottomCollision)
-                    {
-                        line = line.CutAt(bottomCollision, line.end.y < bl.y);
-                    }
-
-                    return line;
+                    curve.Add(new Line(points[i], points[i + 1]));
                 }
 
-                static List<Line> SurfaceCollisionsWith(Line testLine, List<Line> curve)
-                {
-                    List<Line> list = [];
-                    foreach (var line in curve)
-                    {
-                        if (line.CollisionWith(testLine) is not null)
-                        {
-                            list.Add(line);
-                        }
-                    }
-                    return list;
-                }
-
-                static bool PointAboveCurve(Vector2 point, List<Line> curve)
-                {
-                    bool above = true;
-                    foreach (var line in curve)
-                    {
-                        if ((line.start.x <= point.x && line.end.x >= point.x) || (line.end.x <= point.x && line.start.x >= point.x))
-                        {
-                            float slope = (line.end.y - line.start.y) / (line.end.x - line.start.x);
-                            if (!float.IsNaN(slope) && !float.IsInfinity(slope))
-                            {
-                                // Good ol' point-slope form
-                                above &= (slope * (point.x - line.start.x) + line.start.y) < point.y;
-                            }
-                        }
-                    }
-                    return above;
-                }
+                var entry = new TerrainEntry(TerrainType.TerrainCurve);
+                entry.lines.AddRange(curve);
+                return entry;
             }
 
-            protected override Dictionary<string, object> ToInternalJson()
+            private static TerrainEntry FromSuperSlope(SuperSlope slope)
             {
-                return new Dictionary<string, object>
-                {
-                    ["curve"] = curve,
-                    ["bottom"] = bottom < -100000000 ? -10000000.0 : bottom,
-                };
+                var line = new Line(slope.pos, slope.pos2);
+                var depth = new Vector2(0, slope.thickness);
+
+                var entry = new TerrainEntry(TerrainType.SuperSlope);
+                entry.lines.Add(line);
+                entry.lines.Add(line - depth);
+                entry.lines.Add(new Line(line.start, line.start - depth));
+                entry.lines.Add(new Line(line.end, line.end - depth));
+                return entry;
             }
 
-            public static TerrainCurveEntry FromInternalJson(Dictionary<string, object> json)
+            private static TerrainEntry FromCurvedSlope(CurvedSlope slope)
             {
-                var lines = ((List<object>)json["curve"]).Select(Line.FromJson).ToList();
-                var depth = (float)(double)json["bottom"];
-                return new TerrainCurveEntry(lines, depth);
-            }
-        }
-
-        public class SuperSlopeEntry : TerrainEntry
-        {
-            public Line line;
-            public float depth;
-
-            public SuperSlopeEntry(SuperSlope slope) : base(TerrainType.SuperSlope)
-            {
-                line = new Line(slope.pos, slope.pos2);
-                depth = slope.thickness;
-            }
-
-            protected SuperSlopeEntry(Line line, float depth) : base(TerrainType.SuperSlope)
-            {
-                this.line = line;
-                this.depth = depth;
-            }
-
-            public override IEnumerable<Line> GetLines()
-            {
-                var down = new Vector2(0, depth);
-                yield return line;
-                yield return line - down;
-                yield return new Line(line.start, line.start - down);
-                yield return new Line(line.end, line.end - down);
-            }
-
-            public override Line? TrimLine(Line line)
-            {
-                bool startInRange = PointInParallelogram(line.start);
-                bool endInRange = PointInParallelogram(line.end);
-                if (startInRange && endInRange)
-                {
-                    return null;
-                }
-                else if (startInRange || endInRange)
-                {
-                    Vector2 height = new Vector2(0, depth);
-                    Line top = this.line;
-                    Line right = new Line(this.line.end, this.line.end - height);
-                    Line left = new Line(this.line.start, this.line.start - height);
-                    Line bottom = this.line - height;
-
-                    float? f = line.CollisionWith(top) ?? line.CollisionWith(right) ?? line.CollisionWith(left) ?? line.CollisionWith(bottom);
-                    if (f.HasValue)
-                    {
-                        return line.CutAt(f.Value, startInRange);
-                    }
-                }
-                return line;
-
-                bool PointInParallelogram(Vector2 point)
-                {
-                    // Code adapted from https://stackoverflow.com/a/47493986
-                    // Though also significantly modified to meet the usecase here
-                    float d = (line.end.x - line.start.x) * -depth;
-                    if (d != 0)
-                    {
-                        float xp = point.x - line.start.x;
-                        float yp = point.y - line.start.y;
-                        float bb = xp * -depth / d;
-                        float cc = (yp * (line.end.x - line.start.x) - xp * (line.end.y - line.start.y)) / d;
-                        return (bb >= 0 && cc >= 0 && bb <= 1 && cc <= 1);
-                    }
-                    return false;
-                }
-            }
-
-            protected override Dictionary<string, object> ToInternalJson()
-            {
-                return new Dictionary<string, object>
-                {
-                    ["line"] = line,
-                    ["depth"] = depth,
-                };
-            }
-
-            public static SuperSlopeEntry FromInternalJson(Dictionary<string, object> json)
-            {
-                var line = Line.FromJson(json["line"]);
-                var depth = (float)(double)json["depth"];
-                return new SuperSlopeEntry(line, depth);
-            }
-        }
-
-        public class CurvedSlopeEntry : TerrainEntry
-        {
-            public List<Line> curve;
-            public float depth;
-
-            public CurvedSlopeEntry(CurvedSlope slope) : base(TerrainType.CurvedSlope)
-            {
-                curve = [];
-                depth = slope.thickness;
+                var curve = new List<Line>();
+                var height = new Vector2(0, slope.thickness);
 
                 var points = slope.collisionPoints.OrderBy(p => p.x).ToList();
                 for (int i = 0; i < points.Count - 1; i++)
                 {
                     curve.Add(new Line(points[i], points[i + 1]));
                 }
-            }
 
-            protected CurvedSlopeEntry(List<Line> curve, float depth) : base(TerrainType.CurvedSlope)
-            {
-                this.curve = curve;
-                this.depth = depth;
-            }
-
-            public override IEnumerable<Line> GetLines()
-            {
-                var height = new Vector2(0f, depth);
+                var entry = new TerrainEntry(TerrainType.CurvedSlope);
                 foreach (var line in curve)
                 {
-                    yield return line;
+                    entry.lines.Add(line);
                 }
                 foreach (var line in curve)
                 {
-                    yield return line - height;
+                    entry.lines.Add(line - height);
                 }
-                yield return new Line(curve[0].start, curve[0].start - height);
-                yield return new Line(curve[^1].end, curve[^1].end - height);
+                entry.lines.Add(new Line(curve[0].start, curve[0].start - height));
+                entry.lines.Add(new Line(curve[^1].end, curve[^1].end - height));
+                return entry;
             }
 
-            public override Line? TrimLine(Line line)
+            public enum TerrainType
             {
-                var height = new Vector2(0f, depth);
-                if (line.start.x >= curve[0].start.x && line.end.x >= curve[0].start.x && line.start.x <= curve[^1].end.x && line.end.x <= curve[^1].end.x)
-                {
-                    var bottomCurve = curve.Select(x => x - height).ToList();
-                    var topCollisionPoints = SurfaceCollisionsWith(line, curve);
-                    var bottomCollisionPoints = SurfaceCollisionsWith(line, bottomCurve);
-                    if (topCollisionPoints.Count > 0 || bottomCollisionPoints.Count > 0)
-                    {
-                        return line;
-                    }
+                UNKNOWN,
+                TerrainCurve,
+                SuperSlope,
+                CurvedSlope
+            }
 
-                    bool belowTop = !PointAboveCurve(line.start, curve) && !PointAboveCurve(line.end, curve);
-                    bool aboveBottom = PointAboveCurve(line.start, bottomCurve) && PointAboveCurve(line.end, bottomCurve);
-                    return belowTop && aboveBottom ? null : line;
-                }
-                else
+            internal class TerrainEntryConverter : JsonConverter<TerrainEntry>
+            {
+                public override TerrainEntry ReadJson(JsonReader reader, Type objectType, TerrainEntry existingValue, bool hasExistingValue, JsonSerializer serializer)
                 {
-                    float? leftCollision = line.CollisionWith(new Line(curve[0].start, curve[0].start - height));
-                    float? rightCollision = line.CollisionWith(new Line(curve[^1].start, curve[^1].start - height));
-                    if (leftCollision.HasValue)
+                    TerrainType type;
+                    List<Line> lines;
+                    var o = JObject.Load(reader);
+                    if (o.ContainsKey("internal"))
                     {
-                        return line.CutAt(leftCollision.Value, line.start.x > curve[0].start.x);
-                    }
-                    else if (rightCollision.HasValue)
-                    {
-                        return line.CutAt(rightCollision.Value, line.end.x > curve[^1].end.x);
-                    }
+                        var legacyData = o["internal"] as JObject;
+                        if (legacyData["type"].Type == JTokenType.Integer) type = (TerrainType)(int)legacyData["type"];
+                        else if (legacyData["type"].Type == JTokenType.String) type = (TerrainType)Enum.Parse(typeof(TerrainType), (string)legacyData["type"]);
+                        else throw new InvalidDataException("Unknown terrain type!");
 
-                    return line;
-                }
-
-                static List<Line> SurfaceCollisionsWith(Line testLine, List<Line> curve)
-                {
-                    List<Line> list = [];
-                    foreach (var line in curve)
-                    {
-                        if (line.CollisionWith(testLine) is not null)
+                        lines = [];
+                        switch (type)
                         {
-                            list.Add(line);
+                            case TerrainType.TerrainCurve:
+                                lines.AddRange(((JArray)legacyData["curve"]).Cast<Line>());
+                                break;
+                            case TerrainType.SuperSlope:
+                                lines.Add((Line)(JObject)legacyData["line"]);
+                                lines.Add(legacyData.line - depth);
+                                lines.Add(new Line(legacyData.line.start, legacyData.line.start - depth));
+                                lines.Add(new Line(legacyData.line.end, legacyData.line.end - depth));
+                                break;
+                            case TerrainType.CurvedSlope:
+                                lines.AddRange(legacyData.curve);
+                                lines.AddRange(legacyData.curve.Select(x => x - depth));
+                                lines.Add(new Line(legacyData.curve[0].start, legacyData.curve[0].start - depth));
+                                lines.Add(new Line(legacyData.curve[^1].end, legacyData.curve[^1].end - depth));
+                                break;
                         }
                     }
-                    return list;
-                }
-
-                static bool PointAboveCurve(Vector2 point, List<Line> curve)
-                {
-                    bool above = true;
-                    foreach (var line in curve)
+                    else
                     {
-                        if ((line.start.x <= point.x && line.end.x >= point.x) || (line.end.x <= point.x && line.start.x >= point.x))
-                        {
-                            float slope = (line.end.y - line.start.y) / (line.end.x - line.start.x);
-                            if (!float.IsNaN(slope) && !float.IsInfinity(slope))
-                            {
-                                // Good ol' point-slope form
-                                above &= (slope * (point.x - line.start.x) + line.start.y) < point.y;
-                            }
-                        }
+                        type = (TerrainType)Enum.Parse(typeof(TerrainType), (string)o["type"]);
+                        lines = [.. ((JArray)o["lines"]).Cast<Line>()];
                     }
-                    return above;
+
+                    var result = new TerrainEntry(type);
+                    result.lines.AddRange(lines);
+                    return result;
                 }
-            }
 
-            protected override Dictionary<string, object> ToInternalJson()
-            {
-                return new Dictionary<string, object>
+                public override void WriteJson(JsonWriter writer, TerrainEntry value, JsonSerializer serializer)
                 {
-                    ["curve"] = curve,
-                    ["depth"] = depth,
-                };
-            }
-
-            public static CurvedSlopeEntry FromInternalJson(Dictionary<string, object> json)
-            {
-                var lines = ((List<object>)json["curve"]).Select(Line.FromJson).ToList();
-                var depth = (float)(double)json["depth"];
-                return new CurvedSlopeEntry(lines, depth);
+                    var o = new JObject()
+                    {
+                        ["type"] = value.type.ToString(),
+                        ["lines"] = new JArray(value.lines)
+                    };
+                    o.WriteTo(writer);
+                }
             }
         }
     }

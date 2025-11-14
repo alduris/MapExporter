@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace MapExporterNew.Generation
@@ -25,36 +26,30 @@ namespace MapExporterNew.Generation
                 }
             }
 
-            metadata["vista_features"] = data;
+            metadata["vista_features"] = new JArray(data);
 
             yield return 1f;
         }
 
-        private struct VistaData : IJsonObject
+        private struct VistaData : IGeoJsonObject
         {
             public string room;
             public Vector2 pos;
 
-            public readonly Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Point" },
-                            { "coordinates", Vector2ToArray(pos) }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "room", room }
-                        }
-                    }
+                    ["type"] = "Point",
+                    ["coordinates"] = Vector2ToArray(pos)
+                };
+            }
+
+            public readonly JObject Properties()
+            {
+                return new JObject()
+                {
+                    ["room"] = room
                 };
             }
         }

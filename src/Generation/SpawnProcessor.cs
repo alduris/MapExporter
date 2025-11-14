@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using static MapExporterNew.Generation.GenUtil;
 using static MapExporterNew.RegionInfo.RoomEntry;
@@ -38,27 +39,36 @@ namespace MapExporterNew.Generation
                 }
             }
 
-            owner.metadata["spawn_features"] = spawns;
+            owner.metadata["spawn_features"] = new JArray(spawns);
 
             yield return 1f;
             yield break;
         }
 
-        public struct SpawnInfo : IJsonObject
+        public struct SpawnInfo : IGeoJsonObject
         {
             public Vector2 coords;
             public int den;
             public string roomName;
             public DenSpawnData[][] spawnData;
 
-            public readonly Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
+            {
+                return new JObject()
+                {
+                    ["type"] = "Point",
+                    ["coordinates"] = Vector2ToArray(coords)
+                };
+            }
+
+            public readonly JObject Properties()
             {
                 // Put together part of the dictionary
-                List<Dictionary<string, object>> spawnDicts = [];
+                JArray spawnDicts = [];
                 foreach (var data in spawnData)
                 {
                     bool isLineage = data[0].chance >= 0f;
-                    var spawnDict = new Dictionary<string, object>()
+                    var spawnDict = new JObject()
                     {
                         { "is_lineage", isLineage },
                         { "amount", data[0].count },
@@ -69,34 +79,19 @@ namespace MapExporterNew.Generation
                     // Lineage has extra data
                     if (isLineage)
                     {
-                        spawnDict["lineage"] = data.Select(x => x.type).ToArray();
-                        spawnDict["lineage_probs"] = data.Select(x => x.chance.ToString("0.0000")).ToArray();
-                        spawnDict["lineage_data"] = data.Select(x => x.data).ToArray();
+                        spawnDict["lineage"] = new JArray(data.Select(x => x.type));
+                        spawnDict["lineage_probs"] = new JArray(data.Select(x => x.chance));
+                        spawnDict["lineage_data"] = new JArray(data.Select(x => x.data));
                     }
 
                     spawnDicts.Add(spawnDict);
                 }
 
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Point" },
-                            { "coordinates", Vector2ToArray(coords) }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "room", roomName },
-                            { "den", den },
-                            { "spawns",  spawnDicts }
-                        }
-                    }
+                    ["room"] = roomName,
+                    ["den"] = den,
+                    ["spawns"] = spawnDicts
                 };
             }
         }

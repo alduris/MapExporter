@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Runtime;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using Watcher;
 
@@ -80,82 +82,70 @@ namespace MapExporterNew.Generation
                 }
             }
 
-            owner.metadata["placedobject_features"] = placedObjects;
-            owner.metadata["ripplespawnegg_features"] = rippleSpawnEggs;
-            owner.metadata["warppoint_features"] = warpPoints;
-            owner.metadata["warpdest_features"] = warpDestinations;
+            owner.metadata["placedobject_features"] = new JArray(placedObjects);
+            owner.metadata["ripplespawnegg_features"] = new JArray(rippleSpawnEggs);
+            owner.metadata["warppoint_features"] = new JArray(warpPoints);
+            owner.metadata["warpdest_features"] = new JArray(warpDestinations);
 
             yield return 1f;
             yield break;
         }
 
-        public struct PlacedObjectInfo : IJsonObject
+        public struct PlacedObjectInfo : IGeoJsonObject
         {
             public string roomName;
             public string type;
             public Vector2 pos;
             public List<string> settings;
 
-            public readonly Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Point" },
-                            { "coordinates", Vector2ToArray(pos) }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "room", roomName },
-                            { "object", type },
-                            { "settings", settings }
-                        }
-                    }
+                    ["type"] = "Point",
+                    ["coordinates"] = Vector2ToArray(pos)
+                };
+            }
+
+            public readonly JObject Properties()
+            {
+                return new JObject()
+                {
+                    ["room"] = roomName,
+                    ["object"] = type,
+                    ["settings"] = new JArray(settings)
                 };
             }
         }
 
-        public struct WarpPointInfo : IJsonObject
+        public struct WarpPointInfo : IGeoJsonObject
         {
             public string roomName;
             public Vector2 pos;
             public string destRegion;
             public string destRoom;
 
-            public readonly Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
-                return new Dictionary<string, object>()
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Point" },
-                            { "coordinates", Vector2ToArray(pos) }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "room", roomName },
-                            { "destRegion", destRegion },
-                            { "destRoom", destRoom }
-                        }
-                    }
+                    ["type"] = "Point",
+                    ["coordinates"] = Vector2ToArray(pos)
+                };
+            }
+
+            public readonly JObject Properties()
+            {
+                return new JObject()
+                {
+                    ["room"] = roomName,
+                    ["destRegion"] = destRegion,
+                    ["destRoom"] = destRoom
                 };
             }
         }
 
-        public struct WarpDestinationInfo : IJsonObject
+        public struct WarpDestinationInfo : IGeoJsonObject
         {
             public string roomName;
             public Vector2 pos;
@@ -163,29 +153,23 @@ namespace MapExporterNew.Generation
             public bool badWarp;
             public float rippleReq;
 
-            public Dictionary<string, object> ToJson()
+            public readonly JObject Geometry()
             {
-                return new Dictionary<string, object>
+                return new JObject()
                 {
-                    { "type", "Feature" },
-                    {
-                        "geometry",
-                        new Dictionary<string, object>
-                        {
-                            { "type", "Point" },
-                            { "coordinates", Vector2ToArray(pos) }
-                        }
-                    },
-                    {
-                        "properties",
-                        new Dictionary<string, object>
-                        {
-                            { "room", roomName },
-                            { "deadEnd", deadEnd },
-                            { "badWarp", badWarp },
-                            { "rippleReq", rippleReq }
-                        }
-                    }
+                    ["type"] = "Point",
+                    ["coordinates"] = Vector2ToArray(pos)
+                };
+            }
+
+            public readonly JObject Properties()
+            {
+                return new JObject()
+                {
+                    ["room"] = roomName,
+                    ["deadEnd"] = deadEnd,
+                    ["badWarp"] = badWarp,
+                    ["rippleReq"] = rippleReq
                 };
             }
         }
