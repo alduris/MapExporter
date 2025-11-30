@@ -6,6 +6,7 @@
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>../assets/newest/plugins/</OutputPath>
 		<PathMap>$(MSBuildProjectDirectory)=/$(SolutionName)</PathMap>
+		<NoWarn>IDE0305, IDE0290, IDE0044, IDE0090</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -334,7 +334,15 @@ namespace MapExporterNew
                     }
                     catch (Exception e) // die
                     {
-                        Plugin.Logger.LogError(aRoom.name + " had a bad node! (index " + i + ", type " + e.GetType().Name + ")");
+                        string nodeType = aRoom.nodes[i].type?.ToString() ?? "UNKNOWN";
+
+                        Plugin.errorQueue.Enqueue(new ErrorInfo
+                        {
+                            title = "Bad node!",
+                            message = $"{aRoom.name} had a bad node! (index {i}, type {nodeType})",
+                            canContinue = true
+                        });
+                        Plugin.Logger.LogError($"{aRoom.name} had a bad node! (index {i}, type {nodeType})");
                         Plugin.Logger.LogError(e);
                         nodes[i] = new IntVector2(-1, -1);
                     }

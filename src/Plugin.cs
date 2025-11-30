@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Permissions;
-using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Logging;
 using MapExporterNew.Hooks;
@@ -14,9 +13,7 @@ using Menu.Remix.MixedUI;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using MoreSlugcats;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -224,7 +221,6 @@ sealed class Plugin : BaseUnityPlugin
     {
         if (errorPopup != null)
         {
-            errorPopup.Update();
             if (!errorPopup.active)
             {
                 errorPopup = null;
@@ -249,8 +245,19 @@ sealed class Plugin : BaseUnityPlugin
             catch (Exception e)
             {
                 Logger.LogError(e);
-                throw;
+                errorQueue.Enqueue(new ErrorInfo
+                {
+                    title = "Encountered exception!",
+                    message = e.ToString(),
+                    canContinue = false
+                });
             }
         }
+    }
+
+    // Error handling
+    private void OnGUI()
+    {
+        errorPopup?.GuiUpdate();
     }
 }

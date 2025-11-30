@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using MapExporterNew.Screenshotter.UI;
 using RWCustom;
 using UnityEngine;
 
@@ -9,72 +7,78 @@ namespace MapExporterNew.Screenshotter
     internal class ErrorPopup
     {
         public bool canContinue;
-        public string title;
-        public string description;
         public bool active = true;
 
-        public event Action OnContinue;
+        private Rect popupRect;
+        private Vector2 scrollPos;
+        private Vector2 buttonSize;
 
-        private readonly FContainer container;
-        private readonly List<IPopupUI> elements = [];
+        private readonly string titleText;
+        private readonly string descriptionText;
+        private readonly string continueText;
+        private readonly string exitText;
+
+        public event Action OnContinue;
 
         public ErrorPopup(bool canContinue, string title, string description = "")
         {
             this.canContinue = canContinue;
-            this.title = title;
-            this.description = description;
 
-            container = new FContainer();
             var screenCenter = Custom.rainWorld.options.ScreenSize / 2f;
-            var popupSize = new Vector2(600f, 480f);
-            elements.Add(new PopupRoundedRect(container, screenCenter, popupSize, true, 0.95f));
-            elements.Add(new PopupLabel(container, screenCenter + popupSize * 0.5f * Vector2.up + Vector2.down * 25f, title, true));
-            elements.Add(new PopupLabel(container, screenCenter + popupSize * 0.5f * Vector2.up + Vector2.down * 45f, description, false));
-            var buttonSize = new Vector2(80f, 24f);
+            var popupSize = new Vector2(600f, 300f);
+            var popupPos = screenCenter - popupSize / 2;
+            popupRect = new Rect(popupPos, popupSize);
+
+            buttonSize = new Vector2(160f, 24f);
+
+            titleText = Translate(title);
+            descriptionText = Translate(description);
+            continueText = Translate("TRY CONTINUE");
+            exitText = Translate("CLOSE GAME");
+        }
+
+        public void GuiUpdate()
+        {
+            GUI.Window(0, popupRect, GuiWindow, titleText);
+        }
+
+        private void GuiWindow(int windowID)
+        {
+            var scrollSize = new Vector2(popupRect.width - 40f, GUI.skin.label.CalcHeight(new GUIContent(descriptionText), popupRect.width - 40f));
+            scrollPos = GUI.BeginScrollView(new Rect(10f, 30f, popupRect.width - 20f, popupRect.height - 70f), scrollPos, new Rect(Vector2.zero, scrollSize));
+            GUI.Label(new Rect(Vector2.zero, scrollSize), descriptionText);
+            GUI.EndScrollView();
+
             if (canContinue)
             {
-                // We can continue so we want both buttons
-                var continueButton = new PopupButton(container, screenCenter + popupSize * 0.5f * Vector2.down + Vector2.up * 25f + buttonSize * 0.5f * Vector2.left + Vector2.left * 5f, buttonSize, "TRY CONTINUE");
-                continueButton.OnClick += Continue;
-                elements.Add(continueButton);
+                if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 - 5f - buttonSize.x, popupRect.height - 10f - buttonSize.y), buttonSize), continueText))
+                {
+                    Continue();
+                }
 
-                var cancelButton = new PopupButton(container, screenCenter + popupSize * 0.5f * Vector2.down + Vector2.up * 25f + buttonSize * 0.5f * Vector2.right + Vector2.right * 5f, buttonSize, "CLOSE GAME");
-                cancelButton.OnClick += Cancel;
-                elements.Add(cancelButton);
+                if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 + 5f, popupRect.height - 10f - buttonSize.y), buttonSize), exitText))
+                {
+                    Cancel();
+                }
             }
-            else
+            else if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 - buttonSize.x / 2, popupRect.height - 10f - buttonSize.y), buttonSize), exitText))
             {
-                // We can't continue so we only need the close button
-                var cancelButton = new PopupButton(container, screenCenter + popupSize * 0.5f * Vector2.down + Vector2.up * 25f, buttonSize, "CLOSE GAME");
-                cancelButton.OnClick += Cancel;
-                elements.Add(cancelButton);
+                // Can't continue so only close button is needed
+                Cancel();
             }
         }
 
-        public void Update()
-        {
-            foreach (var element in elements)
-            {
-                element.Update();
-            }
-        }
+        private string Translate(string text) => Custom.rainWorld.inGameTranslator.Translate(text);
 
         public void Continue()
         {
             if (!canContinue)
             {
-                throw new Exception("Error popup cannot continue!");
+                return;
             }
             active = false;
 
             OnContinue?.Invoke();
-
-            foreach (var element in elements)
-            {
-                element.Unload();
-            }
-            container.RemoveAllChildren();
-            container.RemoveFromContainer();
         }
 
         public void Cancel()
