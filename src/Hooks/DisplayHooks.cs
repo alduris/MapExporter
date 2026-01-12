@@ -21,6 +21,8 @@ namespace MapExporterNew.Hooks
             On.VoidSpawnGraphics.DrawSprites += AntiVoidSpawn;
             On.Room.Loaded += EffectsBlacklist;
             On.Watcher.Prince.Update += HidePrince;
+            On.Watcher.RippleDepths.SpawnRippleVisions += ForceSpawnRippleVisions;
+            On.Watcher.PearlContent.Update += PearlContentSetToMiddle;
         }
 
         private static void NoLightningFlash(On.Lightning.LightningSource.orig_Update orig, Lightning.LightningSource self)
@@ -160,6 +162,18 @@ namespace MapExporterNew.Hooks
                 self.Destroy();
                 return;
             }
+            orig(self, eu);
+        }
+
+        private static void ForceSpawnRippleVisions(On.Watcher.RippleDepths.orig_SpawnRippleVisions orig, RippleDepths self)
+        {
+            self.rippleVisionsCooldown.Finish();
+            orig(self);
+        }
+
+        private static void PearlContentSetToMiddle(On.Watcher.PearlContent.orig_Update orig, PearlContent self, bool eu)
+        {
+            self.life.Set(self.life.max / 2);
             orig(self, eu);
         }
     }

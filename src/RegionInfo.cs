@@ -215,9 +215,12 @@ namespace MapExporterNew
             }
 
             // Add vistas
-            foreach (var data in (Dictionary<string, object>)json["vistaPoints"])
+            if (json.ContainsKey("vistaPoints"))
             {
-                entry.vistaPoints.Add(data.Key, Vector2FromJson(data.Value));
+                foreach (var data in (Dictionary<string, object>)json["vistaPoints"])
+                {
+                    entry.vistaPoints.Add(data.Key, Vector2FromJson(data.Value));
+                }
             }
 
             return entry;
@@ -676,7 +679,20 @@ namespace MapExporterNew
             public static TerrainEntry FromJson(Dictionary<string, object> json)
             {
                 var data = (Dictionary<string, object>)json["internal"];
-                return (TerrainType)(long)json["type"] switch
+                TerrainType type;
+                if (json["type"] is long l)
+                {
+                    type = (TerrainType)(long)json["type"];
+                }
+                else if (json["type"] is string s)
+                {
+                    type = (TerrainType)Enum.Parse(typeof(TerrainType), s);
+                }
+                else
+                {
+                    throw new InvalidCastException("Could not convert to TerrainType from type '" + json["type"]?.GetType().FullName + "'!");
+                }
+                return type switch
                 {
                     // TerrainType.LocalTerrainCurve => null,
                     TerrainType.TerrainCurve => TerrainCurveEntry.FromInternalJson(data),

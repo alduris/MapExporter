@@ -206,8 +206,9 @@ sealed class Plugin : BaseUnityPlugin
         self.GetStorySession.saveState.deathPersistentSaveData.TongueTutorialMessage = true;
 
         // watcher stuff yay
-        self.GetStorySession.saveState.miscWorldSaveData.numberOfPrinceEncounters = 5; // display the prince
+        self.GetStorySession.saveState.miscWorldSaveData.numberOfPrinceEncounters = Preferences.ShowPrince.GetValue() ? 5 : 0; // display the prince
         self.GetStorySession.saveState.miscWorldSaveData.highestPrinceConversationSeen = 226;
+        self.rainWorld.progression.miscProgressionData.beaten_Watcher_VoidWeaver = true; // makes some daemon rooms appear
 
         // allow Saint ghosts
         self.GetStorySession.saveState.cycleNumber = 1;
