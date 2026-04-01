@@ -416,6 +416,7 @@ assets/map-frontend/resources/warp/*
 !assets/map-frontend/resources/icons/ghostspot.png
 !assets/map-frontend/resources/icons/weaverspot.png
 !assets/map-frontend/resources/icons/ripplespawnegg.png
+!assets/map-frontend/resources/icons/rippletree.png
 !assets/map-frontend/resources/icons/bluetoken.png
 !assets/map-frontend/resources/icons/devtoken.png
 !assets/map-frontend/resources/icons/goldtoken.png
