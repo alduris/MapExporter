@@ -20,11 +20,20 @@ namespace MapExporterNew.Hooks
             On.AntiGravity.BrokenAntiGravity.ctor += AntiBrokenGravity;
             On.GateKarmaGlyph.DrawSprites += MoreVisibleGateKarma;
             On.VoidSpawnGraphics.DrawSprites += AntiVoidSpawn;
-            On.Room.Loaded += EffectsBlacklist;
+            On.Room.Loaded += EffectsBlacklistAndSeeding;
+            On.Room.LoadFromDataString += RockAndSpearSeeding;
             On.Watcher.Prince.Update += HidePrince;
             On.Watcher.RippleDepths.SpawnRippleVisions += ForceSpawnRippleVisions;
             On.Watcher.PearlContent.Update += PearlContentSetToMiddle;
             _ = new Hook(typeof(RegionState.RippleSpawnEggState).GetProperty(nameof(RegionState.RippleSpawnEggState.percentEggsCollected)).GetGetMethod(), RippleSpawnEggState_percentEggsCollected_get);
+        }
+
+        private static void RockAndSpearSeeding(On.Room.orig_LoadFromDataString orig, Room self, string[] lines)
+        {
+            int roomIndex = self.abstractRoom.index - self.abstractRoom.world.firstRoomIndex;
+            UnityEngine.Random.State state = UnityEngine.Random.state;
+            orig(self, lines);
+            UnityEngine.Random.state = state;
         }
 
         private static float RippleSpawnEggState_percentEggsCollected_get(Func<RegionState.RippleSpawnEggState, float> orig, RegionState.RippleSpawnEggState self)
@@ -96,7 +105,7 @@ namespace MapExporterNew.Hooks
             }
         }
 
-        private static void EffectsBlacklist(On.Room.orig_Loaded orig, Room self)
+        private static void EffectsBlacklistAndSeeding(On.Room.orig_Loaded orig, Room self)
         {
             for (int i = self.roomSettings.effects.Count - 1; i >= 0; i--)
             {
@@ -157,7 +166,12 @@ namespace MapExporterNew.Hooks
 
             }
 
+            // Seed for rocks and spears so we don't get random changes in git diffs
+            int roomIndex = self.abstractRoom.index - self.abstractRoom.world.firstRoomIndex;
+            UnityEngine.Random.State state = UnityEngine.Random.state;
+            UnityEngine.Random.InitState(roomIndex);
             orig(self);
+            UnityEngine.Random.state = state;
 
             foreach (var item in reactivateLater)
             {
