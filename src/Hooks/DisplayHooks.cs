@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MonoMod.RuntimeDetour;
 using MoreSlugcats;
 using UnityEngine;
 using Watcher;
@@ -23,6 +24,12 @@ namespace MapExporterNew.Hooks
             On.Watcher.Prince.Update += HidePrince;
             On.Watcher.RippleDepths.SpawnRippleVisions += ForceSpawnRippleVisions;
             On.Watcher.PearlContent.Update += PearlContentSetToMiddle;
+            _ = new Hook(typeof(RegionState.RippleSpawnEggState).GetProperty(nameof(RegionState.RippleSpawnEggState.percentEggsCollected)).GetGetMethod(), RippleSpawnEggState_percentEggsCollected_get);
+        }
+
+        private static float RippleSpawnEggState_percentEggsCollected_get(Func<RegionState.RippleSpawnEggState, float> orig, RegionState.RippleSpawnEggState self)
+        {
+            return self.totalEggs > 0 ? 1f : 0f;
         }
 
         private static void NoLightningFlash(On.Lightning.LightningSource.orig_Update orig, Lightning.LightningSource self)
@@ -132,7 +139,10 @@ namespace MapExporterNew.Hooks
                 )
                     self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 20);
 
-                if (ModManager.Watcher && (item.type == PlacedObject.Type.Pomegranate || item.type == PlacedObject.Type.PomegranateVine))
+                if (item.type == PlacedObject.Type.Pomegranate 
+                    || item.type == PlacedObject.Type.PomegranateVine 
+                    || item.type == PlacedObject.Type.RippleStalk 
+                    || item.type == PlacedObject.Type.RippleTree)
                     self.waitToEnterAfterFullyLoaded = Mathf.Max(self.waitToEnterAfterFullyLoaded, 40);
 
                 // Fuck you

@@ -1205,7 +1205,7 @@
                         let data = feature.properties.settings;
 
                         // Data!
-                        let icon = "./resources/icons/ripplespawnegg.png";
+                        let icon = `./resources/icons/${object}.png`;
 
                         // The resulting HTML
                         objecthtml += `<div class="rse-entry">
@@ -1222,7 +1222,7 @@
                     }
                 });
                 if (hadRippleEggs) rippleEggsLayer.addTo(map);
-                overlays.addOverlay(rippleEggsLayer, "Ripple Spawn Eggs");
+                overlays.addOverlay(rippleEggsLayer, "Ripple Objects");
 
                 // Vista points
                 let hadVistaPoints = map.hasLayer(vistaPointsLayer) || loadedRegion == null;

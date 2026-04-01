@@ -207,8 +207,9 @@ sealed class Plugin : BaseUnityPlugin
 
         // watcher stuff yay
         self.GetStorySession.saveState.miscWorldSaveData.numberOfPrinceEncounters = Preferences.ShowPrince.GetValue() ? 5 : 0; // display the prince
-        self.GetStorySession.saveState.miscWorldSaveData.highestPrinceConversationSeen = 226;
+        self.GetStorySession.saveState.miscWorldSaveData.highestPrinceConversationSeen = 226; // make all rot rooms in outer rim appear
         self.rainWorld.progression.miscProgressionData.beaten_Watcher_VoidWeaver = true; // makes some daemon rooms appear
+        self.rainWorld.progression.miscProgressionData.watcherCampaignSeed = 1; // just in case
 
         // allow Saint ghosts
         self.GetStorySession.saveState.cycleNumber = 1;

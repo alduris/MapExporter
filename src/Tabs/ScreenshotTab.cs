@@ -140,10 +140,13 @@ namespace MapExporterNew.Tabs
             if (WaitDirty)
             {
                 WaitDirty = false;
+                float oldHeight = waitBox.contentSize;
+                float oldScroll = waitBox.scrollOffset;
 
                 // Remove previous items
                 foreach (var item in waitBox.items)
                 {
+                    item.Deactivate();
                     _RemoveItem(item);
                 }
                 waitBox.items.Clear();
@@ -174,7 +177,8 @@ namespace MapExporterNew.Tabs
                             y -= CHECKBOX_LH;
                             var updateCombo = new OpResourceSelector(OIUtil.CosmeticBind(item.Value.updateMode), new Vector2(EDGE_PAD, y), waitBox.size.x - 2 * EDGE_PAD - SCROLLBAR_WIDTH)
                             {
-                                description = Translate("MAPEX:ssupdatemodedesc")
+                                description = Translate("MAPEX:ssupdatemodedesc"),
+                                listHeight = SSUpdateModeTotal
                             };
                             updateCombo._itemList = updateCombo._itemList.Select(x => new ListItem(x.name, PascalRegex.Replace(x.name, " "), x.value)).ToArray();
                             updateCombo.OnValueChanged += (_, val, old) =>
@@ -246,6 +250,7 @@ namespace MapExporterNew.Tabs
                     }
 
                     waitBox.SetContentSize(waitBox.size.y - EDGE_PAD - y);
+                    waitBox.ScrollOffset = oldScroll + (oldHeight - waitBox.contentSize);
                 }
             }
 
@@ -253,6 +258,8 @@ namespace MapExporterNew.Tabs
             if (QueueDirty)
             {
                 QueueDirty = false;
+                float oldHeight = queueBox.contentSize;
+                float oldScroll = queueBox.scrollOffset;
 
                 // Remove previous items
                 foreach (var item in queueBox.items)
@@ -325,6 +332,7 @@ namespace MapExporterNew.Tabs
                     }
 
                     queueBox.SetContentSize(height);
+                    queueBox.ScrollOffset = oldScroll + (oldHeight - waitBox.contentSize);
                 }
             }
         }

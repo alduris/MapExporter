@@ -57,7 +57,7 @@ namespace MapExporterNew.Generation
                             settings = thing.data
                         });
                     }
-                    else if (thing.type == nameof(PlacedObject.Type.RippleSpawnEgg))
+                    else if (thing.type == nameof(PlacedObject.Type.RippleSpawnEgg) || thing.type == nameof(PlacedObject.Type.RippleTree))
                     {
                         rippleSpawnEggs.Add(new PlacedObjectInfo
                         {

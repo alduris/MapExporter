@@ -500,15 +500,17 @@ namespace MapExporterNew
                 || obj.data is SpinningTopData
                 || obj.type == WatcherEnums.PlacedObjectType.WeaverSpot
                 || obj.type == PlacedObject.Type.SandGrubHole
+                || obj.type == PlacedObject.Type.RippleTree
                 || (obj.type.ToString().StartsWith("Placed") && GetObjectCategory(obj.type) == ObjectsPage.DevObjectCategories.Creatures);
 
             static ObjectsPage.DevObjectCategories GetObjectCategory(PlacedObject.Type type)
             {
                 // Have to do this because for some reason the method is not static and it's too much of a hassle to initialize the object to run one method otherwise
-                ObjectsPage objPage = (ObjectsPage)FormatterServices.GetUninitializedObject(typeof(ObjectsPage));
-                return objPage.DevObjectGetCategoryFromPlacedType(type);
+                objPageCache ??= (ObjectsPage)FormatterServices.GetUninitializedObject(typeof(ObjectsPage));
+                return objPageCache.DevObjectGetCategoryFromPlacedType(type);
             }
         }
+        private static ObjectsPage objPageCache = null;
 
         public static void Reset(ResetSeverity severity)
         {

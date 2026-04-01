@@ -1,4 +1,6 @@
 ﻿using System;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using MoreSlugcats;
 using UnityEngine;
 
@@ -16,6 +18,22 @@ namespace MapExporterNew.Hooks
             On.MoreSlugcats.BlinkingFlower.DrawSprites += BlinkingFlower_DrawSprites;
             On.RoomCamera.ApplyEffectColorsToPaletteTexture += EffectColorOOBFix;
             On.Watcher.WatcherRoomSpecificScript.WRSA_J01.UpdateObjects += WRSA_J01_UpdateObjects;
+            IL.GhostCreatureSedater.Update += GhostCreatureSedater_Update;
+        }
+
+        private static void GhostCreatureSedater_Update(ILContext il)
+        {
+            // Hopefully this exception gets fixed in the future and I can remove this. Basically it's just missing a ModManager.MMF check
+            var c = new ILCursor(il);
+            c.GotoNext(MoveType.AfterLabel, x => x.MatchLdsfld<MMF>(nameof(MMF.cfgVanillaExploits)));
+
+            Instruction temp = c.Next;
+            ILLabel brTo = null;
+            c.GotoNext(x => x.MatchBrtrue(out brTo));
+
+            c.Goto(temp);
+            c.EmitDelegate(() => ModManager.MMF);
+            c.Emit(OpCodes.Brfalse, brTo);
         }
 
         private static void IgnoreScavAIComplaints(On.ScavengersWorldAI.WorldFloodFiller.orig_Update orig, ScavengersWorldAI.WorldFloodFiller self)

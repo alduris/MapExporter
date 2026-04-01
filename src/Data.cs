@@ -122,6 +122,7 @@ namespace MapExporterNew
             MergeNewRoomsOnly,
             AllButRoomPositions, // screenshots included
         }
+        public const int SSUpdateModeTotal = 6;
         public static bool TakeScreenshots(SSUpdateMode updateMode) => updateMode == SSUpdateMode.Everything
             || updateMode == SSUpdateMode.ScreenshotsOnly
             || updateMode == SSUpdateMode.MergeNewRoomsOnly
