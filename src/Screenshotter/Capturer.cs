@@ -17,7 +17,7 @@ namespace MapExporterNew.Screenshotter
             { "SU_B13", [2] },
             { "GW_S08", [2] }, // in vanilla only
             { "SL_C01", [4,5] }, // crescent order or will break
-            { "UF_BEEEEG_Drop", [5] }
+            { "UF_BEEEEG_Drop", [5] },
         };
         public static string regionRendering = "SU"; // in case something drastic goes wrong, this is the default
         public static readonly Queue<string> slugsRendering = [];

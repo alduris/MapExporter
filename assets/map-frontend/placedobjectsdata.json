@@ -20,6 +20,8 @@
     "placedbigmoth": {"use": "bigmoth"},
     "placedsmallmoth": {"use": "smallmoth"},
     "placedrats": {"use": "rat"},
+    "xylonest": {"use": "xylo"},
+    "altxylonest": {"use": "xylo"},
     "bluetoken": {
         "text": [
             "(setting 5)"
