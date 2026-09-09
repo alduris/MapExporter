@@ -30,10 +30,17 @@ namespace MapExporterNew.Hooks
 
         private static void RockAndSpearSeeding(On.Room.orig_LoadFromDataString orig, Room self, string[] lines)
         {
-            int roomIndex = self.abstractRoom.index - self.abstractRoom.world.firstRoomIndex;
-            UnityEngine.Random.State state = UnityEngine.Random.state;
-            orig(self, lines);
-            UnityEngine.Random.state = state;
+            if (self.world != null)
+            {
+                int roomIndex = self.abstractRoom.index - self.abstractRoom.world.firstRoomIndex;
+                UnityEngine.Random.State state = UnityEngine.Random.state;
+                orig(self, lines);
+                UnityEngine.Random.state = state;
+            }
+            else
+            {
+                orig(self, lines);
+            }
         }
 
         private static float RippleSpawnEggState_percentEggsCollected_get(Func<RegionState.RippleSpawnEggState, float> orig, RegionState.RippleSpawnEggState self)
@@ -48,6 +55,8 @@ namespace MapExporterNew.Hooks
             self.intensity = 0;
             self.lastIntensity = 0;
             orig(self);
+            self.intensity = 0;
+            self.lastIntensity = 0;
         }
 
         private static void NoShortcutBlink(On.RoomCamera.orig_DrawUpdate orig, RoomCamera self, float timeStacker, float timeSpeed)
@@ -110,7 +119,6 @@ namespace MapExporterNew.Hooks
             for (int i = self.roomSettings.effects.Count - 1; i >= 0; i--)
             {
                 if (self.roomSettings.effects[i].type == RoomSettings.RoomEffect.Type.VoidSea) self.roomSettings.effects.RemoveAt(i); // breaks with no player
-                else if (self.roomSettings.effects[i].type == RoomSettings.RoomEffect.Type.Lightning) self.roomSettings.effects.RemoveAt(i); // bad for screenies
                 else if (self.roomSettings.effects[i].type.ToString() == "CGCameraZoom") self.roomSettings.effects.RemoveAt(i); // bad for screenies
             }
             List<PlacedObject> reactivateLater = [];
