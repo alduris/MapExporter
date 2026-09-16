@@ -17,6 +17,7 @@ namespace MapExporterNew.Screenshotter
         private readonly string descriptionText;
         private readonly string continueText;
         private readonly string exitText;
+        private readonly string copyText;
 
         public event Action OnContinue;
 
@@ -35,6 +36,7 @@ namespace MapExporterNew.Screenshotter
             descriptionText = Translate(description);
             continueText = Translate("TRY CONTINUE");
             exitText = Translate("CLOSE GAME");
+            copyText = Translate("COPY TO CLIPBOARD");
         }
 
         public void GuiUpdate()
@@ -51,9 +53,27 @@ namespace MapExporterNew.Screenshotter
 
             if (canContinue)
             {
-                if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 - 5f - buttonSize.x, popupRect.height - 10f - buttonSize.y), buttonSize), continueText))
+                if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 - buttonSize.x * 1.5f - 10f, popupRect.height - 10f - buttonSize.y), buttonSize), copyText))
+                {
+                    CopyToClipboard();
+                }
+
+                if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 - buttonSize.x / 2f, popupRect.height - 10f - buttonSize.y), buttonSize), continueText))
                 {
                     Continue();
+                }
+
+                if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 + buttonSize.x / 2f + 10f, popupRect.height - 10f - buttonSize.y), buttonSize), exitText))
+                {
+                    Cancel();
+                }
+            }
+            else
+            {
+                // Can't continue so only copy and close buttons are needed
+                if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 - buttonSize.x - 5f, popupRect.height - 10f - buttonSize.y), buttonSize), copyText))
+                {
+                    CopyToClipboard();
                 }
 
                 if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 + 5f, popupRect.height - 10f - buttonSize.y), buttonSize), exitText))
@@ -61,11 +81,11 @@ namespace MapExporterNew.Screenshotter
                     Cancel();
                 }
             }
-            else if (GUI.Button(new Rect(new Vector2(popupRect.width / 2 - buttonSize.x / 2, popupRect.height - 10f - buttonSize.y), buttonSize), exitText))
-            {
-                // Can't continue so only close button is needed
-                Cancel();
-            }
+        }
+
+        private void CopyToClipboard()
+        {
+            GUIUtility.systemCopyBuffer = titleText + "\n\n" + descriptionText;
         }
 
         private string Translate(string text) => Custom.rainWorld.inGameTranslator.Translate(text);

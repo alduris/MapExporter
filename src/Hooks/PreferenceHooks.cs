@@ -43,13 +43,20 @@ namespace MapExporterNew.Hooks
         private static void Oracle_Update(On.Oracle.orig_Update orig, Oracle self, bool eu)
         {
             // Only call orig if user wants to spawn iterators
-            orig(self, eu);
-            bool value = Preferences.ShowOracles.GetValue();
-            if (!value)
+            if (!Preferences.ShowOracles.GetValue())
             {
                 self.Destroy();
                 self.RemoveFromRoom();
+                return;
             }
+
+            var cameras = self.room?.game?.cameras;
+            if (cameras == null || cameras.Length == 0 || cameras[0] == null || cameras[0].hud == null)
+            {
+                return;
+            }
+
+            orig(self, eu);
         }
     }
 }
