@@ -245,6 +245,7 @@ namespace MapExporterNew
             public DenSpawnData[][] spawns;
             public string[] tags;
             public PlacedObjectData[] placedObjects;
+            public List<MusicTriggerData> musicTriggers = [];
             public List<TerrainEntry> terrain = [];
 
             internal bool offscreenDen = false;
@@ -445,7 +446,14 @@ namespace MapExporterNew
                 }
 
                 // Get placed objects
-                placedObjects = [.. room.roomSettings.placedObjects.Where(Resources.AcceptablePlacedObject).Select(x => new PlacedObjectData(x))];
+                placedObjects = [.. room.roomSettings.placedObjects
+                    .Where(Resources.AcceptablePlacedObject)
+                    .Select(x => new PlacedObjectData(x))];
+
+                // Get music triggers
+                musicTriggers = [.. room.roomSettings.triggers
+                    .Where(x => x.tEvent is MusicEvent && x.slugcats.Contains(room.game.StoryCharacter))
+                    .Select(x => new MusicTriggerData(x, x.tEvent as MusicEvent))];
 
                 // Terrain
                 terrain = room.terrain != null ? [.. room.terrain.terrainList.Select(TerrainEntry.GetTerrainEntry).Where(x => x is not null)] : null;
@@ -469,6 +477,7 @@ namespace MapExporterNew
                     { "spawns", spawns },
                     { "tags", tags },
                     { "objects", placedObjects },
+                    { "music", musicTriggers },
                     { "terrain", terrain },
                 };
             }
@@ -493,11 +502,32 @@ namespace MapExporterNew
                         return list.ToArray();
                     })],
                     tags = ((List<object>)json["tags"]).Cast<string>().ToArray(),
-                    placedObjects = [.. (json.TryGetValue("objects", out var o) && o is List<object> l ? l : [])
+                };
+
+                if (json.ContainsKey("objects"))
+                {
+                    var o = json["objects"];
+                    entry.placedObjects = [.. (o is List<object> l ? l : [])
                         .Cast<Dictionary<string, object>>()
                         .Select(PlacedObjectData.FromJson)
-                        .Where(x => x._valid)],
-                };
+                        .Where(x => x._valid)];
+                }
+                else
+                {
+                    entry.placedObjects = [];
+                }
+
+                if (json.ContainsKey("music"))
+                {
+                    var m = json["music"];
+                    entry.musicTriggers = [.. (m is List<object> l ? l : [])
+                        .Cast<Dictionary<string, object>>()
+                        .Select(MusicTriggerData.FromJson)];
+                }
+                else
+                {
+                    entry.musicTriggers = [];
+                }
 
                 if (json["cameras"] != null)
                 {
@@ -601,6 +631,105 @@ namespace MapExporterNew
                             _valid = false
                         };
                     }
+                }
+            }
+
+            public struct MusicTriggerData : IJsonObject
+            {
+                public string song;
+                public string triggerType;
+                public Vector2? pos;
+
+                public MusicTriggerData(EventTrigger trigger, MusicEvent musicEvent)
+                {
+                    song = musicEvent.songName;
+                    triggerType = trigger.type.value;
+
+                    // For the position, we only care about ones that trigger in a certain defined area.
+
+                    // Spot
+                    if (trigger is SpotTrigger spotTrigger)
+                    {
+                        pos = spotTrigger.pos;
+                    }
+
+                    // RegionKit
+                    else if (trigger.type.value == "Rect")
+                    {
+                        string[] data = trigger.ToString().Split(["<tA>"], StringSplitOptions.RemoveEmptyEntries);
+                        Vector2? handle1 = null, handle2 = null;
+                        foreach (var entry in data)
+                        {
+                            string[] entryData = entry.Split(["<tB>"], StringSplitOptions.None);
+                            if (entryData.Length == 3 && float.TryParse(entryData[1], out float f1) && float.TryParse(entryData[2], out float f2))
+                            {
+                                switch (entryData[0])
+                                {
+                                    case "handle1":
+                                        handle1 = new Vector2(f1, f2);
+                                        break;
+                                    case "handle2":
+                                        handle2 = new Vector2(f1, f2);
+                                        break;
+                                }
+                            }
+                        }
+                        if (handle1.HasValue && handle2.HasValue)
+                        {
+                            pos = (handle1.Value + handle2.Value) / 2f;
+                        }
+                    }
+                    else if (trigger.type.value == "Quad")
+                    {
+                        string[] data = trigger.ToString().Split(["<tA>"], StringSplitOptions.RemoveEmptyEntries);
+                        Vector2? handle1 = null, handle2 = null, handle3 = null, handle4 = null;
+                        foreach (var entry in data)
+                        {
+                            string[] entryData = entry.Split(["<tB>"], StringSplitOptions.None);
+                            if (entryData.Length == 3 && float.TryParse(entryData[1], out float f1) && float.TryParse(entryData[2], out float f2))
+                            {
+                                switch (entryData[0])
+                                {
+                                    case "handle1":
+                                        handle1 = new Vector2(f1, f2);
+                                        break;
+                                    case "handle2":
+                                        handle2 = new Vector2(f1, f2);
+                                        break;
+                                    case "handle3":
+                                        handle3 = new Vector2(f1, f2);
+                                        break;
+                                    case "handle4":
+                                        handle4 = new Vector2(f1, f2);
+                                        break;
+                                }
+                            }
+                        }
+                        if (handle1.HasValue && handle2.HasValue && handle3.HasValue && handle4.HasValue)
+                        {
+                            pos = (handle1.Value + handle2.Value + handle3.Value + handle4.Value) / 4f;
+                        }
+                    }
+                }
+
+                public Dictionary<string, object> ToJson()
+                {
+                    return new Dictionary<string, object>
+                    {
+                        { "song", song },
+                        { "triggerType", triggerType },
+                        { "pos", pos == null ? null : Utils.Vector2ToArray(pos.Value) },
+                    };
+                }
+
+                public static MusicTriggerData FromJson(Dictionary<string, object> json)
+                {
+                    return new MusicTriggerData()
+                    {
+                        song = (string)json["song"],
+                        triggerType = (string)json["triggerType"],
+                        pos = json["pos"] == null ? null : Utils.Vector2FromJson(json["pos"])
+                    };
                 }
             }
         }

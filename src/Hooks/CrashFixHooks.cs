@@ -19,6 +19,20 @@ namespace MapExporterNew.Hooks
             On.RoomCamera.ApplyEffectColorsToPaletteTexture += EffectColorOOBFix;
             On.Watcher.WatcherRoomSpecificScript.WRSA_J01.UpdateObjects += WRSA_J01_UpdateObjects;
             IL.GhostCreatureSedater.Update += GhostCreatureSedater_Update;
+            On.ShelterDoor.ctor += ShelterDoor_ctor;
+        }
+
+        private static void ShelterDoor_ctor(On.ShelterDoor.orig_ctor orig, ShelterDoor self, Room room)
+        {
+            try
+            {
+                orig(self, room);
+            }
+            catch
+            {
+                // I have no clue why but I had a shelter randomly throw on a line that it should not have thrown on
+                Plugin.Logger.LogWarning("SHELTER DOOR THREW IN " + room.abstractRoom.name);
+            }
         }
 
         private static void GhostCreatureSedater_Update(ILContext il)

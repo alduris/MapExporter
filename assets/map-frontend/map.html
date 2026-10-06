@@ -103,6 +103,7 @@
             /* Will override color (regardless of order) */
             -webkit-text-stroke-width: 1px;
             -webkit-text-stroke-color: black;
+			text-wrap: nowrap;
         }
 
         .object-image {
@@ -110,6 +111,29 @@
             margin-left: -25px;
             margin-top: -25px;
         }
+
+        .music-image {
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+
+        .music-tooltip {
+            position: absolute;
+            margin-left: 0px;
+            margin-top: 0px;
+            font-weight: 900;
+            font-size: 125%;
+            color: white;
+            -webkit-text-fill-color: white;
+            /* Will override color (regardless of order) */
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: black;
+			text-wrap: nowrap;
+        }
+		
+		.music-details p {
+			margin-block: 0.25em;
+		}
 
         .rse-image {
             position: absolute;
@@ -136,6 +160,7 @@
             -webkit-text-stroke-width: 1px;
             -webkit-text-stroke-color: black;
             font-family: var(--font-body);
+			text-wrap: nowrap;
         }
 
         .roomtag-image {
@@ -206,6 +231,7 @@
             /* Will override color (regardless of order) */
             -webkit-text-stroke-width: 1px;
             -webkit-text-stroke-color: black;
+			text-wrap: nowrap;
         }
 
         .overlay-label {
@@ -379,27 +405,31 @@
 
     <style id="spawnfilters">
         .spawn-filter {
-            display: initial
+            display: initial;
         }
 
         .object-filter {
-            display: initial
+            display: initial;
         }
 
         .roomtag-filter {
-            display: initial
+            display: initial;
+        }
+
+        .music-filter {
+            display: initial;
         }
 
         .warppoint-filter {
-            display: initial
+            display: initial;
         }
 
         .warpdest-filter {
-            display: initial
+            display: initial;
         }
 
         .rse-filter {
-            display: initial
+            display: initial;
         }
     </style>
 
@@ -538,10 +568,12 @@
         var regions = {};
         var slugcats = [];
         var poRules = {};
+        var musicLinks = {};
 
         getJsonObject("regions.json", function (json) { regions = json; }, false);
         getJsonObject("slugcats.json", function (json) { slugcats = json; }, false);
         getJsonObject("placedobjectsdata.json", function (json) { poRules = json; }, false);
+        getJsonObject("musicdata.json", function (json) { musicLinks = json; }, false);
 
         var html = "";
         var regionListSorted = Object.keys(regions).sort((a, b) => regions[a]["name"].toUpperCase().localeCompare(regions[b]["name"].toUpperCase()));
@@ -745,6 +777,7 @@
         var geometryLayer;
         var densLayer;
         var placedObjectsLayer;
+		var musicEventsLayer;
         var roomTagsLayer;
         var warpPointsLayer;
         var warpDestsLayer;
@@ -1083,6 +1116,75 @@
                 });
                 if (hadPlacedObjects) placedObjectsLayer.addTo(map);
                 overlays.addOverlay(placedObjectsLayer, "Placed Objects");
+
+				// Music events
+				let hadMusicEvents = map.hasLayer(musicEventsLayer) || loadedRegion == null;
+				if (musicEventsLayer != null) {
+					overlays.removeLayer(musicEventsLayer);
+					map.removeLayer(musicEventsLayer);
+				}
+				musicEventsLayer = L.geoJSON(json["music_features"], {
+                    pointToLayer: function (feature, latlng) {
+                        let eventData = feature.properties;
+						let songName = musicLinks[eventData.song]?.song ?? eventData.song;
+						let objecthtml = `<div class="music-entry">
+									<img class="music-image" src="./resources/Music_icon.png" title="Song: ${songName}&#013;Triggered by: ${eventData.triggerType}"/>
+									<div class="music-tooltip">${songName}</div>
+									</div>`;
+                        return L.marker(latlng, {
+                            icon: L.divIcon({
+                                className: "music-divs",
+                                html: objecthtml
+                            }),
+                            interactive: true
+                        });
+                    },
+                    onEachFeature: function (feature, layer) {
+                        let eventData = feature.properties;
+						let details = musicLinks[eventData.song] ?? {};
+						if (details.song == undefined) {
+							details["song"] = eventData.song;
+						}
+						let eventhtml = `<div class="music-details">
+									<p><b>Song</b>: ${details.song}</p>
+									<p><b>Trigger type</b>: ${eventData.triggerType}</p>`;
+						let putHR = false;
+						if (details.bandcamp != undefined && details.bandcamp != "") {
+							if (!putHR) {
+								putHR = true;
+								eventhtml += "<hr/>";
+							}
+							eventhtml += `<p><a href="${details.bandcamp}" target="_blank">Bandcamp</a></p>`;
+						}
+						if (details.spotify != undefined && details.spotify != "") {
+							if (!putHR) {
+								putHR = true;
+								eventhtml += "<hr/>";
+							}
+							eventhtml += `<p><a href="${details.spotify}" target="_blank">Spotify</a></p>`;
+						}
+						if (details.youtube != undefined && details.youtube != "") {
+							if (!putHR) {
+								putHR = true;
+								eventhtml += "<hr/>";
+							}
+							eventhtml += `<p><a href="${details.youtube}" target="_blank">YouTube</a></p>`;
+						}
+						if (details.misclinks != undefined) {
+							for (const link of details.misclinks) {
+								if (!putHR) {
+									putHR = true;
+									eventhtml += "<hr/>";
+								}
+								eventhtml += `<p><b>Link</b>: <a href="${link}" target="_blank">${link}</a></p>`;
+							}
+						}
+						eventhtml += "</div>";
+                        layer.bindPopup(eventhtml);
+					}
+				});
+				if (hadMusicEvents) musicEventsLayer.addTo(map);
+				overlays.addOverlay(musicEventsLayer, "Music Events");
 
                 // Warp points
                 let hadWarpPoints = map.hasLayer(warpPointsLayer) || loadedRegion == null;

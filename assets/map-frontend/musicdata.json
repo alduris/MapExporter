@@ -1,0 +1,1406 @@
+{
+	"BM_CC_CANOPY": {
+		"youtube": "https://www.youtube.com/watch?v=u-8NoXFOHpA"
+	},
+	"BM_DS_GATE": {
+		"youtube": "https://www.youtube.com/watch?v=jt2HaAkQv7Q"
+	},
+	"BM_HI_GATE": {
+		"youtube": "https://www.youtube.com/watch?v=e__DlCPPMg8"
+	},
+	"BM_RWTW_ASCENT": {
+		"song": "Ascent",
+		"youtube": "https://www.youtube.com/watch?v=HEMA4TvFmq0"
+	},
+	"BM_RWTW_BLUEENVOI": {
+		"song": "Blue Envoi",
+		"youtube": "https://www.youtube.com/watch?v=F0auGXIsFPs"
+	},
+	"BM_RWTW_COLLAPSEDEARTH": {
+		"song": "Collapsed Earth",
+		"youtube": "https://www.youtube.com/watch?v=xfz0o8xhKyM"
+	},
+	"BM_RWTW_IMPACTSUB": {
+		"song": "Impact Sub",
+		"youtube": "https://www.youtube.com/watch?v=ylcyfNA4JRM"
+	},
+	"BM_RWTW_INANNA": {
+		"song": "Inanna",
+		"youtube": "https://www.youtube.com/watch?v=9xugGu2CYos"
+	},
+	"BM_RWTW_MOURNFULECLIPSE": {
+		"song": "Mournful Eclipse",
+		"youtube": "https://www.youtube.com/watch?v=beSvSTzxzKQ"
+	},
+	"BM_RWTW_TAG_01": {},
+	"BM_RWTW_TAG_02": {},
+	"BM_RWTW_TAG_03": {},
+	"BM_RWTW_TAG_04": {},
+	"BM_RWTW_TAG_05": {},
+	"BM_RWTW_TAG_06": {},
+	"BM_RWTW_TAG_07": {},
+	"BM_RWTW_TAG_08": {},
+	"BM_RWTW_TAG_09": {},
+	"BM_RWTW_TAG_10": {},
+	"BM_RWTW_TAG_11": {},
+	"BM_RWTW_TAG_12": {},
+	"BM_RWTW_TAG_13": {},
+	"BM_RWTW_TAG_14": {},
+	"BM_RWTW_TAG_15": {},
+	"BM_RWTW_TAG_16": {},
+	"BM_RWTW_TAG_17": {},
+	"BM_RWTW_TAG_18": {},
+	"BM_RWTW_UNDISTURBED": {
+		"song": "Undisturbed",
+		"youtube": "https://www.youtube.com/watch?v=ZS-2NhO3tI4"
+	},
+	"BM_RWTW_UNDSQUEAK": {
+		"song": "Und Squeak",
+		"youtube": "https://www.youtube.com/watch?v=2gVv2ZXkj5w"
+	},
+	"BM_RWTW_VERTUNE": {
+		"song": "Vertune",
+		"youtube": "https://www.youtube.com/watch?v=ABmRnvojHZc"
+	},
+	"BM_RWTW_VIOLETABYSS": {
+		"song": "Violet Abyss",
+		"youtube": "https://www.youtube.com/watch?v=mTyCHXje4Dw"
+	},
+	"BM_SB_FILTER": {
+		"youtube": "https://www.youtube.com/watch?v=8v1hETOWy84"
+	},
+	"BM_SB_SUBWAY": {
+		"youtube": "https://www.youtube.com/watch?v=xEUTGXjmBzA"
+	},
+	"BM_SH_CRYPTS": {
+		"youtube": "https://www.youtube.com/watch?v=lS9wmxo89PY"
+	},
+	"BM_SI_STRUT": {
+		"youtube": "https://www.youtube.com/watch?v=a4TmLaXpJ64"
+	},
+	"BM_SL_SHORE": {
+		"youtube": "https://www.youtube.com/watch?v=r3kWZDLgm08"
+	},
+	"BM_SS_DOOR": {
+		"youtube": "https://www.youtube.com/watch?v=qPdYKg4CERY"
+	},
+	"BM_UW_UNDERHANG": {
+		"song": "Underhang",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/underhang-2",
+		"youtube": "https://www.youtube.com/watch?v=YDSSgHIOwmU"
+	},
+	"BM_UW_UPPERWALL": {
+		"youtube": "https://www.youtube.com/watch?v=SmXzxWRPdvU"
+	},
+	"BM_UW_WALL": {
+		"youtube": "https://www.youtube.com/watch?v=29OhtmMJu4o"
+	},
+	"MOON_SIREN": {
+		"song": "Moon's Siren"
+	},
+	"MOON_SIREN_MS": {
+		"song": "Moon's Siren (Submerged)"
+	},
+	"NA_01 - Proxima": {
+		"song": "Proxima",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/proxima",
+		"youtube": "https://www.youtube.com/watch?v=OmDt4v43qu4",
+		"spotify": ""
+	},
+	"NA_02 - Dustcloud": {
+		"song": "Dustcloud",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/dustcloud",
+		"youtube": "https://www.youtube.com/watch?v=2q5xSPp1riw",
+		"spotify": ""
+	},
+	"NA_03 - Wormpad": {
+		"song": "Wormpad",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/wormpad",
+		"youtube": "https://www.youtube.com/watch?v=-IpzdNYc1WY",
+		"spotify": ""
+	},
+	"NA_04 - Silicon": {
+		"song": "Silicon",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/silicon",
+		"youtube": "https://www.youtube.com/watch?v=rgu0yrqc-Jc",
+		"spotify": ""
+	},
+	"NA_05 - Sparkles": {
+		"song": "Sparkles",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/sparkles",
+		"youtube": "https://www.youtube.com/watch?v=ETW_-txQ9KU",
+		"spotify": ""
+	},
+	"NA_06 - Past Echoes": {
+		"song": "Past Echoes",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/past-echoes",
+		"youtube": "https://www.youtube.com/watch?v=EUo7mdUxGfk",
+		"spotify": ""
+	},
+	"NA_07 - Phasing": {
+		"song": "Phasing",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/phasing",
+		"youtube": "https://www.youtube.com/watch?v=7ncyDMntoiE",
+		"spotify": ""
+	},
+	"NA_08 - Dark Sus": {
+		"song": "Dark Sus",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/dark-sus",
+		"youtube": "https://www.youtube.com/watch?v=X05vpku3g64",
+		"spotify": ""
+	},
+	"NA_09 - Interest Pad": {
+		"song": "Interest Pad",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/interest-pad",
+		"youtube": "https://www.youtube.com/watch?v=H7kjObeK-pY",
+		"spotify": ""
+	},
+	"NA_10 - Qanda": {
+		"song": "Quanda",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/quanda",
+		"youtube": "https://www.youtube.com/watch?v=7HbkRzjb46c",
+		"spotify": ""
+	},
+	"NA_11 - Digital Sundown": {
+		"song": "Moondown",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/moondown-theme-ii-2",
+		"youtube": "https://www.youtube.com/watch?v=3l2sSpoinIs",
+		"spotify": ""
+	},
+	"NA_11 - Reminiscence": {
+		"song": "Reminiscence",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/reminiscence",
+		"youtube": "https://www.youtube.com/watch?v=69feyZiayEU",
+		"spotify": ""
+	},
+	"NA_16 - Drastic FM": {
+		"song": "Drastic FM",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/drastic-fm",
+		"youtube": "https://www.youtube.com/watch?v=LBq6DxCjQ50",
+		"spotify": ""
+	},
+	"NA_17 - Dripping Time": {
+		"song": "Dripping Time",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/dripping-time-2",
+		"youtube": "https://www.youtube.com/watch?v=aAjlMN-m9NE",
+		"spotify": ""
+	},
+	"NA_18 - Glass Arcs": {
+		"song": "Glass Arcs",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/glass-arcs",
+		"youtube": "https://www.youtube.com/watch?v=m-zopHnxmmk",
+		"spotify": ""
+	},
+	"NA_19 - Halcyon Memories": {
+		"song": "Halcyon Memories",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/halcyon-memories",
+		"youtube": "https://www.youtube.com/watch?v=z04shakaUcE",
+		"spotify": ""
+	},
+	"NA_19x - Halcyon Memories": {
+		"song": "Halcyon Memories (Reprise)",
+		"bandcamp": "",
+		"youtube": "",
+		"spotify": ""
+	},
+	"NA_20 - Crystalline": {
+		"song": "Crystalline",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/crystalline",
+		"youtube": "https://www.youtube.com/watch?v=hcwJuUKiOS4",
+		"spotify": ""
+	},
+	"NA_21 - New Terra": {
+		"song": "New Terra",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/new-terra",
+		"youtube": "https://www.youtube.com/watch?v=UiqhO2HQJXg",
+		"spotify": ""
+	},
+	"NA_22 - They Say": {
+		"song": "They Say",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/they-say",
+		"youtube": "https://www.youtube.com/watch?v=SR13kd52WMk",
+		"spotify": ""
+	},
+	"NA_23 - Speaking Systems": {
+		"song": "Speaking Systems",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/speaking-systems",
+		"youtube": "https://www.youtube.com/watch?v=J_LlCXitacI",
+		"spotify": ""
+	},
+	"NA_24 - Emotion Thread": {
+		"song": "Emotion Thread",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/emotion-thread",
+		"youtube": "https://www.youtube.com/watch?v=9zA8rvmoAYU",
+		"spotify": ""
+	},
+	"NA_25 - Demonic Riser": {
+		"song": "Demonic Riser",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/demonic-riser",
+		"youtube": "https://www.youtube.com/watch?v=5d6lY57JDr0",
+		"spotify": ""
+	},
+	"NA_26 - Energy Circuit": {
+		"song": "Energy Circuit",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/energy-circuit",
+		"youtube": "https://www.youtube.com/watch?v=ND3sVAl0t3w",
+		"spotify": ""
+	},
+	"NA_27 - Silent Construct": {
+		"song": "Silent Construct",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/silent-construct",
+		"youtube": "https://www.youtube.com/watch?v=1oVhsUfN810",
+		"spotify": ""
+	},
+	"NA_28 - Stargazer": {
+		"song": "Stargazer",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/stargazer-2",
+		"youtube": "https://www.youtube.com/watch?v=gmCyJfAiHds",
+		"spotify": ""
+	},
+	"NA_29 - Flutter": {
+		"song": "Flutter",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/flutter",
+		"youtube": "https://www.youtube.com/watch?v=h_-LQZgnjbg",
+		"spotify": ""
+	},
+	"NA_30 - Distance": {
+		"song": "Distance",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/distance",
+		"youtube": "https://www.youtube.com/watch?v=ptYNC0BRNho",
+		"spotify": ""
+	},
+	"NA_31 - Pulse": {
+		"song": "Pulse",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/pulse-2",
+		"youtube": "https://www.youtube.com/watch?v=q9qXQK6sU4U",
+		"spotify": ""
+	},
+	"NA_32 - Else1": {
+		"song": "ELSE I",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/else-i-2",
+		"youtube": "https://www.youtube.com/watch?v=ajQGeWGOdjE",
+		"spotify": ""
+	},
+	"NA_33 - Else2": {
+		"song": "ELSE II",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/else-ii",
+		"youtube": "https://www.youtube.com/watch?v=AVrAM9YIcmY",
+		"spotify": ""
+	},
+	"NA_34 - Else3": {
+		"song": "ELSE III",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/else-iii",
+		"youtube": "https://www.youtube.com/watch?v=7GJrGZmU2_M",
+		"spotify": ""
+	},
+	"NA_35 - Else4": {
+		"song": "ELSE IV",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/else-iv",
+		"youtube": "https://www.youtube.com/watch?v=9VamwpaHiBk",
+		"spotify": ""
+	},
+	"NA_36 - Else5": {
+		"song": "ELSE V",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/else-v",
+		"youtube": "https://www.youtube.com/watch?v=KWE-3luh7HI",
+		"spotify": ""
+	},
+	"NA_37 - Else6": {
+		"song": "ELSE VI",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/else-vi-2",
+		"youtube": "https://www.youtube.com/watch?v=oBmIQFcu26Q",
+		"spotify": ""
+	},
+	"NA_38 - Else7": {
+		"song": "ELSE VII",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/else-vii",
+		"youtube": "https://www.youtube.com/watch?v=nT-YZffoJYI",
+		"spotify": ""
+	},
+	"NA_39 - Cracked Earth": {
+		"song": "Cracked Earth",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/cracked-earth",
+		"youtube": "https://www.youtube.com/watch?v=YkwjD0vd2nM",
+		"spotify": ""
+	},
+	"NA_40 - Unseen Lands": {
+		"song": "Unseen Lands",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/unseen-lands-2",
+		"youtube": "https://www.youtube.com/watch?v=7L_XYJW6I-Y",
+		"spotify": ""
+	},
+	"NA_41 - Random Gods": {
+		"song": "Random Gods",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/random-gods-theme-iii-2",
+		"youtube": "https://www.youtube.com/watch?v=oXwpkxqqRCQ",
+		"spotify": ""
+	},
+	"NA_42 - Else8": {
+		"song": "ELSE VIII",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/new-else-viii",
+		"youtube": "",
+		"spotify": ""
+	},
+	"NA_43 - Isolation": {
+		"song": "Isolation",
+		"bandcamp": "",
+		"youtube": "",
+		"spotify": ""
+	},
+	"NA_44 - Terrace Vision": {
+		"song": "Terrace Vision",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/terrace-vision",
+		"youtube": "https://www.youtube.com/watch?v=gs_O74LDoZ8",
+		"spotify": ""
+	},
+	"NA_44x - Terrace Vision": {
+		"song": "Terrace Vision (alt)",
+		"bandcamp": "",
+		"youtube": "",
+		"spotify": ""
+	},
+	"Passages": {
+		"song": "Passages",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/passages-2",
+		"youtube": "https://www.youtube.com/watch?v=Z5VLl-deUgA",
+		"spotify": ""
+	},
+	"RWTW_ChildhoodsEnd_Reprise": {
+		"song": "Childhood's End (Reprise)",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/childhoods-end-reprise",
+		"youtube": "https://www.youtube.com/watch?v=_p_sC0l3kmU",
+		"spotify": ""
+	},
+	"RWTW_DaemonSequence": {
+		"song": "Daemon Sequence",
+		"youtube": "https://www.youtube.com/watch?v=nGUkdqVNMtk"
+	},
+	"RWTW_ELSE_VII_Reprise": {
+		"song": "ELSE VII (Reprise)",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=ww5ouQAtJss",
+		"spotify": ""
+	},
+	"RWTW_ST_Amb_01": {
+		"youtube": "https://www.youtube.com/watch?v=FmDU1oUoipw"
+	},
+	"RWTW_ST_Amb_02": {
+		"youtube": "https://www.youtube.com/watch?v=RyDjwYFyoMg"
+	},
+	"RWTW_ST_Amb_03": {
+		"youtube": "https://www.youtube.com/watch?v=lpTBw-qHzho"
+	},
+	"RWTW_ST_Amb_04": {
+		"youtube": "https://www.youtube.com/watch?v=AmarCkuKc84"
+	},
+	"RWTW_ST_Amb_05": {
+		"youtube": "https://www.youtube.com/watch?v=ScClKF_K-0Q"
+	},
+	"RWTW_ST_Amb_06": {
+		"youtube": "https://www.youtube.com/watch?v=z3iCg--iBWo"
+	},
+	"RWTW_ST_ELSE_01": {
+		"youtube": "https://www.youtube.com/watch?v=42VPh8ybA9o"
+	},
+	"RWTW_ST_ELSE_02": {
+		"youtube": "https://www.youtube.com/watch?v=xl6Vi7knDis"
+	},
+	"RWTW_ST_ELSE_03": {
+		"youtube": "https://www.youtube.com/watch?v=_zooURUeCxo"
+	},
+	"RWTW_ST_ELSE_04": {
+		"youtube": "https://www.youtube.com/watch?v=vQ1A_MOWl1s"
+	},
+	"RWTW_ST_ELSE_05": {
+		"youtube": "https://www.youtube.com/watch?v=NKW3yJhp3r8"
+	},
+	"RWTW_WeaverAura": {
+		"song": "Weaver Aura",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=NiD_zEnFI7g",
+		"spotify": ""
+	},
+	"RW_1 - Urban Jungle": {
+		"song": "Urban Jungle",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/urban-jungle-2",
+		"youtube": "https://www.youtube.com/watch?v=uTmGdtiPYys",
+		"spotify": ""
+	},
+	"RW_7 - Rooftops": {
+		"song": "Rooftops",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-7",
+		"youtube": "https://www.youtube.com/watch?v=ZE-O4b-Svvg",
+		"spotify": ""
+	},
+	"RW_8 - Sundown": {
+		"song": "Sundown",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/sundown-theme-i-2",
+		"youtube": "https://www.youtube.com/watch?v=I5DRzHjSDBE",
+		"spotify": ""
+	},
+	"RW_9 - Mud Pits": {
+		"song": "Mud Pits",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/mud-pits-2",
+		"youtube": "https://www.youtube.com/watch?v=n5BN3zMDkSo",
+		"spotify": ""
+	},
+	"RW_10 - Noisy": {
+		"song": "Noisy",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-10",
+		"youtube": "https://www.youtube.com/watch?v=OKmhAbR-Bbo",
+		"spotify": ""
+	},
+	"RW_13 - Action Scene": {
+		"song": "Action Scene",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-13",
+		"youtube": "https://www.youtube.com/watch?v=fXvxnDmwB_I",
+		"spotify": ""
+	},
+	"RW_14 - All Thats Left": {
+		"song": "All That's Left",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/all-thats-left-2",
+		"youtube": "https://www.youtube.com/watch?v=EcG5vhu5j9M",
+		"spotify": ""
+	},
+	"RW_15 - Old Growth": {
+		"song": "Old Growth",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=PxilY9wGMuA",
+		"spotify": ""
+	},
+	"RW_16 - Shoreline": {
+		"song": "The Coast",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/the-coast-2",
+		"youtube": "https://www.youtube.com/watch?v=gWc5cA5Fnsc",
+		"spotify": ""
+	},
+	"RW_18 - The Captain": {
+		"song": "The Captain",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/the-captain-2",
+		"youtube": "https://www.youtube.com/watch?v=1n8lnHdN2MY",
+		"spotify": ""
+	},
+	"RW_19 - Stone Heads": {
+		"song": "Stone Heads",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/stone-heads-2",
+		"youtube": "https://www.youtube.com/watch?v=ArPq0FwHNJc",
+		"spotify": ""
+	},
+	"RW_20 - Polybius": {
+		"song": "Polybius",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-20-polybius",
+		"youtube": "https://www.youtube.com/watch?v=7BdLFYk2h8M",
+		"spotify": ""
+	},
+	"RW_26 - Black Moonlight": {
+		"song": "Black Moonlight",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/black-moonlight-2",
+		"youtube": "https://www.youtube.com/watch?v=lHctDlB3Cxc",
+		"spotify": ""
+	},
+	"RW_27 - Train Tunnels": {
+		"song": "Train Tunnels",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-27-train-tunnels",
+		"youtube": "",
+		"spotify": ""
+	},
+	"RW_28 - Ferrous Forest": {
+		"song": "Ferrous Forest",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=-bEoAC-zpxc",
+		"spotify": ""
+	},
+	"RW_29 - Lovely Arps": {
+		"song": "Lovely Arps",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/lovely-arps-2",
+		"youtube": "https://www.youtube.com/watch?v=_4x4jXT4F-Y",
+		"spotify": ""
+	},
+	"RW_32 - Grey Cloud": {
+		"song": "GREY CLOUD",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/grey-cloud-2",
+		"youtube": "https://www.youtube.com/watch?v=8uBjD0siHnY",
+		"spotify": ""
+	},
+	"RW_33 - Weyuon": {
+		"song": "Weyuon",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/weyuon-2",
+		"youtube": "https://www.youtube.com/watch?v=FyhEURVyT28",
+		"spotify": ""
+	},
+	"RW_34 - Slaughter": {
+		"song": "Slaughter",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-34-slaughter",
+		"youtube": "https://www.youtube.com/watch?v=vcygE0vavRQ",
+		"spotify": ""
+	},
+	"RW_37 - Garbage City Shuffle": {
+		"song": "Garbage City Shuffle",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=tYf-QArL2T8",
+		"spotify": ""
+	},
+	"RW_38 - The Wet Moist": {
+		"song": "The Wet Moist",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=rRx25LBSwNs",
+		"spotify": ""
+	},
+	"RW_39 - Lack of Comfort": {
+		"song": "Lack of Comfort",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-39-lack-of-comfort",
+		"youtube": "https://www.youtube.com/watch?v=T8RAEs4D3Bo",
+		"spotify": ""
+	},
+	"RW_40 - Floes": {
+		"song": "Floes",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/floes-2",
+		"youtube": "https://www.youtube.com/watch?v=wkalcN3or7o",
+		"spotify": ""
+	},
+	"RW_41 - Grumblebum": {
+		"song": "Grumblebum",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/grumblebum-2",
+		"youtube": "https://www.youtube.com/watch?v=nyZcbKZPcI8",
+		"spotify": ""
+	},
+	"RW_42 - Kayava": {
+		"song": "Kayava",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/kayava-2",
+		"youtube": "https://www.youtube.com/watch?v=KN1nHTHP5R8",
+		"spotify": ""
+	},
+	"RW_43 - Albino": {
+		"song": "Albino",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=TFexrjq3Jsk",
+		"spotify": ""
+	},
+	"RW_43 - Bio Engineering": {
+		"song": "Bio Engineering",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/bio-engineering-2",
+		"youtube": "https://www.youtube.com/watch?v=bJNXazHoLkE",
+		"spotify": ""
+	},
+	"RW_45 - Deep Energy": {
+		"song": "Deep Energy",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/deep-energy-2",
+		"youtube": "https://www.youtube.com/watch?v=a5EJ9n1sChQ",
+		"spotify": ""
+	},
+	"RW_46 - Lonesound": {
+		"song": "Lonesound",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-46-lonesound",
+		"youtube": "https://www.youtube.com/watch?v=BBk54rYn294",
+		"spotify": ""
+	},
+	"RW_47 - Maze of Soil": {
+		"song": "Maze of Soil",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-47-maze-of-soil",
+		"youtube": "https://www.youtube.com/watch?v=_tQ7Uv0C5MI",
+		"spotify": ""
+	},
+	"RW_48 - Wind Chimes": {
+		"song": "Wind Chimes",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-48-wind-chimes",
+		"youtube": "https://www.youtube.com/watch?v=E-RbGdpRS90",
+		"spotify": ""
+	},
+	"RW_49 - Nest in Metal": {
+		"song": "Nest in Metal",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-49-nest-in-metal",
+		"youtube": "https://www.youtube.com/watch?v=hG-yLvkfy5A",
+		"spotify": ""
+	},
+	"RW_50 - Mist Engine": {
+		"song": "Mist Engine",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-50-mist-engine",
+		"youtube": "https://www.youtube.com/watch?v=dgh2SX-FU34",
+		"spotify": ""
+	},
+	"RW_51 - Swaying Fronds": {
+		"song": "Swaying Fronds",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-51-swaying-fronds",
+		"youtube": "https://www.youtube.com/watch?v=HYzqdxUnDiU",
+		"spotify": ""
+	},
+	"RW_52 - Garbage Worms": {
+		"song": "Garbage Worms",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/garbage-worms-2",
+		"youtube": "https://www.youtube.com/watch?v=gaEDRx2LC14",
+		"spotify": ""
+	},
+	"RW_53 - Leviathan Cave": {
+		"song": "Leviathan Cave",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-53-leviathan-cave",
+		"youtube": "https://www.youtube.com/watch?v=W6OeQbn7enY",
+		"spotify": ""
+	},
+	"RW_53 - Leviathan": {
+		"song": "Leviathan Cave",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-53-leviathan-cave",
+		"youtube": "https://www.youtube.com/watch?v=8Ov5yhgYrkE",
+		"spotify": ""
+	},
+	"RW_54 - Raindeer Ride": {
+		"song": "Raindeer Ride",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/raindeer-ride-2",
+		"youtube": "https://www.youtube.com/watch?v=ItW3kWXMATo",
+		"spotify": ""
+	},
+	"RW_55 - Sky Sprite": {
+		"song": "Sky Sprite",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-55-sky-sprite",
+		"youtube": "https://www.youtube.com/watch?v=PMHB13SBsFE",
+		"spotify": ""
+	},
+	"RW_55 - White Lizard": {
+		"song": "White Lizard",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/white-lizard-2",
+		"youtube": "https://www.youtube.com/watch?v=7W1WyF7YPig",
+		"spotify": ""
+	},
+	"RW_58 - Lantern Mice": {
+		"song": "Lantern Mice",
+		"bandcamp": "https://jamesprimate.bandcamp.com/track/rw-58-lantern-mice",
+		"youtube": "https://www.youtube.com/watch?v=j-9pA0ukP3Y",
+		"spotify": ""
+	},
+	"RW_59 - Lost City": {
+		"song": "Lost City",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/lost-city",
+		"youtube": "https://www.youtube.com/watch?v=YaMvn12zkxA",
+		"spotify": ""
+	},
+	"RW_60 - Bloom": {
+		"song": "Bloom",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/bloom",
+		"youtube": "https://www.youtube.com/watch?v=OI5Y52QsMOU",
+		"spotify": ""
+	},
+	"RW_61 - Rain": {
+		"song": "Rain",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/rain",
+		"youtube": "https://www.youtube.com/watch?v=2UvFa7AH55I",
+		"spotify": ""
+	},
+	"RW_62 - Orange Lizard": {
+		"song": "Orange Lizard",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/orange-lizard",
+		"youtube": "https://www.youtube.com/watch?v=O2QdDflcpYc",
+		"spotify": ""
+	},
+	"RW_63 - Wandering Cut": {
+		"song": "Wandering Cut",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/wandering-cut",
+		"youtube": "https://www.youtube.com/watch?v=aEi1dU-EGjs",
+		"spotify": ""
+	},
+	"RW_64 - Daze": {
+		"song": "Daze",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/daze",
+		"youtube": "https://www.youtube.com/watch?v=7ZGW2GtX7ts",
+		"spotify": ""
+	},
+	"RW_65 - Garden": {
+		"song": "Garden",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/garden-2",
+		"youtube": "https://www.youtube.com/watch?v=yLeosLevDkw",
+		"spotify": ""
+	},
+	"RW_66 - Metal Canopy": {
+		"song": "Metal Canopy",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/metal-canopy",
+		"youtube": "https://www.youtube.com/watch?v=c_cKppHU4hE",
+		"spotify": ""
+	},
+	"RW_67 - Random Fate": {
+		"song": "Random Fate",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/random-fate",
+		"youtube": "https://www.youtube.com/watch?v=x8uWlX8lB5c",
+		"spotify": ""
+	},
+	"RW_68 - Wired": {
+		"song": "Wired",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/wired",
+		"youtube": "https://www.youtube.com/watch?v=8-zhzujGvcE",
+		"spotify": ""
+	},
+	"RW_69 - Ancient": {
+		"song": "Ancient",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/ancient",
+		"youtube": "https://www.youtube.com/watch?v=Nf7_4nH-PWk",
+		"spotify": ""
+	},
+	"RW_70 - Scapeless Doubt": {
+		"song": "Scapeless Doubt",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/scapeless-doubt",
+		"youtube": "https://www.youtube.com/watch?v=r_-iot2tt2I",
+		"spotify": ""
+	},
+	"RW_71 - Sparking Pendulum": {
+		"song": "Sparkling Pendulum",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/sparkling-pendulum",
+		"youtube": "https://www.youtube.com/watch?v=8wF5935z3jo",
+		"spotify": ""
+	},
+	"RW_72 - Satellite": {
+		"song": "Satellite",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/satellite",
+		"youtube": "https://www.youtube.com/watch?v=OySdj3JdIcE",
+		"spotify": ""
+	},
+	"RW_73 - Flicker": {
+		"song": "Flicker",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/flicker",
+		"youtube": "https://www.youtube.com/watch?v=KdTN8atV3-U",
+		"spotify": ""
+	},
+	"RW_74 - Aquaphobia": {
+		"song": "Aquaphobia",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/aquaphobia",
+		"youtube": "https://www.youtube.com/watch?v=zx5xyVo2e40",
+		"spotify": ""
+	},
+	"RW_75 - Onto A New Dawn": {
+		"song": "Onto A New Dawn",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/onto-a-new-dawn",
+		"youtube": "https://www.youtube.com/watch?v=wy4s_vyxGzw",
+		"spotify": ""
+	},
+	"RW_76 - Not Your Rain": {
+		"song": "Not Your Rain",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/not-your-rain",
+		"youtube": "https://www.youtube.com/watch?v=59brYtqhB8A",
+		"spotify": ""
+	},
+	"RW_77 - Fragile": {
+		"song": "Fragile",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/fragile",
+		"youtube": "https://www.youtube.com/watch?v=RhSKxYV06ww",
+		"spotify": ""
+	},
+	"RW_78 - Obverse of the Old Wind": {
+		"song": "Obverse of the Old Wind",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/obverse-of-the-old-wind",
+		"youtube": "https://www.youtube.com/watch?v=fpzKJA2NAB0",
+		"spotify": ""
+	},
+	"RW_79 - Overcast": {
+		"song": "Overcast",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/overcast",
+		"youtube": "https://www.youtube.com/watch?v=xBj7owewwPY",
+		"spotify": ""
+	},
+	"RW_80 - Frosted Festival": {
+		"song": "Frosted Festival",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/frosted-festival",
+		"youtube": "https://www.youtube.com/watch?v=FlZMhQEWxLM",
+		"spotify": ""
+	},
+	"RW_81 - Breathing Hyometer": {
+		"song": "Breathing Hyometer",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/breathing-hyometer",
+		"youtube": "https://www.youtube.com/watch?v=X5iK0vN06rI",
+		"spotify": ""
+	},
+	"RW_82 - Trusted Component": {
+		"song": "Trusted Component",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/trusted-component",
+		"youtube": "https://www.youtube.com/watch?v=z33zBYtWleM",
+		"spotify": ""
+	},
+	"RW_83 - Accidented Condition": {
+		"song": "Accidented Condition",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/accidented-condition",
+		"youtube": "https://www.youtube.com/watch?v=xRFd4hPxXW8",
+		"spotify": ""
+	},
+	"RW_84 - Chilblain Grace": {
+		"song": "Chilblain Grace",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/chilblain-grace",
+		"youtube": "https://www.youtube.com/watch?v=NLIc4Z0vWeM",
+		"spotify": ""
+	},
+	"RW_85 - Ascent": {
+		"song": "Ascent",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/ascent",
+		"youtube": "https://www.youtube.com/watch?v=CMgmEoj2FR4",
+		"spotify": ""
+	},
+	"RW_86 - The Cycle": {
+		"song": "The Cycle",
+		"bandcamp": "",
+		"youtube": "",
+		"spotify": ""
+	},
+	"RW_87 - Fading Light": {
+		"song": "Fading Light",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/fading-light",
+		"youtube": "https://www.youtube.com/watch?v=siubgDPrwq8",
+		"spotify": ""
+	},
+	"RW_88 - Flux": {
+		"song": "Flux",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/flux",
+		"youtube": "https://www.youtube.com/watch?v=z95Id8-Gq5I",
+		"spotify": ""
+	},
+	"RW_89 - Vast Unlife": {
+		"song": "Vast Unlife",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/vast-unlife",
+		"youtube": "https://www.youtube.com/watch?v=MZSbCXilXR0",
+		"spotify": ""
+	},
+	"RW_90 - Eyes of Iron": {
+		"song": "Eyes of Iron",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/eyes-of-iron",
+		"youtube": "https://www.youtube.com/watch?v=9cFdGulANBg",
+		"spotify": ""
+	},
+	"RW_91 - Sheer Ice Torrent": {
+		"song": "Sheer Ice Torrent",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/sheer-ice-torrent",
+		"youtube": "https://www.youtube.com/watch?v=1SvBfO1lQcs",
+		"spotify": ""
+	},
+	"RW_92 - Reclaiming Entropy": {
+		"song": "Reclaiming Entropy",
+		"bandcamp": "",
+		"youtube": "",
+		"spotify": ""
+	},
+	"RW_93 - Veiled Northstar": {
+		"song": "Veiled Northstar",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/veiled-northstar",
+		"youtube": "https://www.youtube.com/watch?v=BCoHzOmE980",
+		"spotify": ""
+	},
+	"RW_94 - Weathered Steps": {
+		"song": "Weathered Steps",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/weathered-steps",
+		"youtube": "https://www.youtube.com/watch?v=EK3Jwd_hf8E",
+		"spotify": ""
+	},
+	"RW_95 - Reflection of the Moon": {
+		"song": "Reflection of the Moon",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/reflection-of-the-moon",
+		"youtube": "https://www.youtube.com/watch?v=BQmo2WB6qpg",
+		"spotify": ""
+	},
+	"RW_96 - Fragments": {
+		"song": "Fragments",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/fragments",
+		"youtube": "https://www.youtube.com/watch?v=GF1WqdfPn50",
+		"spotify": ""
+	},
+	"RW_97 - Open Skies": {
+		"song": "Open Skies",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/open-skies",
+		"youtube": "https://www.youtube.com/watch?v=qQa3rE9yFLE",
+		"spotify": ""
+	},
+	"RW_98 - Frost Reaper": {
+		"song": "Frost Reaper",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/frost-reaper",
+		"youtube": "https://www.youtube.com/watch?v=rA1jOpTIRkc",
+		"spotify": ""
+	},
+	"RW_99 - Air Toxing": {
+		"song": "Air Toxing",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/air-toxing",
+		"youtube": "https://www.youtube.com/watch?v=lbbgcEtVwcI",
+		"spotify": ""
+	},
+	"RW_100 - Lonesound 2": {
+		"song": "Lonesound 2",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=oPBEtVMybps",
+		"spotify": ""
+	},
+	"RW_101 - Bell of Gesture": {
+		"song": "Bell of Gesture",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/bell-of-gesture",
+		"youtube": "https://www.youtube.com/watch?v=NeKzeX-IZMQ",
+		"spotify": ""
+	},
+	"RW_102 - Bio Oscillator": {
+		"song": "Bio Oscillator",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=NS_GmMxmR94",
+		"spotify": ""
+	},
+	"RW_103 - Cave Drop": {
+		"song": "Cave Drop",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=Cud4S4-I-zc",
+		"spotify": ""
+	},
+	"RW_104 - Chaos": {
+		"song": "Chaos",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=z6PgjHuT6SU",
+		"spotify": ""
+	},
+	"RW_105 - Delwijar": {
+		"song": "Delwijar",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=TntzNxKufMk",
+		"spotify": ""
+	},
+	"RW_106 - Evening at Peace": {
+		"song": "Evening at Peace",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/evening-at-peace",
+		"youtube": "https://www.youtube.com/watch?v=kTW6c-LxnWY",
+		"spotify": ""
+	},
+	"RW_107 - Evil Arp": {
+		"song": "Evil Arp",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/evil-arp",
+		"youtube": "https://www.youtube.com/watch?v=LAQeJ1L2sCs",
+		"spotify": ""
+	},
+	"RW_108 - Explorer": {
+		"song": "Explorer",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=Us-cFcY9k4g",
+		"spotify": ""
+	},
+	"RW_109 - Freq Shift": {
+		"song": "Freq Shift",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/freq-shift",
+		"youtube": "https://www.youtube.com/watch?v=J9stzX0KOEI",
+		"spotify": ""
+	},
+	"RW_110 - Insect Roamer": {
+		"song": "Insect Roamer",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=ZkTrXewLvsQ",
+		"spotify": ""
+	},
+	"RW_111 - Laser Cutter": {
+		"song": "Laser Cutter",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/laser-cutter",
+		"youtube": "https://www.youtube.com/watch?v=HHnufVIh61U",
+		"spotify": ""
+	},
+	"RW_112 - Light Beams": {
+		"song": "Light Beams",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/light-beams",
+		"youtube": "https://www.youtube.com/watch?v=Izhqv1AtomQ",
+		"spotify": ""
+	},
+	"RW_113 - Liquid Lead": {
+		"song": "Liquid Lead",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/liquid-lead",
+		"youtube": "https://www.youtube.com/watch?v=5n-UqQ8hchE",
+		"spotify": ""
+	},
+	"RW_114 - Machine Riser": {
+		"song": "Machine Riser",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/machine-riser",
+		"youtube": "https://www.youtube.com/watch?v=6Iooru87Cgs",
+		"spotify": ""
+	},
+	"RW_115 - Membrane": {
+		"song": "Membrane",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=gxdRD9GUmJA",
+		"spotify": ""
+	},
+	"RW_116 - Passive Flow": {
+		"song": "Passive Flow",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/passive-flow",
+		"youtube": "https://www.youtube.com/watch?v=KIcRfLkMJ1Y",
+		"spotify": ""
+	},
+	"RW_117 - Porto": {
+		"song": "Porto",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/porto",
+		"youtube": "https://www.youtube.com/watch?v=APWe4yqHL5g",
+		"spotify": ""
+	},
+	"RW_118 - Ripple Visions": {
+		"song": "Ripple Visions",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=52J63GrKaGM",
+		"spotify": ""
+	},
+	"RW_119 - Sci Prad": {
+		"song": "Sci Prad",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/sci-prad",
+		"youtube": "https://www.youtube.com/watch?v=fpEiVgiTLTs",
+		"spotify": ""
+	},
+	"RW_120 - Shimmery": {
+		"song": "Shimmery",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/shimmery",
+		"youtube": "https://www.youtube.com/watch?v=hqNjJYkLhM4",
+		"spotify": ""
+	},
+	"RW_121 - Soft Gesture": {
+		"song": "Soft Gesture",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=Ex-mj0QQAPA",
+		"spotify": ""
+	},
+	"RW_122 - Speaking Systems 2": {
+		"song": "Speaking Systems 2",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/speakingsystems-ii",
+		"youtube": "https://www.youtube.com/watch?v=OqEhuHKG08o",
+		"spotify": ""
+	},
+	"RW_123 - Speaking Systems 3": {
+		"song": "Speaking Systems 3",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/speakingsystems-iii",
+		"youtube": "https://www.youtube.com/watch?v=bTp_iS56jiA",
+		"spotify": ""
+	},
+	"RW_124 - Theme of Youth": {
+		"song": "Theme of Youth",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/theme-of-youth",
+		"youtube": "https://www.youtube.com/watch?v=hgdDEg2Mgfg",
+		"spotify": ""
+	},
+	"RW_125 - Timelapse": {
+		"song": "Timelapse",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=gcSm8stk3nQ",
+		"spotify": ""
+	},
+	"RW_126 - Distant Breeze": {
+		"song": "Distant Breeze",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/distant-breeze",
+		"youtube": "https://www.youtube.com/watch?v=1f88zvMPvbE",
+		"spotify": ""
+	},
+	"RW_127 - Whale Song": {
+		"song": "Whale Song",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=Fhu3hCudx9s",
+		"spotify": ""
+	},
+	"RW_128 - Research": {
+		"song": "Research",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/reseach",
+		"youtube": "https://www.youtube.com/watch?v=yRlNosvZGV4",
+		"spotify": ""
+	},
+	"RW_129 - Seaside": {
+		"song": "Seaside",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=Cf-lkV5Qalk",
+		"spotify": ""
+	},
+	"RW_130 - Steel Pines": {
+		"song": "Steel Pines",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=nX0hjpNHq14",
+		"spotify": ""
+	},
+	"RW_131 - Versat": {
+		"song": "Versat",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=4mcIjG21Zps",
+		"spotify": ""
+	},
+	"RW_132 - Pitter Patter": {
+		"song": "Pitter Patter",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=wKNlrqffAF8",
+		"spotify": ""
+	},
+	"RW_133 - Ponder": {
+		"song": "Ponder",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/ponder",
+		"youtube": "https://www.youtube.com/watch?v=XYgD94FClCc",
+		"spotify": ""
+	},
+	"RW_134 - Puddles": {
+		"song": "Puddles",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=AyRQCwJQk8A",
+		"spotify": ""
+	},
+	"RW_135 - Fe56": {
+		"song": "Fe56",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=LdBEdxeG8Fs",
+		"spotify": ""
+	},
+	"RW_136 - Lullaby": {
+		"song": "Lullaby",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/lullaby",
+		"youtube": "https://www.youtube.com/watch?v=ptheiuJ9V7A",
+		"spotify": ""
+	},
+	"RW_137 - Luminous": {
+		"song": "Luminous",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=e94uSRZeVxQ",
+		"spotify": ""
+	},
+	"RW_138 - Teeth": {
+		"song": "Teeth",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=yOiSrPJT_J4",
+		"spotify": ""
+	},
+	"RW_139 - Haldec": {
+		"song": "Haldec",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=jHI_TZPvnE4",
+		"spotify": ""
+	},
+	"RW_140 - Merciful Eclipse": {
+		"song": "Merciful Eclipse",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/merciful-eclipse",
+		"youtube": "https://www.youtube.com/watch?v=wPg47vAiv7s",
+		"spotify": ""
+	},
+	"RW_141 - Advent Eclipse": {
+		"song": "Advent Eclipse",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=TfDx6c-c_KE",
+		"spotify": ""
+	},
+	"RW_142 - Passerby": {
+		"song": "Passerby",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/passerby",
+		"youtube": "https://www.youtube.com/watch?v=UNPwFBuEFBs",
+		"spotify": ""
+	},
+	"RW_143 - Bio Bop": {
+		"song": "Bio Bop",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/bio-bop",
+		"youtube": "https://www.youtube.com/watch?v=yI-J3Ros1Pg",
+		"spotify": ""
+	},
+	"RW_144 - Basilisk Beat": {
+		"song": "Basilisk Beat",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/basilisk",
+		"youtube": "https://www.youtube.com/watch?v=eHmyZnYQBU0",
+		"spotify": ""
+	},
+	"RW_145 - Moon Dog": {
+		"song": "Moon Dog",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/moon-dog",
+		"youtube": "https://www.youtube.com/watch?v=VJELltixxZ4",
+		"spotify": ""
+	},
+	"RW_146 - Glass Fields": {
+		"song": "Glass Fields",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=pvrSde2W_kY",
+		"spotify": ""
+	},
+	"RW_147 - Afterhours": {
+		"song": "Afterhours",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/afterhours",
+		"youtube": "https://www.youtube.com/watch?v=M9uktAfTfhY",
+		"spotify": ""
+	},
+	"RW_148 - Ambient Arp": {
+		"song": "Ambient Arp",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/ambient-arp",
+		"youtube": "https://www.youtube.com/watch?v=_Gw_LC32fQQ",
+		"spotify": ""
+	},
+	"RW_149 - Come and Go": {
+		"song": "Come and Go",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/come-and-go",
+		"youtube": "https://www.youtube.com/watch?v=F6W7y75s9GA",
+		"spotify": ""
+	},
+	"RW_150 - Computer Tape": {
+		"song": "Computer Tape",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/computer-tape",
+		"youtube": "https://www.youtube.com/watch?v=5mT-uDSt69k",
+		"spotify": ""
+	},
+	"RW_151 - Condemned": {
+		"song": "Condemned",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=tbZDKXkIQYI",
+		"spotify": ""
+	},
+	"RW_152 - Cup": {
+		"song": "Cup and Handle",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/cup-and-handle",
+		"youtube": "https://www.youtube.com/watch?v=emlIWW5GbSs",
+		"spotify": ""
+	},
+	"RW_153 - Granular Mist": {
+		"song": "Granular Mist",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=Uo5bTkWaFHQ",
+		"spotify": ""
+	},
+	"RW_154 - Groovy": {
+		"song": "Groovy",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/groovy",
+		"youtube": "https://www.youtube.com/watch?v=kqD2Up6D5_g",
+		"spotify": ""
+	},
+	"RW_155 - Light of Hope": {
+		"song": "Light of Hope",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/light-of-hope",
+		"youtube": "https://www.youtube.com/watch?v=bazfD0gqiA4",
+		"spotify": ""
+	},
+	"RW_156 - Nightshade Follower": {
+		"song": "Nightshade Follower",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=WN1P9jmN0vc",
+		"spotify": ""
+	},
+	"RW_157 - Reactor Core": {
+		"song": "Reactor Core",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/reactor-core",
+		"youtube": "https://www.youtube.com/watch?v=SxpLDncYGcg",
+		"spotify": ""
+	},
+	"RW_158 - Rhythmic Pad": {
+		"song": "Rhythmic Pad",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=DgxRH8ak0Nw",
+		"spotify": ""
+	},
+	"RW_159 - Roadkill": {
+		"song": "Roadkill",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=Mdoj8bj7k3g",
+		"spotify": ""
+	},
+	"RW_160 - Rubber Bass": {
+		"song": "Rubber Bass",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/rubber-bass",
+		"youtube": "https://www.youtube.com/watch?v=Hi4VJwZ65fU",
+		"spotify": ""
+	},
+	"RW_161 - Childhoods End": {
+		"song": "Childhood's End",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/childhoods-end",
+		"youtube": "https://www.youtube.com/watch?v=3xld1M709SQ",
+		"spotify": ""
+	},
+	"RW_162 - Weaver Energy": {
+		"song": "Weaver Energy",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=yk9Zy14Utn4",
+		"spotify": ""
+	},
+	"RW_163 - Skywhale Ride": {
+		"song": "Skywhale Ride",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/skywhale-ride",
+		"youtube": "https://www.youtube.com/watch?v=uL_YNDVImUs",
+		"spotify": ""
+	},
+	"RW_164 - Rot Lizard": {
+		"song": "Rot Lizard",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/rot-lizard",
+		"youtube": "https://www.youtube.com/watch?v=t1iKEXMyeg4",
+		"spotify": ""
+	},
+	"RW_165 - Drill Crab": {
+		"song": "Drill Crab",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/drill-crab",
+		"youtube": "https://www.youtube.com/watch?v=7s5mdeYtJH4",
+		"spotify": ""
+	},
+	"RW_166 - Boxworm Firefly": {
+		"song": "Boxworm Firefly",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/boxworm-firefly",
+		"youtube": "https://www.youtube.com/watch?v=4aaD4kgB4KM",
+		"spotify": ""
+	},
+	"RW_167 - Bone Shakers": {
+		"song": "Bone Shakers",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=iPTiPNaCY28",
+		"spotify": ""
+	},
+	"RW_168 - Big Moths": {
+		"song": "Big Moths",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/big-moth",
+		"youtube": "https://www.youtube.com/watch?v=UIquq4dnZpA",
+		"spotify": ""
+	},
+	"RW_169 - Grubs": {
+		"song": "Grubs",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/grubs",
+		"youtube": "https://www.youtube.com/watch?v=EiLszmmkhgA",
+		"spotify": ""
+	},
+	"RW_170 - In Dreams": {
+		"song": "In Dreams",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/in-dreams",
+		"youtube": "https://www.youtube.com/watch?v=jOR_f9dOS5A",
+		"spotify": ""
+	},
+	"RW_171 - Efflorescence": {
+		"song": "Efflorescence",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/efflorescence",
+		"youtube": "https://www.youtube.com/watch?v=Qcn1NOmkIxU",
+		"spotify": ""
+	},
+	"RW_172 - Bathing": {
+		"song": "Bathing",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/bathing",
+		"youtube": "https://www.youtube.com/watch?v=V0M7yjSMoVU",
+		"spotify": ""
+	},
+	"RW_173 - Spinning Top Reprise": {
+		"song": "Spinning Top Reprise",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/spinning-top-reprise",
+		"youtube": "https://www.youtube.com/watch?v=4wlNT16Rh4E",
+		"spotify": ""
+	},
+	"RW_174 - A Path A Purpose": {
+		"song": "A Path A Purpose",
+		"bandcamp": "https://akuparagames.bandcamp.com/track/a-path-a-purpose",
+		"youtube": "https://www.youtube.com/watch?v=YkREQIWoOAA",
+		"spotify": ""
+	},
+	"RW_Intro_Theme": {
+		"song": "Pictures of the Past",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=S9UGHv9S_3w",
+		"spotify": ""
+	},
+	"RW_Outro_Theme": {
+		"song": "Outro Theme",
+		"youtube": "https://www.youtube.com/watch?v=4NT9xA74UIA"
+	},
+	"RW_Outro_Theme_B": {
+	},
+	"RW_Outro_Theme_B_Short": {
+	},
+	"TitleRollRain": {
+		"youtube": "https://www.youtube.com/watch?v=9BL8V90otok"
+	},
+	"WMPA_Calcification": {
+		"song": "Calcification",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=EQPc-GCnjdc",
+		"spotify": ""
+	},
+	"WMPA_FamilialSky": {
+		"song": "Familial Sky",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=IOzb0CtfpUk",
+		"spotify": ""
+	},
+	"WMPA_PaleCurrents": {
+		"song": "Pale Currents",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=LbJGvJfkZQo",
+		"spotify": ""
+	},
+	"WMPA_SaltWindRitual": {
+		"song": "Salt Wind Ritual",
+		"bandcamp": "",
+		"youtube": "https://www.youtube.com/watch?v=etQfhaPaRFw",
+		"spotify": ""
+	}
+}
